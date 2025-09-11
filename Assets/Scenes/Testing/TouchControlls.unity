@@ -469,11 +469,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db5b4a887dc6d0c4b97067c2598b2cc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dragSpeed: 2
-  minZ: -100
-  maxZ: 100
-  _touchSensitivity: 0.2
-  rotationSpeed: 0.2
+  panSpeed: 0.05
+  zoomSpeed: 0.1
+  minZoomDistance: 5
+  maxZoomDistance: 40
+  rotationSpeed: 0.5
   focusDistance: 10
 --- !u!1 &1094080023
 GameObject:
