@@ -1,13 +1,14 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// Handles touch-based camera controls: pan, zoom, and rotate.
+/// </summary>
 public class TouchCameraController : MonoBehaviour
 {
-    private enum PrimaryGesture { None, Undetermined, Zoom, Rotate }
+    private enum PrimaryGesture { None, Undetermined, Pan, Zoom, Rotate }
 
     [Header("Pan Settings")]
     [SerializeField] private float panSpeed = 0.01f;
-    [SerializeField] private float decelerationRate = 0.9f; 
-    [SerializeField] private float stopThreshold = 0.05f;   
 
     [Header("Zoom Settings")]
     [SerializeField] private float zoomSpeed = 0.02f;
@@ -22,6 +23,7 @@ public class TouchCameraController : MonoBehaviour
     [SerializeField] private float deadzone = 1.5f;
     [SerializeField] private float pinchThreshold = 3f;
     [SerializeField] private float rotateThreshold = 3f;
+    [SerializeField] private float panThreshold = 3f; 
     [SerializeField] private float dominanceFactor = 1.3f;
 
     [Header("Debug")]
@@ -35,12 +37,14 @@ public class TouchCameraController : MonoBehaviour
     private float lastDistance;
     private Vector2 lastMid;
 
-    private Vector3 panVelocity;   
-    private bool isPanning;        
-
-    void Start()
+    void Awake()
     {
         _mainCamera = Camera.main;
+        if (_mainCamera == null)
+        {
+            Debug.LogError("TouchCameraController: No main camera found in the scene.");
+            enabled = false;
+        }
     }
 
     void Update()
@@ -49,24 +53,16 @@ public class TouchCameraController : MonoBehaviour
         {
             ProcessTwoFinger();
         }
-        else
+        else if (primaryState != PrimaryGesture.None)
         {
-            // Touch released -> stop detecting gesture but keep inertia
-            if (primaryState != PrimaryGesture.None)
-            {
-                if (debug) Debug.Log("Gesture ended -> reset");
-                primaryState = PrimaryGesture.None;
-                isPanning = false; // will switch to inertia movement
-            }
-
-            // Apply inertia when not actively panning
-            if (!isPanning && panVelocity.sqrMagnitude > stopThreshold * stopThreshold)
-            {
-                ApplyInertia();
-            }
+            if (debug) Debug.Log("Gesture ended -> reset");
+            primaryState = PrimaryGesture.None;
         }
     }
 
+    /// <summary>
+    /// Processes two-finger touch gestures for pan, zoom, and rotate.
+    /// </summary>
     private void ProcessTwoFinger()
     {
         Touch t0 = Input.GetTouch(0);
@@ -84,13 +80,11 @@ public class TouchCameraController : MonoBehaviour
             lastPos1 = cur1;
             lastDistance = curDist;
             lastMid = mid;
-            panVelocity = Vector3.zero; 
             return;
         }
 
         Vector2 d0 = cur0 - lastPos0;
         Vector2 d1 = cur1 - lastPos1;
-        Vector2 midDelta = mid - lastMid;
         float distanceDelta = curDist - lastDistance;
 
         // Gesture scores
@@ -100,29 +94,35 @@ public class TouchCameraController : MonoBehaviour
         if (verticalOpposite)
             rotateScore = (Mathf.Abs(d0.y) + Mathf.Abs(d1.y)) * 0.5f;
 
-        // Lock primary state (only between Zoom/Rotate)
+        Vector2 avgDelta = (d0 + d1) * 0.5f;
+        float panScore = avgDelta.magnitude;
+
+        // Lock primary state (Pan/Zoom/Rotate)
         if (primaryState == PrimaryGesture.Undetermined)
         {
-            if (pinchScore > pinchThreshold && pinchScore > rotateScore * dominanceFactor)
+            if (panScore > panThreshold && panScore > pinchScore * dominanceFactor && panScore > rotateScore * dominanceFactor)
+            {
+                primaryState = PrimaryGesture.Pan;
+                if (debug) Debug.Log("Locked primary gesture: Pan");
+            }
+            else if (pinchScore > pinchThreshold && pinchScore > panScore * dominanceFactor && pinchScore > rotateScore * dominanceFactor)
             {
                 primaryState = PrimaryGesture.Zoom;
                 if (debug) Debug.Log("Locked primary gesture: Zoom");
             }
-            else if (rotateScore > rotateThreshold && rotateScore > pinchScore * dominanceFactor)
+            else if (rotateScore > rotateThreshold && rotateScore > panScore * dominanceFactor && rotateScore > pinchScore * dominanceFactor)
             {
                 primaryState = PrimaryGesture.Rotate;
                 if (debug) Debug.Log("Locked primary gesture: Rotate");
             }
         }
 
-        Vector2 avgDelta = (d0 + d1) * 0.5f;
-        if (avgDelta.magnitude > deadzone)
+        // Only allow the locked gesture
+        if (primaryState == PrimaryGesture.Pan && panScore > deadzone)
         {
             HandlePan(avgDelta);
-            isPanning = true;
         }
-
-        if (primaryState == PrimaryGesture.Zoom)
+        else if (primaryState == PrimaryGesture.Zoom)
         {
             HandleZoom(distanceDelta);
         }
@@ -138,6 +138,9 @@ public class TouchCameraController : MonoBehaviour
         lastMid = mid;
     }
 
+    /// <summary>
+    /// Handles camera panning.
+    /// </summary>
     private void HandlePan(Vector2 avgDelta)
     {
         Vector3 right = _mainCamera.transform.right;
@@ -147,38 +150,26 @@ public class TouchCameraController : MonoBehaviour
 
         Vector3 move = (-right * avgDelta.x - forward * avgDelta.y) * panSpeed;
         _mainCamera.transform.position += move;
-
-        // Store velocity for inertia
-        panVelocity = move / Time.deltaTime;
     }
 
-    private void ApplyInertia()
-    {
-        _mainCamera.transform.position += panVelocity * Time.deltaTime;
-
-        // Exponential decay for smooth slowdown
-        float decay = Mathf.Pow(decelerationRate, Time.deltaTime * 60f);
-        panVelocity *= decay;
-
-        if (panVelocity.sqrMagnitude < stopThreshold * stopThreshold)
-        {
-            panVelocity = Vector3.zero;
-        }
-    }
-
+    /// <summary>
+    /// Handles camera zooming.
+    /// </summary>
     private void HandleZoom(float distanceDelta)
     {
-
         Vector3 move = _mainCamera.transform.forward * (distanceDelta * zoomSpeed);
-        Vector3 newPos = new Vector3(_mainCamera.transform.position.x, Mathf.Clamp(_mainCamera.transform.position.y,minZoomDistance, maxZoomDistance), _mainCamera.transform.position.z) + move;
-
-        if(newPos.y < minZoomDistance || newPos.y > maxZoomDistance)
-            return;
+        Vector3 newPos = new Vector3(_mainCamera.transform.position.x, Mathf.Clamp(_mainCamera.transform.position.y, minZoomDistance,maxZoomDistance) ,_mainCamera.transform.position.z) + move;
 
         Vector3 focusPoint = _mainCamera.transform.position + _mainCamera.transform.forward * focusDistance;
+        float newDistance = Vector3.Distance(newPos, focusPoint);
+
+        if (newDistance >= minZoomDistance && newDistance <= maxZoomDistance)
             _mainCamera.transform.position = newPos;
     }
 
+    /// <summary>
+    /// Handles camera rotation.
+    /// </summary>
     private void HandleRotation(float rotationDelta)
     {
         Vector3 focusPoint = _mainCamera.transform.position + _mainCamera.transform.forward * focusDistance;
