@@ -23,8 +23,7 @@ public class TouchCameraController : MonoBehaviour
     [SerializeField] private float deadzone = 1.5f;
     [SerializeField] private float pinchThreshold = 3f;
     [SerializeField] private float rotateThreshold = 3f;
-    [SerializeField] private float panThreshold = 3f;
-    [SerializeField] private float dominanceFactor = 1.3f;
+    
 
     [Header("Debug")]
     [SerializeField] private bool debug = false;
