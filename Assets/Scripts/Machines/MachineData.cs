@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum MaterialType { None, Silicon, Copper, Plastic, Chip, Circuit }
@@ -14,8 +15,11 @@ public class MachineData : ScriptableObject
     [Header("Production")]
     public MaterialType inputMaterial;
     public MaterialType outputMaterial;
-    public float processingTime = 2f; 
+    public float processingTime = 2f;
 
     [Header("Size")]
-    public Vector2Int size = new Vector2Int(1, 1); 
+    public Vector2Int size = new Vector2Int(1, 1);
+
+    [Header("Upgrades")]
+    public List<MachineUpgrade> upgrades;
 }
