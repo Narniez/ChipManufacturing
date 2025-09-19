@@ -1,40 +1,57 @@
+using System.Collections;
 using UnityEngine;
 
 public class Machine : MonoBehaviour
 {
-    [SerializeField] private MachineData data;
-
-    public MachineData Data => data;
-
-    private float timer;
-    [SerializeField] private bool isActive = true;
+    private MachineData data;
+    private int upgradeLevel = 0;
+    private Coroutine productionRoutine;
 
     public void Initialize(MachineData machineData)
     {
         data = machineData;
-        name = machineData.machineName;
+        StartProduction();
     }
 
-    private void Update()
+    private void StartProduction()
     {
-        if (!isActive) return;
+        if (productionRoutine != null)
+            StopCoroutine(productionRoutine);
 
-        timer += Time.deltaTime;
-        if (timer >= data.processingTime)
+        productionRoutine = StartCoroutine(ProductionLoop());
+    }
+
+    private IEnumerator ProductionLoop()
+    {
+        while (true)
         {
+            yield return new WaitForSeconds(data.processingTime);
             ProduceOutput();
-            timer = 0;
         }
     }
 
     private void ProduceOutput()
     {
-    
-        
+        // Fire event or directly tell ConveyorManager
+        OnMaterialProduced?.Invoke(data.outputMaterial, transform.position);
     }
 
-    public void ToggleActive(bool active)
+    public void Upgrade()
     {
-        isActive = active;
+        if (upgradeLevel < data.upgrades.Count)
+        {
+            var upgrade = data.upgrades[upgradeLevel];
+            data.processingTime *= upgrade.prrocessingSpeedMultiplier;
+            upgradeLevel++;
+            StartProduction(); 
+        }
     }
+
+    public void OnTap()
+    {
+        // Open UI, show upgrade button, stats, etc.
+        Debug.Log($"Machine {data.machineName} tapped. Upgrade level: {upgradeLevel}");
+    }
+
+    public event System.Action<MaterialType, Vector3> OnMaterialProduced;
 }

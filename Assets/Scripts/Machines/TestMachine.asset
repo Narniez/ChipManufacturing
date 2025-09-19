@@ -20,3 +20,5 @@ MonoBehaviour:
   outputMaterial: 4
   processingTime: 2
   size: {x: 1, y: 1}
+  upgrades:
+  - {fileID: 11400000, guid: 1e54abd3b0b52ee42b43195bb15e517a, type: 2}
