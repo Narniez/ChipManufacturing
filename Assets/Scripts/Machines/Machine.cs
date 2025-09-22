@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class Machine : MonoBehaviour
+public class Machine : MonoBehaviour, IInteractable
 {
     private MachineData data;
     private int upgradeLevel = 0;
@@ -34,6 +34,7 @@ public class Machine : MonoBehaviour
     {
         // Fire event or directly tell ConveyorManager
         OnMaterialProduced?.Invoke(data.outputMaterial, transform.position);
+        //Debug.Log($"Machine {data.machineName} produced {data.outputMaterial}");
     }
 
     public void Upgrade()
@@ -51,6 +52,11 @@ public class Machine : MonoBehaviour
     {
         // Open UI, show upgrade button, stats, etc.
         Debug.Log($"Machine {data.machineName} tapped. Upgrade level: {upgradeLevel}");
+    }
+
+    public void OnHold()
+    {
+        Debug.Log("Machine hold interaction not implemented."); 
     }
 
     public event System.Action<MaterialType, Vector3> OnMaterialProduced;

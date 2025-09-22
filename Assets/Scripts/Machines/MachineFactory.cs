@@ -7,7 +7,7 @@ public class MachineFactory : MonoBehaviour
         GameObject go = Instantiate(data.prefab, position, Quaternion.identity);
         Machine machine = go.GetComponent<Machine>();
 
-       // machine.Initialize(data);
+        machine.Initialize(data);
         return machine;
     }
 }
