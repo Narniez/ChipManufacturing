@@ -23,7 +23,15 @@ public class TouchCameraController : MonoBehaviour
     [SerializeField] private float deadzone = 1.5f;
     [SerializeField] private float pinchThreshold = 3f;
     [SerializeField] private float rotateThreshold = 3f;
-    
+
+    [Header("Bounds")]
+    [Tooltip("Optional: If set, camera will be clamped to this BoxCollider's world bounds.")]
+    [SerializeField] private BoxCollider boundsCollider;
+    [Tooltip("Used if no BoxCollider is provided.")]
+    [SerializeField] private Vector2 xLimits = new Vector2(-50, 50);
+    [SerializeField] private Vector2 zLimits = new Vector2(-50, 50);
+    [SerializeField] private bool clampY = false;
+    [SerializeField] private Vector2 yLimits = new Vector2(2, 50);
 
     [Header("Debug")]
     [SerializeField] private bool debug = false;
@@ -45,10 +53,13 @@ public class TouchCameraController : MonoBehaviour
     private Vector3 targetPosition;
     private Vector3 positionVelocity;
     private Quaternion targetRotation;
-    private float targetZoomDistance;
 
     // Lock while a two-finger gesture is active (prevents pan until both fingers are lifted)
     private bool isTwoFingerGestureActive = false;
+
+    // World pivot for two-finger gestures (set once per gesture via raycast)
+    private bool hasPivot = false;
+    private Vector3 pivotWorld;
 
     void Awake()
     {
@@ -60,7 +71,9 @@ public class TouchCameraController : MonoBehaviour
         }
         targetPosition = _mainCamera.transform.position;
         targetRotation = _mainCamera.transform.rotation;
-        targetZoomDistance = focusDistance;
+
+        // Ensure starting target is inside bounds
+        ClampTargetToBounds();
     }
 
     void Update()
@@ -74,18 +87,17 @@ public class TouchCameraController : MonoBehaviour
             }
             else if (Input.touchCount == 1)
             {
-                // Ignore one-finger input while two-finger gesture is locked
-                // Sync lastSinglePos so pan won't jump when we resume later
                 lastSinglePos = Input.GetTouch(0).position;
             }
             else
             {
-                // Both fingers lifted -> end the two-finger gesture
                 isTwoFingerGestureActive = false;
+                hasPivot = false;
                 primaryState = PrimaryGesture.None;
                 positionVelocity = Vector3.zero;
                 targetPosition = _mainCamera.transform.position;
                 targetRotation = _mainCamera.transform.rotation;
+                ClampTargetToBounds();
             }
         }
         else
@@ -113,6 +125,7 @@ public class TouchCameraController : MonoBehaviour
                 positionVelocity = Vector3.zero;
                 targetPosition = _mainCamera.transform.position;
                 targetRotation = _mainCamera.transform.rotation;
+                ClampTargetToBounds();
             }
         }
 
@@ -175,6 +188,7 @@ public class TouchCameraController : MonoBehaviour
         Vector2 mid = (cur0 + cur1) * 0.5f;
         float curDist = Vector2.Distance(cur0, cur1);
 
+        // On gesture start, cache history and set a world pivot using a raycast
         if (t0.phase == TouchPhase.Began || t1.phase == TouchPhase.Began || primaryState == PrimaryGesture.None)
         {
             primaryState = PrimaryGesture.Undetermined; // used only for debug/flow
@@ -182,13 +196,16 @@ public class TouchCameraController : MonoBehaviour
             lastPos1 = cur1;
             lastDistance = curDist;
             lastMid = mid;
+
+            hasPivot = TryGetMidpointPivotWorld(mid, out pivotWorld);
+            if (debug) Debug.Log($"Two-finger pivot set (hasPivot={hasPivot}) at {pivotWorld}");
             return;
         }
 
         Vector2 d0 = cur0 - lastPos0;
         Vector2 d1 = cur1 - lastPos1;
 
-        float distanceDelta = curDist - lastDistance; 
+        float distanceDelta = curDist - lastDistance; // >0 = fingers apart (zoom in)
         float pinchScore = Mathf.Abs(distanceDelta);
 
         float rotateScore = 0f;
@@ -197,7 +214,7 @@ public class TouchCameraController : MonoBehaviour
         if (verticalOpposite)
             rotateScore = (Mathf.Abs(d0.y) + Mathf.Abs(d1.y)) * 0.5f;
 
-        // Lock state for debugging visibility only
+        // Debug visibility
         if (primaryState == PrimaryGesture.Undetermined)
         {
             if (pinchScore > pinchThreshold && rotateScore > rotateThreshold)
@@ -212,10 +229,10 @@ public class TouchCameraController : MonoBehaviour
             {
                 if (debug) Debug.Log("Locked primary gesture: Rotate");
             }
-            primaryState = PrimaryGesture.Zoom; // mark as two-finger active; we still apply both below
+            primaryState = PrimaryGesture.Zoom; // mark two-finger active
         }
 
-        // Apply both simultaneously if above thresholds; never pan on two-finger
+        // Apply both simultaneously; doesn't pan on two-finger
         if (pinchScore > pinchThreshold)
         {
             HandleZoom(distanceDelta);
@@ -234,48 +251,126 @@ public class TouchCameraController : MonoBehaviour
     }
 
     /// <summary>
+    /// Raycast the two-finger midpoint to a ground plane (y=0) to get a stable world pivot.
+    /// This is where we use a raycast.
+    /// </summary>
+    private bool TryGetMidpointPivotWorld(Vector2 midScreen, out Vector3 world)
+    {
+        Ray ray = _mainCamera.ScreenPointToRay(midScreen);
+        Plane plane = new Plane(Vector3.up, Vector3.zero); // ground plane at y=0
+        if (plane.Raycast(ray, out float enter))
+        {
+            world = ray.GetPoint(enter);
+            return true;
+        }
+        // Fallback: use a point in front of the camera so zoom still works
+        world = targetPosition + (targetRotation * Vector3.forward) * Mathf.Max(0.01f, focusDistance);
+        return false;
+    }
+
+    /// <summary>
     /// Handles camera panning. avgDelta is a screen-space pixel delta.
     /// </summary>
     private void HandlePan(Vector2 avgDelta)
     {
-        // Convert screen-space delta into world movement relative to camera orientation.
         Vector3 right = _mainCamera.transform.right;
         Vector3 forward = _mainCamera.transform.forward;
         forward.y = 0f;
         forward.Normalize();
 
-        // Pixel-to-world scaling: panSpeed determines how responsive the camera is to screen movement.
         Vector3 move = (-right * avgDelta.x - forward * avgDelta.y) * panSpeed;
         targetPosition += move;
+        ClampTargetToBounds();
     }
 
     /// <summary>
-    /// Handles camera zooming (two-finger pinch).
+    /// Zoom by clamping distance from pivotWorld to the camera position.
+    /// When clamped to min/max, further pinch input does nothing.
     /// </summary>
     private void HandleZoom(float distanceDelta)
     {
-        Vector3 move = _mainCamera.transform.forward * (distanceDelta * zoomSpeed);
-        Vector3 newPos = new Vector3(targetPosition.x, Mathf.Clamp(targetPosition.y, minZoomDistance, maxZoomDistance), targetPosition.z) + move;
+        if (!hasPivot)
+        {
+            hasPivot = true;
+            pivotWorld = targetPosition + (targetRotation * Vector3.forward) * Mathf.Max(0.01f, focusDistance);
+        }
 
-        Vector3 focusPoint = targetPosition + _mainCamera.transform.forward * focusDistance;
-        float newDistance = Vector3.Distance(newPos, focusPoint);
+        Vector3 toCam = targetPosition - pivotWorld;
+        float currentDist = toCam.magnitude;
 
-        if (newDistance >= minZoomDistance && newDistance <= maxZoomDistance)
-            targetPosition = newPos;
+        // Positive distanceDelta (fingers apart) -> zoom in (reduce distance)
+        float desiredChange = distanceDelta * zoomSpeed;
+        float targetDist = Mathf.Clamp(currentDist - desiredChange, minZoomDistance, maxZoomDistance);
+
+        // If already clamped to the same distance, do nothing (prevents any drift)
+        if (Mathf.Abs(targetDist - currentDist) < 0.0001f)
+            return;
+
+        Vector3 dir = toCam.sqrMagnitude > 1e-8f ? toCam.normalized : (targetRotation * Vector3.back);
+        targetPosition = pivotWorld + dir * targetDist;
+        ClampTargetToBounds();
     }
 
     /// <summary>
-    /// Handles camera rotation (two-finger opposite vertical movement).
+    /// Rotate around the same world pivot set at gesture start.
     /// </summary>
     private void HandleRotation(float rotationDelta)
     {
-        Vector3 focusPoint = targetPosition + _mainCamera.transform.forward * focusDistance;
+        if (!hasPivot)
+        {
+            hasPivot = true;
+            pivotWorld = targetPosition + (targetRotation * Vector3.forward) * Mathf.Max(0.01f, focusDistance);
+        }
+
         Quaternion rot = Quaternion.AngleAxis(rotationDelta * rotationSpeed, Vector3.up);
 
-        // Rotate around focus point (changes position) and apply orientation
-        Vector3 dir = targetPosition - focusPoint;
+        // Rotate camera position around pivot and rotate orientation
+        Vector3 dir = targetPosition - pivotWorld;
         dir = rot * dir;
-        targetPosition = focusPoint + dir;
+        targetPosition = pivotWorld + dir;
         targetRotation = rot * targetRotation;
+        ClampTargetToBounds();
     }
+
+    private void ClampTargetToBounds()
+    {
+        if (boundsCollider != null)
+        {
+            Bounds b = boundsCollider.bounds;
+            float x = Mathf.Clamp(targetPosition.x, b.min.x, b.max.x);
+            float z = Mathf.Clamp(targetPosition.z, b.min.z, b.max.z);
+            float y = clampY ? Mathf.Clamp(targetPosition.y, b.min.y, b.max.y) : targetPosition.y;
+            targetPosition = new Vector3(x, y, z);
+        }
+        else
+        {
+            float x = Mathf.Clamp(targetPosition.x, xLimits.x, xLimits.y);
+            float z = Mathf.Clamp(targetPosition.z, zLimits.x, zLimits.y);
+            float y = clampY ? Mathf.Clamp(targetPosition.y, yLimits.x, yLimits.y) : targetPosition.y;
+            targetPosition = new Vector3(x, y, z);
+        }
+    }
+
+#if UNITY_EDITOR
+    // Visualize bounds when selected (editor only)
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        if (boundsCollider != null)
+        {
+            Gizmos.DrawWireCube(boundsCollider.bounds.center, boundsCollider.bounds.size);
+        }
+        else
+        {
+            Vector3 c1 = new Vector3(xLimits.x, 0, zLimits.x);
+            Vector3 c2 = new Vector3(xLimits.y, 0, zLimits.x);
+            Vector3 c3 = new Vector3(xLimits.y, 0, zLimits.y);
+            Vector3 c4 = new Vector3(xLimits.x, 0, zLimits.y);
+            Gizmos.DrawLine(c1, c2);
+            Gizmos.DrawLine(c2, c3);
+            Gizmos.DrawLine(c3, c4);
+            Gizmos.DrawLine(c4, c1);
+        }
+    }
+#endif
 }
