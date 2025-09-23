@@ -20,7 +20,7 @@ public class GridService : MonoBehaviour
     public Vector2Int WorldToCell(Vector3 world)
     {
         int cx = Mathf.FloorToInt((world.x - origin.x) / cellSize);
-        int cy = Mathf.FloorToInt((world.y - origin.y) / cellSize);
+        int cy = Mathf.FloorToInt((world.z - origin.z) / cellSize);
         return new Vector2Int(cx, cy);
     }
 
@@ -30,11 +30,43 @@ public class GridService : MonoBehaviour
     {
         float wx = origin.x + (cell.x + 0.5f) * cellSize;
         float wz = origin.z + (cell.y + 0.5f) * cellSize;
-        return new Vector3(wx,y, wz);
+        return new Vector3(wx, y, wz);
 
     }
 
-    //Checks if a cell is currently occupied
+    public Vector3 CellToWorldCenter(Vector3 originMin, int x, int y, float yLift = 0f)
+    {
+        float wx = originMin.x + (x + 0.5f) * cellSize;
+        float wz = originMin.z + (y + 0.5f) * cellSize;
+        return new Vector3(wx, yLift, wz);
+    }
+
+    public void CreateGridFromPlane(Transform plane, out int cols, out int rows, out Vector3 originMin)
+    {
+        const float UNITY_PLANE_SIZE = 10f;
+
+        float planeWidth = plane.localScale.x * UNITY_PLANE_SIZE;
+        float planeDepth = plane.localScale.z * UNITY_PLANE_SIZE;
+
+        cols = Mathf.Max(1, Mathf.RoundToInt(planeWidth / cellSize));
+        rows = Mathf.Max(1, Mathf.RoundToInt(planeDepth / cellSize));
+
+        float targetWidth = cols * cellSize;
+        float targetDepth = rows * cellSize;
+
+        //Snaps the scale so the plane matches whole cells
+        Vector3 local = plane.localScale;
+        local.x = targetWidth / UNITY_PLANE_SIZE;
+        local.z = targetDepth / UNITY_PLANE_SIZE;
+        plane.localScale = local;
+
+        Vector3 center = plane.position;
+        originMin = center
+                  - Vector3.right * (targetWidth * 0.5f)
+                  - Vector3.forward * (targetDepth * 0.5f);
+    }
+
+   //Checks if a cell is currently occupied
 
     public bool IsCellOccupied(Vector2Int cell)
     {
@@ -53,9 +85,33 @@ public class GridService : MonoBehaviour
         return false;
     }
 
+    public bool Clear(Vector2Int cell)
+    {
+        return cells.Remove(cell);
+    }
+
+    //Marks a cell as occupied
+    public bool SetOccupant(Vector2Int cell, Object occupant)
+    {
+        if (occupant == null)
+        {
+            return Clear(cell);
+        }
+
+        bool changed = true;
+        CellData existing;
+        if (cells.TryGetValue(cell, out existing))
+        {
+            changed = existing.occupant != occupant;
+        }
+
+        cells[cell] = new CellData { occupant = occupant };
+        return changed;
+    }
+
     //Checks if 2 cells are adjacent in 4 directions
 
-    public bool AreAdjacent4(Vector2Int a,  Vector2Int b)
+    public bool AreAdjacent4(Vector2Int a, Vector2Int b)
     {
         return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) == 1;
     }
@@ -76,7 +132,5 @@ public class GridService : MonoBehaviour
         Vector2Int w = cell + Vector2Int.left;
         yield return new Neighbor(w, Direction.West, IsCellOccupied(w));
     }
-
-
 
 }
