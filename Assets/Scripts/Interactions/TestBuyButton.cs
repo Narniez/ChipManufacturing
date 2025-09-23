@@ -21,7 +21,7 @@ public class TestBuyButton : MonoBehaviour
 
 
         // Ignore if already placing (prevents starting a new placement mid/after confirm)
-        if (pm.IsPlacing) return;
+       // if (pm.IsPlacing) return;
 
         pm.StartPlacement(machineData);
     }

@@ -1,12 +1,17 @@
 using System.Collections;
 using UnityEngine;
 
-public class Machine : MonoBehaviour, IInteractable
+public class Machine : MonoBehaviour, IInteractable, IDraggable
 {
     private MachineData data;
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
 
+    public event System.Action<MaterialType, Vector3> OnMaterialProduced;
+
+    // IDraggable
+    public bool CanDrag => true;
+    public Transform DragTransform => transform;
     public void Initialize(MachineData machineData)
     {
         data = machineData;
@@ -32,9 +37,7 @@ public class Machine : MonoBehaviour, IInteractable
 
     private void ProduceOutput()
     {
-        // Fire event or directly tell ConveyorManager
         OnMaterialProduced?.Invoke(data.outputMaterial, transform.position);
-        //Debug.Log($"Machine {data.machineName} produced {data.outputMaterial}");
     }
 
     public void Upgrade()
@@ -48,16 +51,30 @@ public class Machine : MonoBehaviour, IInteractable
         }
     }
 
+    // IInteractable
     public void OnTap()
     {
-        // Open UI, show upgrade button, stats, etc.
         Debug.Log($"Machine {data.machineName} tapped. Upgrade level: {upgradeLevel}");
     }
 
     public void OnHold()
     {
-        Debug.Log("Machine hold interaction not implemented."); 
+        // Optional: add visual feedback (highlight, scale, etc.). Dragging is handled by PlacementManager.
+        // e.g., GetComponent<Renderer>()?.material.SetFloat("_Outline", 1f);
     }
 
-    public event System.Action<MaterialType, Vector3> OnMaterialProduced;
+    public void OnDragStart()
+    {
+        // Optional: visuals/feedback when picked up
+    }
+
+    public void OnDrag(Vector3 worldPosition)
+    {
+        DragTransform.position = worldPosition;
+    }
+
+    public void OnDragEnd()
+    {
+        // Optional: visuals/feedback when dropped
+    }
 }
