@@ -61,12 +61,8 @@ public class GridService : MonoBehaviour
         plane.localScale = local;
 
         Vector3 center = plane.position;
-        originMin = center
-                  - Vector3.right * (targetWidth * 0.5f)
-                  - Vector3.forward * (targetDepth * 0.5f);
+        originMin = center - Vector3.right * (targetWidth * 0.5f) - Vector3.forward * (targetDepth * 0.5f);
     }
-
-   //Checks if a cell is currently occupied
 
     public bool IsCellOccupied(Vector2Int cell)
     {

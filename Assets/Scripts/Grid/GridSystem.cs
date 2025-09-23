@@ -48,7 +48,7 @@ public class GridSystem : MonoBehaviour
 
     private void Update()
     {
-        Rebuild(autoRebuild);
+        Rebuild(false);
     }
 
     private void Rebuild(bool force)

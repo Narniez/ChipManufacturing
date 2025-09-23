@@ -9,11 +9,11 @@ namespace GridCellTypes
         //any object - gameobject, mono script, so
         public Object occupant;
 
-        public bool occupied
+        public bool Occupied
         {
             get { return occupant != null; }
         }
-    }
+    }   
 
     public struct Neighbor
     {
