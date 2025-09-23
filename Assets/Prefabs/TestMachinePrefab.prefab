@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8263410892452505289}
   - component: {fileID: 3087660499971983952}
   - component: {fileID: 695206007071751741}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: OutputLane (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -120,7 +120,7 @@ GameObject:
   - component: {fileID: 372186451689752485}
   - component: {fileID: 995950248668652422}
   - component: {fileID: 2741274609707949744}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: OutputLane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -229,7 +229,7 @@ GameObject:
   - component: {fileID: 8172276249755967312}
   - component: {fileID: 2040697053072559305}
   - component: {fileID: 4296471298935805155}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: TestMachinePrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}

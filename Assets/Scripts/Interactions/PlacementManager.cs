@@ -1,231 +1,143 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.EventSystems;
+﻿using UnityEngine;
 
 public class PlacementManager : MonoBehaviour
 {
     public static PlacementManager Instance { get; private set; }
 
+    [Header("Factory")]
     [SerializeField] private MachineFactory factory;
 
-    private MachineData selectedMachine;
-    private GameObject previewObject;
-    [SerializeField] private bool isPlacing;
+    [Header("Edge Scroll While Dragging")]
+    [SerializeField] private float edgeZonePixels = 48f;
+    [SerializeField] private float edgeScrollSpeed = 12f; 
 
-    // Tap filtering (prevents preview jumping when pressing UI like Confirm)
-    [SerializeField] private float tapMaxMovePixels = 20f;
-    private Vector2 mouseDownPos;
-    private bool mouseDownActive;
+    // [Header("Grid")]
+    // [SerializeField] private GridSnapper grid; 
 
-    // Robust UI guard: block world taps if a click/touch began on UI, until it is released
-    private bool blockMouseTapUntilRelease = false;
-    private readonly HashSet<int> blockedFingerIds = new HashSet<int>();
-    private bool blockAllTapsUntilNoTouches = false; 
+    private CameraController _camCtrl; 
+    private IDraggable dragging;
 
-    private int activeFingerId = -1;
-    private Vector2 touchDownPos;
-
-    public bool IsPlacing => isPlacing;
     private void Awake()
     {
         if (Instance != null) Destroy(gameObject);
         Instance = this;
+        _camCtrl = FindFirstObjectByType<CameraController>(); 
     }
 
-    // Called by Buy button
+    private void OnEnable()
+    {
+        if (InteractionManager.Instance != null)
+        {
+            InteractionManager.Instance.OnHoldStart += OnHoldStart;
+            InteractionManager.Instance.OnHoldMove += OnHoldMove;
+            InteractionManager.Instance.OnHoldEnd  += OnHoldEnd;
+            InteractionManager.Instance.OnTap      += OnTap;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (InteractionManager.Instance != null)
+        {
+            InteractionManager.Instance.OnHoldStart -= OnHoldStart;
+            InteractionManager.Instance.OnHoldMove  -= OnHoldMove;
+            InteractionManager.Instance.OnHoldEnd   -= OnHoldEnd;
+            InteractionManager.Instance.OnTap       -= OnTap;
+        }
+    }
+
+    // Buy spawns immediately at screen center (no confirm)
     public void StartPlacement(MachineData machineData)
     {
-        CancelPlacement();
+        if (factory == null || machineData == null || machineData.prefab == null)
+        {
+            Debug.LogError("PlacementManager.StartPlacement: Missing factory or machine data/prefab.");
+            return;
+        }
 
-        selectedMachine = machineData;
-
-        // Create a transparent preview object
-        previewObject = Instantiate(machineData.prefab);
-        SetPreviewMaterial(previewObject, true);
-
-        isPlacing = true;
-
-        // Spawn at screen center
-        Vector3 centerPos = GetWorldFromScreen(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f));
-        previewObject.transform.position = centerPos;
+        var cam = Camera.main;
+        Vector3 centerPos = ScreenToGround(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f), cam);
+        var created = factory.CreateMachine(machineData, centerPos);
+        // If created also implements IDraggable, it will be drag-enabled automatically by interactions.
     }
 
-    // Called by Confirm button
-    public void ConfirmPlacement()
+    private void OnTap(IInteractable interactable, Vector2 screen, Vector3 world)
     {
-        if (!isPlacing) return;
-
-        // Guard: block any tap processing caused by this click/tap
-        blockMouseTapUntilRelease = true;
-        blockAllTapsUntilNoTouches = true;
-
-        // Place at current preview position (do NOT move on confirm)
-        PlaceMachine(previewObject.transform.position);
-        CancelPlacement();
-
-       Debug.Log("Machinde placed isPlacing = " + isPlacing);
+        // Optional global tap handling (selection/UI)
     }
 
-    // Optional: hook to a "Cancel" button or ESC/right-click
-    public void CancelPlacement()
+    private void OnHoldStart(IInteractable interactable, Vector2 screen, Vector3 world)
     {
-        if (previewObject != null)
-        {
-            Destroy(previewObject);
-            previewObject = null;
-        }
+        dragging = interactable as IDraggable;
+        if (dragging == null || !dragging.CanDrag) return;
 
-        selectedMachine = null;
-        isPlacing = false;
+        if (_camCtrl != null) _camCtrl.SetInputLocked(true);
 
-        // reset tap state
-        mouseDownActive = false;
-        activeFingerId = -1;
+        //world = ApplySnap(world); // Snap disabled for now
+        dragging.OnDragStart();
+        dragging.OnDrag(world);
     }
 
-    private void Update()
+    private void OnHoldMove(IInteractable interactable, Vector2 screen, Vector3 world)
     {
-        if (!isPlacing) return;
+        if (dragging == null || dragging != interactable as IDraggable) return;
 
-        // Move preview on discrete click/tap (mouse or touch)
-        if (TryGetTapWorldPosition(out Vector3 worldPos))
-        {
-            previewObject.transform.position = worldPos;
-        }
+        EdgeScrollCamera(screen);
 
-        //// Convenience: right-click cancels while testing with mouse
-        //if (Input.GetMouseButtonDown(1))
-        //{
-        //    CancelPlacement();
-        //}
+        // world = ApplySnap(world); 
+        dragging.OnDrag(world);
     }
 
-    private void PlaceMachine(Vector3 position)
+    private void OnHoldEnd(IInteractable interactable, Vector2 screen, Vector3 world)
     {
-        factory.CreateMachine(selectedMachine, position);
+        if (dragging == null || dragging != interactable as IDraggable) return;
+
+        // world = ApplySnap(world);
+        dragging.OnDrag(world);
+        dragging.OnDragEnd();
+
+        if (_camCtrl != null) _camCtrl.SetInputLocked(false);
+        dragging = null;
     }
 
-    // Only treat a "tap" when pointer goes down and up outside UI, and didn't move too far.
-    private bool TryGetTapWorldPosition(out Vector3 worldPos)
+    // private Vector3 ApplySnap(Vector3 world)
+    // {
+    //     return grid != null ? grid.Snap(world) : world;
+    // }
+
+    private void EdgeScrollCamera(Vector2 screenPos)
     {
-        // If we are swallowing remaining touch ups after Confirm
-        if (blockAllTapsUntilNoTouches && Input.touchCount > 0)
-        {
-            worldPos = default;
-            return false;
-        }
-        if (blockAllTapsUntilNoTouches && Input.touchCount == 0)
-        {
-            blockAllTapsUntilNoTouches = false;
-        }
+        if (_camCtrl == null) return;
 
-        // TOUCH
-        if (Input.touchCount > 0)
-        {
-            for (int i = 0; i < Input.touchCount; i++)
-            {
-                Touch t = Input.GetTouch(i);
+        float w = Screen.width;
+        float h = Screen.height;
 
-                if (t.phase == TouchPhase.Began)
-                {
-                    // If began over UI, block this finger until it ends
-                    bool overUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(t.fingerId);
-                    if (overUI) blockedFingerIds.Add(t.fingerId);
+        float xDir = 0f;
+        if (screenPos.x < edgeZonePixels)
+            xDir = -(1f - Mathf.Clamp01(screenPos.x / edgeZonePixels));
+        else if (screenPos.x > w - edgeZonePixels)
+            xDir = (1f - Mathf.Clamp01((w - screenPos.x) / edgeZonePixels));
 
-                    // Track the first active finger that is not blocked
-                    if (activeFingerId == -1 && !blockedFingerIds.Contains(t.fingerId))
-                    {
-                        activeFingerId = t.fingerId;
-                        touchDownPos = t.position;
-                    }
-                }
+        float yDir = 0f;
+        if (screenPos.y < edgeZonePixels)
+            yDir = -(1f - Mathf.Clamp01(screenPos.y / edgeZonePixels));
+        else if (screenPos.y > h - edgeZonePixels)
+            yDir = (1f - Mathf.Clamp01((h - screenPos.y) / edgeZonePixels));
 
-                // If this finger was UI-blocked, ignore until it ends
-                if (blockedFingerIds.Contains(t.fingerId))
-                {
-                    if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
-                        blockedFingerIds.Remove(t.fingerId);
-                    continue;
-                }
+        if (Mathf.Approximately(xDir, 0f) && Mathf.Approximately(yDir, 0f)) return;
 
-                if (t.fingerId == activeFingerId && (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled))
-                {
-                    float moved = (t.position - touchDownPos).magnitude;
-                    bool validTap = moved <= tapMaxMovePixels;
+        Transform camT = _camCtrl.transform;
+        Vector3 right = camT.right;
+        Vector3 forward = camT.forward; forward.y = 0f; forward.Normalize();
 
-                    activeFingerId = -1;
-
-                    if (validTap)
-                    {
-                        worldPos = GetWorldFromScreen(t.position);
-                        return true;
-                    }
-                }
-            }
-        }
-        else
-        {
-            // No touches -> clear active finger
-            activeFingerId = -1;
-            blockedFingerIds.Clear();
-        }
-
-        // MOUSE
-        if (Input.GetMouseButtonDown(0))
-        {
-            mouseDownActive = true;
-            mouseDownPos = Input.mousePosition;
-
-            // If mouse down starts over UI, block until release
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-                blockMouseTapUntilRelease = true;
-        }
-        else if (mouseDownActive && Input.GetMouseButtonUp(0))
-        {
-            mouseDownActive = false;
-
-            // If a UI interaction began, swallow this up and clear the block
-            if (blockMouseTapUntilRelease)
-            {
-                blockMouseTapUntilRelease = false;
-                worldPos = default;
-                return false;
-            }
-
-            float moved = ((Vector2)Input.mousePosition - mouseDownPos).magnitude;
-            bool validClick = moved <= tapMaxMovePixels;
-
-            if (validClick)
-            {
-                worldPos = GetWorldFromScreen(Input.mousePosition);
-                return true;
-            }
-        }
-
-        worldPos = default;
-        return false;
+        Vector3 move = (right * xDir + forward * yDir) * edgeScrollSpeed * Time.unscaledDeltaTime;
+        _camCtrl.NudgeWorld(move);
     }
 
-    private Vector3 GetWorldFromScreen(Vector2 screenPos)
+    private static Vector3 ScreenToGround(Vector2 screenPos, Camera cam)
     {
-        Ray ray = Camera.main.ScreenPointToRay(screenPos);
-        Plane plane = new Plane(Vector3.up, Vector3.zero); // Ground plane at y=0
-        if (plane.Raycast(ray, out float enter))
-        {
-            return ray.GetPoint(enter);
-        }
-
-        return Vector3.zero;
-    }
-
-    private void SetPreviewMaterial(GameObject obj, bool isPreview)
-    {
-        var renderer = obj.GetComponent<MeshRenderer>();
-        if (renderer == null) return;
-
-        var mat = renderer.materials[0];
-        Color c = mat.color;
-        c.a = isPreview ? 0.5f : 1f;
-        mat.color = c;
+        Ray ray = cam.ScreenPointToRay(screenPos);
+        Plane plane = new Plane(Vector3.up, Vector3.zero);
+        return plane.Raycast(ray, out float enter) ? ray.GetPoint(enter) : Vector3.zero;
     }
 }
