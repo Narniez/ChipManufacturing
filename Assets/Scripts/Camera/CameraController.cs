@@ -29,7 +29,7 @@ public class CameraController : MonoBehaviour
     [Tooltip("Used if no BoxCollider is provided.")]
     [SerializeField] private Vector2 xLimits = new Vector2(-50, 50);
     [SerializeField] private Vector2 zLimits = new Vector2(-50, 50);
-    [SerializeField] private bool clampY = false;
+    //[SerializeField] private bool clampY = false;
     //[SerializeField] private Vector2 yLimits = new Vector2(2, 50);
 
     [Header("Debug")]
