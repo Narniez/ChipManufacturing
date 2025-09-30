@@ -220,7 +220,7 @@ public class CameraController : MonoBehaviour
         if (rotateScore > rotateThreshold)
         {
             float rotationAmount = (d0.y - d1.y) * 0.5f;
-            HandleRotation(rotationAmount);
+            HandleRotation(-rotationAmount);
         }
 
         lastPos0 = cur0;
