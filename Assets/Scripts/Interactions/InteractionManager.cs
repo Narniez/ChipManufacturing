@@ -2,13 +2,13 @@ using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-[DefaultExecutionOrder(-100)] // Ensure Instance is ready before others subscribe
+[DefaultExecutionOrder(-100)] 
 public class InteractionManager : MonoBehaviour
 {
     public static InteractionManager Instance { get; private set; }
 
     [Header("Detection")]
-    [SerializeField] private float holdSeconds = 0.5f; // easier to test; tweak in Inspector
+    [SerializeField] private float holdSeconds = 0.5f; 
     [SerializeField] private float moveTolerancePixels = 40f;
     [SerializeField] private LayerMask interactableMask = ~0;
 
