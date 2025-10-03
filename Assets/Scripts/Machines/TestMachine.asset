@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8967eb2bc9f92e94cb009538a9497d84, type: 3}
   m_Name: TestMachine
   m_EditorClassIdentifier: 
+  defaultOrientation: 0
   machineName: TestMachine
   prefab: {fileID: 9038231671212334539, guid: c9b619322d435f148a2f8a16fcf52b23, type: 3}
   icon: {fileID: 0}
