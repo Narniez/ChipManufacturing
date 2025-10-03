@@ -9,6 +9,6 @@ public class TESTInventory : MonoBehaviour
         inv.Add("chip", 3);
         inv.TryRemove("chip", 1);
 
-        Debug.Log($"[InventoryTest] chip: {inv.GetCount("chip")}");
+       
     }
 }
