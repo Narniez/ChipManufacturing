@@ -1,8 +1,6 @@
-using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.UI;
-using System.Collections.Generic;
 using TMPro;
+using System.Collections.Generic;
 
 public class TestValidator : MonoBehaviour
 {
@@ -11,6 +9,10 @@ public class TestValidator : MonoBehaviour
     [SerializeField] TextMeshProUGUI timeText;
 
     [SerializeField] Color targetColor = Color.green;
+    [SerializeField] Color resetColor = Color.white; // used on reset (optional)
+
+    public event System.Action<float> OnTestCompleted; // notify listeners
+    public float LastTime { get; private set; } = 0f;
 
     float timePassed = 0f;
     bool startTimer = false;
@@ -44,10 +46,15 @@ public class TestValidator : MonoBehaviour
         {
             testComplete = true;
             startTimer = false;
+            LastTime = timePassed;
             Debug.Log($"Time Passed: {timePassed:F2}s");
+
+            // fire event before showing UI so other systems can react
+            OnTestCompleted?.Invoke(LastTime);
+
             if (testCompleteUI != null)
             {
-                timeText.text = $"{timePassed:F2}s"; 
+                if (timeText != null) timeText.text = $"{timePassed:F2}s";
                 testCompleteUI.SetActive(true);
             }
         }
@@ -55,22 +62,42 @@ public class TestValidator : MonoBehaviour
 
     void TrackTime()
     {
-        
         timePassed += Time.unscaledDeltaTime;
     }
 
     public void ActivateTimer()
     {
+        // restart timer for a new run
+        timePassed = 0f;
         startTimer = true;
+        testPassed = false;
+        testComplete = false;
+        if (testCompleteUI != null) testCompleteUI.SetActive(false);
+    }
+
+    // Call from a "Continue" flow to hide UI and optionally reset letters for another run
+    public void ResetAfterContinue(bool resetLetters = false)
+    {
+        if (testCompleteUI != null) testCompleteUI.SetActive(false);
+        testComplete = false;
+        startTimer = false;
+        timePassed = 0f;
+
+        if (resetLetters && letterObjects != null)
+        {
+            foreach (var obj in letterObjects)
+            {
+                if (obj == null) continue;
+                var tmp = obj.GetComponent<TMP_Text>();
+                if (tmp != null) tmp.color = resetColor;
+            }
+        }
     }
 
     static bool IsTargetColor(GameObject obj, Color target, float tolerance = 0.001f)
     {
-        // TextMeshPro (UGUI or 3D)
         var tmp = obj.GetComponent<TMP_Text>();
         if (tmp != null) return Approximately(tmp.color, target, tolerance);
-
-
         return false;
     }
 
