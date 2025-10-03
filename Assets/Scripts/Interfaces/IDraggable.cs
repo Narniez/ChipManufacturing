@@ -8,7 +8,7 @@ public interface IDraggable
     // Which transform should be moved while dragging (usually the root)
     Transform DragTransform { get; }
 
-    // Drag lifecycle hooks
+   
     void OnDragStart();
     void OnDrag(Vector3 worldPosition);
     void OnDragEnd();

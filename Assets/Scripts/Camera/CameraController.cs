@@ -7,6 +7,8 @@ public class CameraController : MonoBehaviour
     [Header("Pan Settings")]
     [SerializeField] private float panSpeed = 0.01f;
     [SerializeField] private float panSmoothTime = 0.15f;
+    [Tooltip("Pan speed multiplier when at minimum zoom (closer in). 1 = no change, lower slows panning as you zoom in.")]
+    [SerializeField] [Range(0.05f, 1f)] private float panSpeedScaleAtMinZoom = 0.3f;
 
     [Header("Zoom Settings")]
     [SerializeField] private float zoomSpeed = 0.02f;
@@ -29,11 +31,14 @@ public class CameraController : MonoBehaviour
     [Tooltip("Used if no BoxCollider is provided.")]
     [SerializeField] private Vector2 xLimits = new Vector2(-50, 50);
     [SerializeField] private Vector2 zLimits = new Vector2(-50, 50);
-    [SerializeField] private bool clampY = false;
+    //[SerializeField] private bool clampY = false;
     //[SerializeField] private Vector2 yLimits = new Vector2(2, 50);
 
-    [Header("Debug")]
+    [Header("Debug/Test")]
     [SerializeField] private bool debug = false;
+    [Tooltip("If true, rotation and zoom can happen simultaneously. If false, only one (the dominant) is allowed at a time.")]
+    [SerializeField] private bool allowRotationWhenZooming = true;
+    [SerializeField] private bool allowPanningWhenZooming = true;
 
     private Camera _mainCamera;
     private PrimaryGesture primaryState = PrimaryGesture.None;
@@ -199,7 +204,7 @@ public class CameraController : MonoBehaviour
         Vector2 d0 = cur0 - lastPos0;
         Vector2 d1 = cur1 - lastPos1;
 
-        float distanceDelta = curDist - lastDistance; // >0 = zoom in
+        float distanceDelta = curDist - lastDistance;
         float pinchScore = Mathf.Abs(distanceDelta);
 
         float rotateScore = 0f;
@@ -208,19 +213,53 @@ public class CameraController : MonoBehaviour
         if (verticalOpposite)
             rotateScore = (Mathf.Abs(d0.y) + Mathf.Abs(d1.y)) * 0.5f;
 
+        // Decide the primary gesture (exclusive if allowRotationWhenZooming is false)
         if (primaryState == PrimaryGesture.Undetermined)
         {
-            primaryState = PrimaryGesture.Zoom;
+            bool pinchDetected = pinchScore > pinchThreshold;
+            bool rotateDetected = rotateScore > rotateThreshold;
+
+            if (!allowRotationWhenZooming)
+            {
+                if (pinchDetected && !rotateDetected) primaryState = PrimaryGesture.Zoom;
+                else if (!pinchDetected && rotateDetected) primaryState = PrimaryGesture.Rotate;
+                else if (pinchDetected && rotateDetected)
+                    primaryState = (pinchScore >= rotateScore) ? PrimaryGesture.Zoom : PrimaryGesture.Rotate;
+                // else remain Undetermined until one passes threshold
+            }
+            // When simultaneous is allowed, keep state Undetermined and apply both below
         }
 
-        if (pinchScore > pinchThreshold)
+        if (allowRotationWhenZooming)
         {
-            HandleZoom(distanceDelta);
+            if (pinchScore > pinchThreshold)
+            {
+                HandleZoom(distanceDelta);
+            }
+            if (rotateScore > rotateThreshold)
+            {
+                float rotationAmount = (d0.y - d1.y) * 0.5f;
+                HandleRotation(-rotationAmount);
+            }
         }
-        if (rotateScore > rotateThreshold)
+        else
         {
-            float rotationAmount = (d0.y - d1.y) * 0.5f;
-            HandleRotation(rotationAmount);
+            if (primaryState == PrimaryGesture.Zoom)
+            {
+                if (pinchScore > pinchThreshold)
+                {
+                    HandleZoom(distanceDelta);
+                }
+            }
+            else if (primaryState == PrimaryGesture.Rotate)
+            {
+                if (rotateScore > rotateThreshold)
+                {
+                    float rotationAmount = (d0.y - d1.y) * 0.5f;
+                    HandleRotation(-rotationAmount);
+                }
+            }
+            // If still Undetermined and below thresholds, do nothing
         }
 
         lastPos0 = cur0;
@@ -249,7 +288,8 @@ public class CameraController : MonoBehaviour
         forward.y = 0f;
         forward.Normalize();
 
-        Vector3 move = (-right * avgDelta.x - forward * avgDelta.y) * panSpeed;
+        float speed = EffectivePanSpeed();
+        Vector3 move = (-right * avgDelta.x - forward * avgDelta.y) * speed;
         targetPosition += move;
         ClampTargetToBounds();
     }
@@ -291,6 +331,34 @@ public class CameraController : MonoBehaviour
         targetPosition = pivotWorld + dir;
         targetRotation = rot * targetRotation;
         ClampTargetToBounds();
+    }
+
+    private float EffectivePanSpeed()
+    {
+        // Scale pan speed based on current zoom distance: slower when zoomed-in, original when zoomed-out
+        float dist = GetCurrentZoomDistance();
+        float t = Mathf.InverseLerp(minZoomDistance, maxZoomDistance, dist); // 0 at min zoom, 1 at max zoom
+        float scale = Mathf.Lerp(panSpeedScaleAtMinZoom, 1f, t);
+        return panSpeed * scale;
+    }
+
+    private float GetCurrentZoomDistance()
+    {
+        if (hasPivot)
+        {
+            return Mathf.Clamp((targetPosition - pivotWorld).magnitude, minZoomDistance, maxZoomDistance);
+        }
+
+        // Approximate by intersecting camera forward with ground plane (y=0)
+        Plane plane = new Plane(Vector3.up, Vector3.zero);
+        Ray ray = new Ray(targetPosition, targetRotation * Vector3.forward);
+        if (plane.Raycast(ray, out float enter) && enter > 0f)
+        {
+            Vector3 hit = ray.GetPoint(enter);
+            return Mathf.Clamp(Vector3.Distance(targetPosition, hit), minZoomDistance, maxZoomDistance);
+        }
+
+        return Mathf.Clamp(focusDistance, minZoomDistance, maxZoomDistance);
     }
 
     private void ClampTargetToBounds()

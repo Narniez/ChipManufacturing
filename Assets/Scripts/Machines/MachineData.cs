@@ -6,6 +6,9 @@ public enum MaterialType { None, Silicon, Copper, Plastic, Chip, Circuit }
 [CreateAssetMenu(fileName = "MachineData", menuName = "Scriptable Objects/MachineData")]
 public class MachineData : ScriptableObject
 {
+    [Header("Orientation")]
+    public GridOrientation defaultOrientation = GridOrientation.North;
+
     [Header("Basic Info")]
     public string machineName;
     public GameObject prefab;
