@@ -17,20 +17,13 @@ public class InventoryService : IInventory
     public void Add(string itemId, int qty)
     {
         if (qty <= 0) return;
-        _counts[itemId] = GetCount(itemId) + qty;
-        if (debug) Debug.Log($"[Inventory] +{qty} {itemId} (total {GetCount(itemId)})");
+        TryApply(new Dictionary<string, int> { { itemId, qty } });
     }
 
     public bool TryRemove(string itemId, int qty)
     {
-        if (qty <= 0 || GetCount(itemId) < qty) return false;
-
-        var left = GetCount(itemId) - qty;
-        if (left > 0) _counts[itemId] = left;
-        else _counts.Remove(itemId);
-
-        if (debug) Debug.Log($"[Inventory] -{qty} {itemId} (left {GetCount(itemId)})");
-        return true;
+        if (qty <= 0) return false;
+        return TryApply(new Dictionary<string, int> { { itemId, -qty } });
     }
 
     public bool TryApply(IDictionary<string, int> change)
