@@ -4,9 +4,19 @@ public class CameraController : MonoBehaviour
 {
     private enum PrimaryGesture { None, Undetermined, Pan, Zoom, Rotate }
 
+    public enum CameraTestMode
+    {
+        A_SimultaneousZoomRotate = 0,
+        B_ExclusiveZoomOrRotate = 1,
+        C_TwoFingerSameDirectionRotate = 2,
+        D_OneFingerRotate_TwoFingerPan = 3
+    }
+
     [Header("Pan Settings")]
     [SerializeField] private float panSpeed = 0.01f;
     [SerializeField] private float panSmoothTime = 0.15f;
+    [Tooltip("Pan speed multiplier when at minimum zoom (closer in). 1 = no change, lower slows panning as you zoom in.")]
+    [SerializeField] [Range(0.05f, 1f)] private float panSpeedScaleAtMinZoom = 0.3f;
 
     [Header("Zoom Settings")]
     [SerializeField] private float zoomSpeed = 0.02f;
@@ -29,11 +39,15 @@ public class CameraController : MonoBehaviour
     [Tooltip("Used if no BoxCollider is provided.")]
     [SerializeField] private Vector2 xLimits = new Vector2(-50, 50);
     [SerializeField] private Vector2 zLimits = new Vector2(-50, 50);
-    //[SerializeField] private bool clampY = false;
-    //[SerializeField] private Vector2 yLimits = new Vector2(2, 50);
 
-    [Header("Debug")]
+    [Header("Debug/Test")]
     [SerializeField] private bool debug = false;
+    [Tooltip("If true, rotation and zoom can happen simultaneously. If false, only one (the dominant) is allowed at a time.")]
+    [SerializeField] private bool allowRotationWhenZooming = true;
+    [SerializeField] private bool allowPanningWhenZooming = true;
+
+    [Header("Test Mode")]
+    [SerializeField] private CameraTestMode testMode = CameraTestMode.A_SimultaneousZoomRotate;
 
     private Camera _mainCamera;
     private PrimaryGesture primaryState = PrimaryGesture.None;
@@ -57,6 +71,10 @@ public class CameraController : MonoBehaviour
     private bool hasPivot = false;
     private Vector3 pivotWorld;
 
+    // Start pose for reset
+    private Vector3 startPosition;
+    private Quaternion startRotation;
+
     // External input lock (e.g., while dragging a machine)
     public bool InputLocked { get; private set; }
 
@@ -68,8 +86,13 @@ public class CameraController : MonoBehaviour
             Debug.LogError("TouchCameraController: No main camera found in the scene.");
             enabled = false;
         }
-        targetPosition = _mainCamera.transform.position;
-        targetRotation = _mainCamera.transform.rotation;
+
+        // Record start pose and initialize targets
+        startPosition = _mainCamera.transform.position;
+        startRotation = _mainCamera.transform.rotation;
+
+        targetPosition = startPosition;
+        targetRotation = startRotation;
         ClampTargetToBounds();
     }
 
@@ -78,8 +101,46 @@ public class CameraController : MonoBehaviour
         InputLocked = locked;
         if (locked)
         {
-            // Stop any residual motion
             positionVelocity = Vector3.zero;
+        }
+    }
+
+    //expose mode setter for UI
+    public void SetTestMode(CameraTestMode mode)
+    {
+        testMode = mode;
+        // Keep existing flags meaningful for A/B; C uses simultaneous; D ignores pinch/rotate two-finger.
+        if (mode == CameraTestMode.A_SimultaneousZoomRotate || mode == CameraTestMode.C_TwoFingerSameDirectionRotate)
+        {
+            allowRotationWhenZooming = true;
+        }
+        else if (mode == CameraTestMode.B_ExclusiveZoomOrRotate)
+        {
+            allowRotationWhenZooming = false;
+        }
+        if (debug) Debug.Log($"Camera Test Mode set to: {testMode}");
+    }
+
+    // Reset camera to scene start pose
+    public void ResetToStart(bool immediate = true)
+    {
+        // clear gesture state
+        isTwoFingerGestureActive = false;
+        hasPivot = false;
+        primaryState = PrimaryGesture.None;
+        positionVelocity = Vector3.zero;
+        lastPos0 = lastPos1 = lastMid = Vector2.zero;
+        lastDistance = 0f;
+
+        // reset targets
+        targetPosition = startPosition;
+        targetRotation = startRotation;
+        ClampTargetToBounds();
+
+        if (immediate && _mainCamera != null)
+        {
+            _mainCamera.transform.position = targetPosition;
+            _mainCamera.transform.rotation = targetRotation;
         }
     }
 
@@ -168,7 +229,16 @@ public class CameraController : MonoBehaviour
 
         if (delta.sqrMagnitude > deadzone * deadzone)
         {
-            HandlePan(delta);
+            if (testMode == CameraTestMode.D_OneFingerRotate_TwoFingerPan)
+            {
+                // One-finger rotate (use horizontal delta for yaw)
+                HandleRotation(delta.x);
+            }
+            else
+            {
+                // Default: one-finger pan
+                HandlePan(delta);
+            }
         }
 
         lastSinglePos = cur;
@@ -199,34 +269,95 @@ public class CameraController : MonoBehaviour
         Vector2 d0 = cur0 - lastPos0;
         Vector2 d1 = cur1 - lastPos1;
 
-        float distanceDelta = curDist - lastDistance; // >0 = zoom in
+        float distanceDelta = curDist - lastDistance;
         float pinchScore = Mathf.Abs(distanceDelta);
 
-        float rotateScore = 0f;
-        bool verticalOpposite = (Mathf.Sign(d0.y) != Mathf.Sign(d1.y)) &&
-                                (Mathf.Abs(d0.y) > 0 && Mathf.Abs(d1.y) > 0);
-        if (verticalOpposite)
-            rotateScore = (Mathf.Abs(d0.y) + Mathf.Abs(d1.y)) * 0.5f;
+        // Compute rotation score and delta depending on mode
+        float rotationAmount;
+        float rotateScore = ComputeRotateSignal(d0, d1, out rotationAmount);
 
-        if (primaryState == PrimaryGesture.Undetermined)
+        if (testMode == CameraTestMode.D_OneFingerRotate_TwoFingerPan)
         {
-            primaryState = PrimaryGesture.Zoom;
+            // Two-finger same-direction pan only; ignore pinch/rotate
+            float dot = Vector2.Dot(d0.normalized, d1.normalized);
+            bool sameDir = dot > 0.3f; // tolerance
+            if (sameDir)
+            {
+                Vector2 avg = (d0 + d1) * 0.5f;
+                HandlePan(avg);
+            }
+            // else do nothing for conflicting two-finger movement
         }
+        else if (allowRotationWhenZooming)
+        {
+            if (pinchScore > pinchThreshold)
+            {
+                HandleZoom(distanceDelta);
+            }
+            if (rotateScore > rotateThreshold)
+            {
+                HandleRotation(-rotationAmount);
+            }
+        }
+        else
+        {
+            // Exclusive: choose primary
+            if (primaryState == PrimaryGesture.Undetermined)
+            {
+                bool pinchDetected = pinchScore > pinchThreshold;
+                bool rotateDetected = rotateScore > rotateThreshold;
 
-        if (pinchScore > pinchThreshold)
-        {
-            HandleZoom(distanceDelta);
-        }
-        if (rotateScore > rotateThreshold)
-        {
-            float rotationAmount = (d0.y - d1.y) * 0.5f;
-            HandleRotation(-rotationAmount);
+                if (pinchDetected && !rotateDetected) primaryState = PrimaryGesture.Zoom;
+                else if (!pinchDetected && rotateDetected) primaryState = PrimaryGesture.Rotate;
+                else if (pinchDetected && rotateDetected)
+                    primaryState = (pinchScore >= rotateScore) ? PrimaryGesture.Zoom : PrimaryGesture.Rotate;
+            }
+
+            if (primaryState == PrimaryGesture.Zoom && pinchScore > pinchThreshold)
+            {
+                HandleZoom(distanceDelta);
+            }
+            else if (primaryState == PrimaryGesture.Rotate && rotateScore > rotateThreshold)
+            {
+                HandleRotation(-rotationAmount);
+            }
         }
 
         lastPos0 = cur0;
         lastPos1 = cur1;
         lastDistance = curDist;
         lastMid = mid;
+    }
+
+    // Mode-aware rotation detection for two-finger gestures
+    private float ComputeRotateSignal(Vector2 d0, Vector2 d1, out float rotationAmount)
+    {
+        // Opposite vertical (default): current behavior
+        if (testMode == CameraTestMode.C_TwoFingerSameDirectionRotate)
+        {
+            // Same vertical direction => rotate
+            bool sameVertical = Mathf.Sign(d0.y) == Mathf.Sign(d1.y) && (Mathf.Abs(d0.y) > 0f || Mathf.Abs(d1.y) > 0f);
+            if (sameVertical)
+            {
+                rotationAmount = (d0.y + d1.y) * 0.5f;
+                return (Mathf.Abs(d0.y) + Mathf.Abs(d1.y)) * 0.5f;
+            }
+            rotationAmount = 0f;
+            return 0f;
+        }
+        else
+        {
+            // Opposite vertical => rotate (original)
+            bool verticalOpposite = (Mathf.Sign(d0.y) != Mathf.Sign(d1.y)) &&
+                                    (Mathf.Abs(d0.y) > 0f && Mathf.Abs(d1.y) > 0f);
+            if (verticalOpposite)
+            {
+                rotationAmount = (d0.y - d1.y) * 0.5f;
+                return (Mathf.Abs(d0.y) + Mathf.Abs(d1.y)) * 0.5f;
+            }
+            rotationAmount = 0f;
+            return 0f;
+        }
     }
 
     private bool TryGetMidpointPivotWorld(Vector2 midScreen, out Vector3 world)
@@ -249,7 +380,8 @@ public class CameraController : MonoBehaviour
         forward.y = 0f;
         forward.Normalize();
 
-        Vector3 move = (-right * avgDelta.x - forward * avgDelta.y) * panSpeed;
+        float speed = EffectivePanSpeed();
+        Vector3 move = (-right * avgDelta.x - forward * avgDelta.y) * speed;
         targetPosition += move;
         ClampTargetToBounds();
     }
@@ -293,6 +425,33 @@ public class CameraController : MonoBehaviour
         ClampTargetToBounds();
     }
 
+    private float EffectivePanSpeed()
+    {
+        float dist = GetCurrentZoomDistance();
+        float t = Mathf.InverseLerp(minZoomDistance, maxZoomDistance, dist); // 0 at min zoom, 1 at max zoom
+        float scale = Mathf.Lerp(panSpeedScaleAtMinZoom, 1f, t);
+        return panSpeed * scale;
+    }
+
+    private float GetCurrentZoomDistance()
+    {
+        if (hasPivot)
+        {
+            return Mathf.Clamp((targetPosition - pivotWorld).magnitude, minZoomDistance, maxZoomDistance);
+        }
+
+        // Approximate by intersecting camera forward with ground plane (y=0)
+        Plane plane = new Plane(Vector3.up, Vector3.zero);
+        Ray ray = new Ray(targetPosition, targetRotation * Vector3.forward);
+        if (plane.Raycast(ray, out float enter) && enter > 0f)
+        {
+            Vector3 hit = ray.GetPoint(enter);
+            return Mathf.Clamp(Vector3.Distance(targetPosition, hit), minZoomDistance, maxZoomDistance);
+        }
+
+        return Mathf.Clamp(focusDistance, minZoomDistance, maxZoomDistance);
+    }
+
     private void ClampTargetToBounds()
     {
         if (boundsCollider != null)
@@ -311,7 +470,6 @@ public class CameraController : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    // Visualize bounds when selected (editor only)
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
@@ -332,5 +490,4 @@ public class CameraController : MonoBehaviour
         }
     }
 #endif
-
 }

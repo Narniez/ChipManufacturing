@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,8 +7,9 @@ public class InventoryService : IInventory
     [Header("Debug")]
     [SerializeField] private bool debug = true;
 
-
     private readonly Dictionary<string, int> _counts = new();
+    public event Action<IDictionary<string, int>, IReadOnlyDictionary<string, int>> OnChanged;
+    public IReadOnlyDictionary<string, int> GetInventoryItems() => _counts;
 
     public int GetCount(string itemId) =>
         _counts.TryGetValue(itemId, out var n) ? n : 0;
@@ -15,19 +17,43 @@ public class InventoryService : IInventory
     public void Add(string itemId, int qty)
     {
         if (qty <= 0) return;
-        _counts[itemId] = GetCount(itemId) + qty;
-        if (debug) Debug.Log($"[Inventory] +{qty} {itemId} (total {GetCount(itemId)})");
+        TryApply(new Dictionary<string, int> { { itemId, qty } });
     }
 
     public bool TryRemove(string itemId, int qty)
     {
-        if (qty <= 0 || GetCount(itemId) < qty) return false;
+        if (qty <= 0) return false;
+        return TryApply(new Dictionary<string, int> { { itemId, -qty } });
+    }
 
-        var left = GetCount(itemId) - qty;
-        if (left > 0) _counts[itemId] = left;
-        else _counts.Remove(itemId);
+    public bool TryApply(IDictionary<string, int> change)
+    {
+        if (change == null || change.Count == 0) return true;
 
-        if (debug) Debug.Log($"[Inventory] -{qty} {itemId} (left {GetCount(itemId)})");
+        //check if we have enough items
+        foreach (var kv in change)
+        {
+            var have = GetCount(kv.Key);
+            var delta = kv.Value;
+            if (delta < 0 && have + delta < 0)
+            {
+                if (debug) Debug.LogWarning($"[Inventory] Not enough '{kv.Key}' (have {have}, need {-delta}).");
+                return false;
+            }
+        }
+
+        //
+        foreach (var kv in change)
+        {
+            var newCount = GetCount(kv.Key) + kv.Value;
+            if (newCount <= 0) _counts.Remove(kv.Key);
+            else _counts[kv.Key] = newCount;
+
+            if (debug) Debug.Log($"[Inventory] {kv.Key}: {(kv.Value >= 0 ? "+" : "")}{kv.Value} {GetCount(kv.Key)}");
+        }
+
+        OnChanged?.Invoke(change, _counts);
         return true;
     }
+
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -18,10 +19,14 @@ public class InteractionManager : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool debugLogs = false;
 
+    // Fires when a tap hits an IInteractable
     public event Action<IInteractable, Vector2, Vector3> OnTap;
     public event Action<IInteractable, Vector2, Vector3> OnHoldStart;
     public event Action<IInteractable, Vector2, Vector3> OnHoldMove;
     public event Action<IInteractable, Vector2, Vector3> OnHoldEnd;
+
+    // fires when a valid tap occurs that doesn't hit any IInteractable (used to dismiss selection UI)
+    public event Action<Vector2, Vector3> OnTapEmpty;
 
     private Camera _cam;
 
@@ -31,6 +36,7 @@ public class InteractionManager : MonoBehaviour
     private float fingerDownTime;
     private bool isHolding;
     private IInteractable activeTarget;
+    private bool touchGestureOverUI; // new: track if this gesture started/ended over UI
 
     // Mouse tracking
     private bool mouseDown;
@@ -38,6 +44,10 @@ public class InteractionManager : MonoBehaviour
     private float mouseDownTime;
     private bool mouseHolding;
     private IInteractable mouseTarget;
+    private bool mouseGestureOverUI; // new: track if this gesture started/ended over UI
+
+    // cache for UI raycasts
+    private static readonly List<RaycastResult> _uiRaycastResults = new List<RaycastResult>();
 
     private void Awake()
     {
@@ -55,6 +65,7 @@ public class InteractionManager : MonoBehaviour
         UpdateTouch();
     }
 
+    #region Touch Handling
     private void UpdateTouch()
     {
         if (Input.touchCount == 0)
@@ -69,8 +80,12 @@ public class InteractionManager : MonoBehaviour
             Touch t = Input.GetTouch(i);
             if (t.phase != TouchPhase.Began) continue;
 
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(t.fingerId))
+            // Ignore taps over UI at press (and mark the gesture as UI)
+            if (IsPointerOverUI(t.position))
+            {
+                touchGestureOverUI = true;
                 continue;
+            }
 
             if (activeFingerId != -1) continue; // track only one finger
 
@@ -78,6 +93,7 @@ public class InteractionManager : MonoBehaviour
             fingerDownPos = t.position;
             fingerDownTime = Time.unscaledTime;
             isHolding = false;
+            touchGestureOverUI = false;
             activeTarget = RaycastInteractable(t.position);
             if (debugLogs) Debug.Log($"[IM] Touch Began -> finger {activeFingerId}, target={activeTarget}");
         }
@@ -90,7 +106,6 @@ public class InteractionManager : MonoBehaviour
 
             float moved = (t.position - fingerDownPos).magnitude;
 
-            // Start hold after time threshold, regardless of drift (tap still respects moveTolerance)
             if (!isHolding && activeTarget != null &&
                 (Time.unscaledTime - fingerDownTime) >= holdSeconds)
             {
@@ -109,21 +124,35 @@ public class InteractionManager : MonoBehaviour
 
             if (t.phase == TouchPhase.Canceled || t.phase == TouchPhase.Ended)
             {
+                bool endedOverUI = IsPointerOverUI(t.position);
+                Vector3 world = ScreenToGround(t.position);
+
                 if (isHolding)
                 {
-                    Vector3 world = ScreenToGround(t.position);
                     if (debugLogs) Debug.Log($"[IM] HoldEnd -> {activeTarget} @ {world}");
                     OnHoldEnd?.Invoke(activeTarget, t.position, world);
                 }
                 else
                 {
-                    // Tap only if it didn’t drift too far
-                    if (activeTarget != null && moved <= moveTolerancePixels)
+                    float movedEnd = (t.position - fingerDownPos).magnitude;
+
+                    // Ignore entire tap if it started or ended over UI
+                    if (touchGestureOverUI || endedOverUI)
                     {
-                        Vector3 world = ScreenToGround(t.position);
-                        if (debugLogs) Debug.Log($"[IM] Tap -> {activeTarget} @ {world} (moved={moved}px)");
+                        ResetTouch();
+                        return;
+                    }
+
+                    if (activeTarget != null && movedEnd <= moveTolerancePixels)
+                    {
+                        if (debugLogs) Debug.Log($"[IM] Tap -> {activeTarget} @ {world} (moved={movedEnd}px)");
                         activeTarget.OnTap();
                         OnTap?.Invoke(activeTarget, t.position, world);
+                    }
+                    else if (movedEnd <= moveTolerancePixels)
+                    {
+                        if (debugLogs) Debug.Log($"[IM] TapEmpty @ {world} (moved={movedEnd}px)");
+                        OnTapEmpty?.Invoke(t.position, world);
                     }
                 }
 
@@ -131,25 +160,31 @@ public class InteractionManager : MonoBehaviour
             }
         }
     }
+    #endregion
 
+    #region Mouse Handling
     private void UpdateMouse()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            // Ignore clicks over UI at press (and mark the gesture as UI)
+            if (IsPointerOverUI(Input.mousePosition))
+            {
+                mouseGestureOverUI = true;
                 return;
+            }
 
             mouseDown = true;
             mouseDownPos = Input.mousePosition;
             mouseDownTime = Time.unscaledTime;
             mouseHolding = false;
+            mouseGestureOverUI = false;
             mouseTarget = RaycastInteractable(mouseDownPos);
             if (debugLogs) Debug.Log($"[IM] Mouse Down -> target={mouseTarget}");
         }
 
         if (mouseDown && !mouseHolding && mouseTarget != null)
         {
-            // Start hold after time threshold (ignore drift here)
             if ((Time.unscaledTime - mouseDownTime) >= holdSeconds)
             {
                 mouseHolding = true;
@@ -168,29 +203,43 @@ public class InteractionManager : MonoBehaviour
 
         if (Input.GetMouseButtonUp(0) && mouseDown)
         {
+            Vector2 upPos = Input.mousePosition;
+            Vector3 world = ScreenToGround(upPos);
+
             if (mouseHolding)
             {
-                Vector3 world = ScreenToGround(Input.mousePosition);
                 if (debugLogs) Debug.Log($"[IM] Mouse HoldEnd -> {mouseTarget} @ {world}");
-                OnHoldEnd?.Invoke(mouseTarget, (Vector2)Input.mousePosition, world);
+                OnHoldEnd?.Invoke(mouseTarget, upPos, world);
             }
             else
             {
-                float moved = ((Vector2)Input.mousePosition - mouseDownPos).magnitude;
-                if (mouseTarget != null && moved <= moveTolerancePixels)
+                float moved = (upPos - mouseDownPos).magnitude;
+
+                // Ignore entire tap if it started or ended over UI
+                bool endedOverUI = IsPointerOverUI(upPos);
+                if (!(mouseGestureOverUI || endedOverUI))
                 {
-                    Vector3 world = ScreenToGround(Input.mousePosition);
-                    if (debugLogs) Debug.Log($"[IM] Mouse Tap -> {mouseTarget} @ {world} (moved={moved}px)");
-                    mouseTarget.OnTap();
-                    OnTap?.Invoke(mouseTarget, (Vector2)Input.mousePosition, world);
+                    if (mouseTarget != null && moved <= moveTolerancePixels)
+                    {
+                        if (debugLogs) Debug.Log($"[IM] Mouse Tap -> {mouseTarget} @ {world} (moved={moved}px)");
+                        mouseTarget.OnTap();
+                        OnTap?.Invoke(mouseTarget, upPos, world);
+                    }
+                    else if (moved <= moveTolerancePixels)
+                    {
+                        if (debugLogs) Debug.Log($"[IM] Mouse TapEmpty @ {world} (moved={moved}px)");
+                        OnTapEmpty?.Invoke(upPos, world);
+                    }
                 }
             }
 
             mouseDown = false;
             mouseHolding = false;
             mouseTarget = null;
+            mouseGestureOverUI = false;
         }
     }
+    #endregion
 
     private void ResetTouch()
     {
@@ -198,6 +247,7 @@ public class InteractionManager : MonoBehaviour
         activeFingerId = -1;
         isHolding = false;
         activeTarget = null;
+        touchGestureOverUI = false;
     }
 
     private IInteractable RaycastInteractable(Vector2 screenPos)
@@ -213,5 +263,15 @@ public class InteractionManager : MonoBehaviour
         Ray ray = _cam.ScreenPointToRay(screenPos);
         Plane plane = new Plane(Vector3.up, Vector3.zero);
         return plane.Raycast(ray, out float enter) ? ray.GetPoint(enter) : Vector3.zero;
+    }
+
+    //UI hit test (works for both mouse and touch)
+    private static bool IsPointerOverUI(Vector2 screenPos)
+    {
+        if (EventSystem.current == null) return false;
+        var ped = new PointerEventData(EventSystem.current) { position = screenPos };
+        _uiRaycastResults.Clear();
+        EventSystem.current.RaycastAll(ped, _uiRaycastResults);
+        return _uiRaycastResults.Count > 0;
     }
 }

@@ -116,8 +116,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     {
         Anchor = anchor;
         Orientation = orientation;
+
+        transform.rotation = orientation.ToRotation();
         // World position is applied externally during drag; optionally sync here if needed:
-        // ApplyWorldFromPlacement(gridServiceReference);
+        ///ApplyWorldFromPlacement(gridServiceReference);
     }
 
     public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation orientation)
