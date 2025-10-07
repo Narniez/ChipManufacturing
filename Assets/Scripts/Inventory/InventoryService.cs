@@ -4,29 +4,31 @@ using UnityEngine;
 
 public class InventoryService : IInventory
 {
+    public static InventoryService Instance { get; private set; }
+
     [Header("Debug")]
     [SerializeField] private bool debug = true;
 
-    private readonly Dictionary<string, int> _counts = new();
-    public event Action<IDictionary<string, int>, IReadOnlyDictionary<string, int>> OnChanged;
-    public IReadOnlyDictionary<string, int> GetInventoryItems() => _counts;
+    private readonly Dictionary<int, int> _counts = new();
+    public event Action<IDictionary<int, int>, IReadOnlyDictionary<int, int>> OnChanged;
+    public IReadOnlyDictionary<int, int> GetInventoryItems() => _counts;
 
-    public int GetCount(string itemId) =>
+    public int GetCount(int itemId) =>
         _counts.TryGetValue(itemId, out var n) ? n : 0;
 
-    public void Add(string itemId, int qty)
+    public void Add(int itemId, int qty)
     {
         if (qty <= 0) return;
-        TryApply(new Dictionary<string, int> { { itemId, qty } });
+        TryApply(new Dictionary<int, int> { { itemId, qty } });
     }
 
-    public bool TryRemove(string itemId, int qty)
+    public bool TryRemove(int itemId, int qty)
     {
         if (qty <= 0) return false;
-        return TryApply(new Dictionary<string, int> { { itemId, -qty } });
+        return TryApply(new Dictionary<int, int> { { itemId, -qty } });
     }
 
-    public bool TryApply(IDictionary<string, int> change)
+    public bool TryApply(IDictionary<int, int> change)
     {
         if (change == null || change.Count == 0) return true;
 
