@@ -9,7 +9,8 @@ public class CameraController : MonoBehaviour
         A_SimultaneousZoomRotate = 0,
         B_ExclusiveZoomOrRotate = 1,
         C_TwoFingerSameDirectionRotate = 2,
-        D_OneFingerRotate_TwoFingerPan = 3
+        D_OneFingerRotate_TwoFingerPan = 3,
+        E_DesktopMouseControls = 4
     }
 
     [Header("Pan Settings")]
@@ -39,6 +40,14 @@ public class CameraController : MonoBehaviour
     [Tooltip("Used if no BoxCollider is provided.")]
     [SerializeField] private Vector2 xLimits = new Vector2(-50, 50);
     [SerializeField] private Vector2 zLimits = new Vector2(-50, 50);
+
+    [Header("Mouse Settings (Editor/Desktop)")]
+    [Tooltip("Horizontal mouse delta while right-button held is multiplied by this before rotating.")]
+    [SerializeField] private float mouseRotateSensitivity = 0.2f;
+    [Tooltip("How much pinch 'distanceDelta' a single scroll notch simulates. Higher = stronger zoom.")]
+    [SerializeField] private float mouseWheelZoomDelta = 120f;
+    [Tooltip("When zooming with the wheel, pivot toward the mouse cursor on the ground plane.")]
+    [SerializeField] private bool zoomTowardsMouse = true;
 
     [Header("Debug/Test")]
     [SerializeField] private bool debug = false;
@@ -74,6 +83,12 @@ public class CameraController : MonoBehaviour
     // Start pose for reset
     private Vector3 startPosition;
     private Quaternion startRotation;
+
+    // Mouse controls
+    private bool isMouseRotating = false;
+    private Vector2 lastMousePos;
+    private bool isMousePanning = false;
+    private Vector2 lastMousePanPos;
 
     // External input lock (e.g., while dragging a machine)
     public bool InputLocked { get; private set; }
@@ -155,47 +170,53 @@ public class CameraController : MonoBehaviour
     {
         if (!InputLocked)
         {
-            if (isTwoFingerGestureActive)
+            // Desktop mode: only process mouse, skip touch logic entirely
+            if (testMode == CameraTestMode.E_DesktopMouseControls)
             {
-                if (Input.touchCount >= 2)
-                {
-                    ProcessTwoFinger();
-                }
-                else if (Input.touchCount == 1)
-                {
-                    lastSinglePos = Input.GetTouch(0).position;
-                }
-                else
-                {
-                    isTwoFingerGestureActive = false;
-                    hasPivot = false;
-                    primaryState = PrimaryGesture.None;
-                    positionVelocity = Vector3.zero;
-                    targetPosition = _mainCamera.transform.position;
-                    targetRotation = _mainCamera.transform.rotation;
-                }
+                ProcessMouseControls();
             }
             else
             {
-                if (Input.touchCount >= 2)
+                if (isTwoFingerGestureActive)
                 {
-                    isTwoFingerGestureActive = true;
-                    ProcessTwoFinger();
-                }
-                else if (Input.touchCount == 1)
-                {
-                    ProcessOneFinger();
+                    if (Input.touchCount >= 2)
+                    {
+                        ProcessTwoFinger();
+                    }
+                    else if (Input.touchCount == 1)
+                    {
+                        lastSinglePos = Input.GetTouch(0).position;
+                    }
+                    else
+                    {
+                        // No touch: stop gesture, but DO NOT reset targets
+                        isTwoFingerGestureActive = false;
+                        hasPivot = false;
+                        primaryState = PrimaryGesture.None;
+                        positionVelocity = Vector3.zero;
+                    }
                 }
                 else
                 {
-                    if (primaryState != PrimaryGesture.None)
+                    if (Input.touchCount >= 2)
                     {
-                        if (debug) Debug.Log("Gesture ended -> reset");
-                        primaryState = PrimaryGesture.None;
+                        isTwoFingerGestureActive = true;
+                        ProcessTwoFinger();
                     }
-                    positionVelocity = Vector3.zero;
-                    targetPosition = _mainCamera.transform.position;
-                    targetRotation = _mainCamera.transform.rotation;
+                    else if (Input.touchCount == 1)
+                    {
+                        ProcessOneFinger();
+                    }
+                    else
+                    {
+                        // No touch: idle (keep targets), just stop smoothing velocity
+                        if (primaryState != PrimaryGesture.None)
+                        {
+                            if (debug) Debug.Log("Gesture ended -> reset");
+                            primaryState = PrimaryGesture.None;
+                        }
+                        positionVelocity = Vector3.zero;
+                    }
                 }
             }
         }
@@ -212,6 +233,101 @@ public class CameraController : MonoBehaviour
             _mainCamera.transform.rotation,
             targetRotation,
             Mathf.Clamp01(Time.deltaTime / Mathf.Max(0.0001f, rotationSmoothTime)));
+    }
+
+    private void ProcessMouseControls()
+    {
+        // Left mouse button: pan
+        if (Input.GetMouseButtonDown(0) && !Input.GetMouseButton(1)) // don't start pan if RMB pressed
+        {
+            isMousePanning = true;
+            lastMousePanPos = Input.mousePosition;
+        }
+        else if (Input.GetMouseButton(0) && isMousePanning && !Input.GetMouseButton(1))
+        {
+            Vector2 cur = (Vector2)Input.mousePosition;
+            Vector2 delta = cur - lastMousePanPos;
+            if (delta.sqrMagnitude > 0.0001f)
+            {
+                HandlePan(delta);
+            }
+            lastMousePanPos = cur;
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            isMousePanning = false;
+        }
+
+        // Right mouse button: rotate (yaw) around a ground-plane pivot under the cursor
+        if (Input.GetMouseButtonDown(1))
+        {
+            isMouseRotating = true;
+            lastMousePos = Input.mousePosition;
+
+            // Set pivot under mouse so rotation feels anchored to the scene
+            if (TryGetMousePivotWorld((Vector2)lastMousePos, out var pivot))
+            {
+                pivotWorld = pivot;
+                hasPivot = true;
+            }
+            else
+            {
+                // fallback pivot in front of camera
+                hasPivot = true;
+                pivotWorld = targetPosition + (targetRotation * Vector3.forward) * Mathf.Max(0.01f, focusDistance);
+            }
+        }
+        else if (Input.GetMouseButton(1) && isMouseRotating)
+        {
+            Vector2 cur = Input.mousePosition;
+            Vector2 delta = cur - lastMousePos;
+
+            // Use horizontal delta for yaw; scale by sensitivity
+            float rotationDelta = delta.x * mouseRotateSensitivity;
+            if (Mathf.Abs(rotationDelta) > 0.0001f)
+            {
+                HandleRotation(rotationDelta);
+            }
+
+            lastMousePos = cur;
+        }
+        else if (Input.GetMouseButtonUp(1))
+        {
+            isMouseRotating = false;
+        }
+
+        // Mouse wheel: zoom in/out. Positive scroll zooms in.
+        float wheel = Input.mouseScrollDelta.y;
+        if (Mathf.Abs(wheel) > 0.0001f)
+        {
+            if (zoomTowardsMouse && TryGetMousePivotWorld((Vector2)Input.mousePosition, out var mousePivot))
+            {
+                pivotWorld = mousePivot;
+                hasPivot = true;
+            }
+            else if (!hasPivot)
+            {
+                hasPivot = true;
+                pivotWorld = targetPosition + (targetRotation * Vector3.forward) * Mathf.Max(0.01f, focusDistance);
+            }
+
+            // Simulate a pinch distanceDelta; HandleZoom applies zoomSpeed scaling and clamping
+            float distanceDelta = wheel * mouseWheelZoomDelta;
+            HandleZoom(distanceDelta);
+        }
+    }
+
+    private bool TryGetMousePivotWorld(Vector2 screenPos, out Vector3 world)
+    {
+        Ray ray = _mainCamera.ScreenPointToRay(screenPos);
+        Plane plane = new Plane(Vector3.up, Vector3.zero);
+        if (plane.Raycast(ray, out float enter))
+        {
+            world = ray.GetPoint(enter);
+            return true;
+        }
+        world = default;
+        return false;
     }
 
     private void ProcessOneFinger()
@@ -275,6 +391,7 @@ public class CameraController : MonoBehaviour
         // Compute rotation score and delta depending on mode
         float rotationAmount;
         float rotateScore = ComputeRotateSignal(d0, d1, out rotationAmount);
+
 
         if (testMode == CameraTestMode.D_OneFingerRotate_TwoFingerPan)
         {

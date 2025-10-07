@@ -3702,6 +3702,10 @@ PrefabInstance:
       value: Main Camera
       objectReference: {fileID: 0}
     - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
+      propertyPath: testMode
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
       propertyPath: panSpeedScaleAtMinZoom
       value: 0.1
       objectReference: {fileID: 0}
