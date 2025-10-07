@@ -12,7 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2a2e681ebc4a4e4a88a51e9ad1a00aa, type: 3}
   m_Name: Steel
   m_EditorClassIdentifier: 
+  id: 0
   materialName: Steel
   materialType: 0
   materialCategory: 0
-  icon: {fileID: 0}
+  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  unit: pcs
+  unitScale: 1
+  maxStack: 9999
+  tags: []

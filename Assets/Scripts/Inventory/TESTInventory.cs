@@ -6,8 +6,8 @@ public class TESTInventory : MonoBehaviour
     {
         var inv = GameServices.Inventory;
 
-        inv.Add("chip", 3);
-        inv.TryRemove("chip", 1);
+        inv.Add(1, 3);
+        inv.TryRemove(1, 1);
 
        
     }
