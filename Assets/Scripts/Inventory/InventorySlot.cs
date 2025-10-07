@@ -10,7 +10,6 @@ public class InventorySlot : MonoBehaviour, IDropHandler
     private void Awake()
     {
         if (content == null) content = (RectTransform)transform;
-        // Ensure the slot root can receive raycasts
         var img = GetComponent<UnityEngine.UI.Image>();
         img.raycastTarget = true;
     }

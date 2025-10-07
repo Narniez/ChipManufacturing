@@ -12,6 +12,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     [Header("UI")]
     [SerializeField] private Image itemIcon;
     [SerializeField] private TextMeshProUGUI quantityText;
+    [SerializeField] private SellPopup sellPopup;
 
     [Header("Drag")]
     [SerializeField] private Canvas dragCanvasOverride;
@@ -65,11 +66,27 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             quantityText.color = hasData ? Color.white : new Color(1, 1, 1, 0.15f);
         }
     }
-     // ---------------- DRAG / DROP ----------------
+
+    public void RefreshFromService()
+    {
+        if (slotItem == null || InventoryService.Instance == null) return;
+        slotQuantity = InventoryService.Instance.GetCount(slotItem.id);
+        SetStats();
+    }
+
+    public void OpenSellPopup()
+    {
+        if (slotItem == null || slotQuantity <= 0 || sellPopup == null) return;
+        sellPopup.gameObject.SetActive(true);
+        sellPopup.OpenFor(this);
+    }
+    // ---------------- DRAG / DROP ----------------
 
     public void OnBeginDrag(PointerEventData e)
     {
         if (slotItem == null || slotQuantity <= 0) return;
+
+        if (sellPopup && sellPopup.gameObject.activeSelf) sellPopup.Close();
 
         _dropHandledThisDrag = false;
         _originalParent = transform.parent;
@@ -98,7 +115,6 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             rt.anchoredPosition = Vector2.zero;
             rt.localScale = Vector3.one;
 
-            // Also rebind CurrentSlot just in case
             var slot = _originalParent ? _originalParent.GetComponentInParent<InventorySlot>() : null;
             if (slot != null) CurrentSlot = slot;
         }
