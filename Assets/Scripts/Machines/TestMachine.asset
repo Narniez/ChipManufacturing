@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TestMachine
   m_EditorClassIdentifier: 
   defaultOrientation: 0
-  machineName: TestMachine
+  machineName: BestMachine
   prefab: {fileID: 9038231671212334539, guid: c9b619322d435f148a2f8a16fcf52b23, type: 3}
   icon: {fileID: 0}
   cost: 0

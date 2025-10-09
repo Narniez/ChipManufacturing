@@ -29,7 +29,7 @@ public class PlacementManager : MonoBehaviour
     // State machine
     private IPlacementState _state;
 
-    // New: commands + placement rules
+    // Commands + placement rules
     public CommandHistory History { get; private set; }
     public PlacementRulePipeline PlacementRules { get; private set; }
 
@@ -46,8 +46,6 @@ public class PlacementManager : MonoBehaviour
         if (Instance != null) Destroy(gameObject);
         Instance = this;
         _camCtrl = FindFirstObjectByType<CameraController>();
-
-        // Build default rule pipeline (extend freely)
         PlacementRules = new PlacementRulePipeline()
             .Add(new InsideGridRule())
             .Add(new AreaFreeRule());
@@ -81,7 +79,6 @@ public class PlacementManager : MonoBehaviour
             InteractionManager.Instance.OnHoldMove  += OnHoldMove;
             InteractionManager.Instance.OnHoldEnd   += OnHoldEnd;
             InteractionManager.Instance.OnTap       += OnTap;
-            //Close selection on empty tap by forwarding as a null target tap to current state
             InteractionManager.Instance.OnTapEmpty  += OnTapEmpty;
         }
     }
@@ -144,7 +141,6 @@ public class PlacementManager : MonoBehaviour
             else
             {
                 Debug.LogWarning($"Cannot place new machine: {error}");
-                // Optionally destroy or queue a preview state
             }
         }
     }
