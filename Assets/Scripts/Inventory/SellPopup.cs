@@ -2,25 +2,30 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using UnityEditor;
+using UnityEngine.EventSystems;
 
 public class SellPopup : MonoBehaviour
 {
     [Header("UI")]
     [SerializeField] private Image icon;
     [SerializeField] private TMP_Text nameText;
-    //[SerializeField] private TMP_Text haveText;
     [SerializeField] private Slider amountSlider;
     [SerializeField] private TMP_InputField amountInput;
     [SerializeField] private Button confirmBtn;
-    //[SerializeField] private Button cancelBtn;
-    //[SerializeField] private TMP_Text totalValueText; 
+    [SerializeField] private Canvas _popupCanvas;
+    [SerializeField] private int LROfsset;
+    [SerializeField] private int UDOffset;
+    private RectTransform popupPanel;
 
     [Header("Pricing (placeholder)")]
     [SerializeField] private int pricePerUnit = 1;
 
-    private InventoryItem _item; 
-    private int _have;          
+    private InventoryItem _item;
+    private int _have;
+
+    private Transform _originalParent;
+
+    private Vector2 _prefabLocalOffset;
 
     void Awake()
     {
@@ -45,7 +50,6 @@ public class SellPopup : MonoBehaviour
         });
 
         confirmBtn.onClick.AddListener(OnConfirm);
-        //cancelBtn.onClick.AddListener(Close);
     }
 
     // ---------------- OPEN / CLOSE ----------------
@@ -53,34 +57,75 @@ public class SellPopup : MonoBehaviour
     public void OpenFor(InventoryItem item)
     {
         _item = item;
-        RefreshStockFromService();   // sets _have and clamps controls
+        RefreshStockFromService();
 
-        if (_item.SlotItem != null)
-        {
-            //if (icon) { icon.sprite = _item.SlotItem.icon; icon.enabled = icon.sprite != null; }
-            if (nameText) nameText.text = _item.SlotItem.materialName;
-        }
+        if (_item.SlotItem != null && nameText)
+            nameText.text = _item.SlotItem.materialName;
 
         amountSlider.minValue = 1;
         amountSlider.maxValue = Mathf.Max(1, _have);
-
         amountSlider.value = Mathf.Clamp(_have, (int)amountSlider.minValue, (int)amountSlider.maxValue);
         amountInput.text = ((int)amountSlider.value).ToString();
 
         UpdateFooter((int)amountSlider.value);
         confirmBtn.interactable = _have > 0;
 
-        gameObject.SetActive(true);
+        _originalParent = transform.parent;
 
-        // subscribe for live updates
+        if (_popupCanvas == null)
+            _popupCanvas = GameObject.FindGameObjectWithTag("PopupCanvas")?.GetComponent<Canvas>();
+
+        var popupRT = transform as RectTransform;
+        Vector3 worldPos = popupRT.position;
+
+        if (_popupCanvas != null)
+        {
+            transform.SetParent(_popupCanvas.transform, worldPositionStays: false);
+            transform.SetAsLastSibling();
+            gameObject.SetActive(true);
+            RepositionToItem();
+        }
+        else
+        {
+            Debug.LogWarning("SellPopup.OpenFor: no popup Canvas found. Popup may render under other UI.");
+            gameObject.SetActive(true);
+        }
+
         if (InventoryService.Instance != null)
             InventoryService.Instance.OnChanged += OnInventoryChanged;
+    }
+
+    // Call to reposition the popup to match the inventory item's current position.
+    // Useful immediately after reparenting and also to follow the item if it moves.
+    public void RepositionToItem()
+    {
+        if (_item == null || _popupCanvas == null) return;
+
+        var popupRT = transform as RectTransform;
+        var itemRT = _item.transform as RectTransform;
+        if (popupRT == null || itemRT == null) return;
+
+        Camera canvasCam = _popupCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _popupCanvas.worldCamera;
+        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(canvasCam, itemRT.position);
+
+        var popupCanvasRT = _popupCanvas.transform as RectTransform;
+        if (popupCanvasRT == null) return;
+
+        // Convert the item's position to canvas local point
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(popupCanvasRT, screenPoint, canvasCam, out Vector2 localPoint);
+
+        Vector2 offset = new Vector2(LROfsset, UDOffset);
+        popupRT.anchoredPosition = localPoint + offset;
     }
 
     public void Close()
     {
         if (InventoryService.Instance != null)
             InventoryService.Instance.OnChanged -= OnInventoryChanged;
+
+        // --- Restore original parent ---
+        if (_originalParent != null)
+            transform.SetParent(_originalParent, worldPositionStays: false);
 
         gameObject.SetActive(false);
         _item = null;
@@ -99,7 +144,7 @@ public class SellPopup : MonoBehaviour
 
         _have = newHave;
 
-        // If stock dropped to 0 while open, disable confirm and (optionally) auto-close
+        // If stock dropped to 0 while open, disable confirm and auto-close
         if (_have <= 0)
         {
             confirmBtn.interactable = false;
@@ -124,7 +169,7 @@ public class SellPopup : MonoBehaviour
         if (InventoryService.Instance != null)
         {
             int serviceCount = InventoryService.Instance.GetCount(_item.SlotItem.id);
-           if(serviceCount > 0) _have  = serviceCount;
+            if (serviceCount > 0) _have = serviceCount;
             _have = _item.SlotQuantity;
         }
         else _have = _item.SlotQuantity;
@@ -139,7 +184,7 @@ public class SellPopup : MonoBehaviour
         int amount = Mathf.RoundToInt(amountSlider.value);
         //int amount = Mathf.RoundToInt(int.Parse(amountInput.text));
 
-        // Sell through the service (single source of truth)
+        // Sell through the service 
         if (InventoryService.Instance != null)
             InventoryService.Instance.TryRemove(_item.SlotItem.id, amount);
 
@@ -151,8 +196,29 @@ public class SellPopup : MonoBehaviour
 
     private void UpdateFooter(int amount)
     {
-        /*if (totalValueText)
-            totalValueText.text = $"Sell for: {amount * Mathf.Max(0, pricePerUnit)}";*/
+      
         confirmBtn.interactable = _item != null && amount >= 1 && amount <= _have;
+    }
+
+    void Update()
+    {
+        if (!gameObject.activeInHierarchy) return;
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (EventSystem.current != null)
+            {
+                Camera cam = _popupCanvas != null && _popupCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+                    ? _popupCanvas.worldCamera
+                    : null;
+
+                RectTransform popupRect = transform as RectTransform;
+
+                if (popupRect != null && !RectTransformUtility.RectangleContainsScreenPoint(popupRect, Input.mousePosition, cam))
+                {
+                    Close();
+                }
+            }
+        }
     }
 }
