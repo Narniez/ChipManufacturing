@@ -3,10 +3,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
     [Header("Bound Data")]
-    [SerializeField] private MaterialData slotItem;  
+    [SerializeField] private MaterialData slotItem;
     [SerializeField] private int slotQuantity = 0;
 
     [Header("UI")]
@@ -74,12 +74,12 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         SetStats();
     }
 
-    public void OpenSellPopup()
-    {
-        if (slotItem == null || slotQuantity <= 0 || sellPopup == null) return;
-        sellPopup.gameObject.SetActive(true);
-        sellPopup.OpenFor(this);
-    }
+    /*   public void OpenSellPopup()
+       {
+           if (slotItem == null || slotQuantity <= 0 || sellPopup == null) return;
+           sellPopup.gameObject.SetActive(true);
+           sellPopup.OpenFor(this);
+       }*/
     // ---------------- DRAG / DROP ----------------
 
     public void OnBeginDrag(PointerEventData e)
@@ -120,4 +120,14 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         }
     }
     public void NotifyDroppedHandled() => _dropHandledThisDrag = true;
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (sellPopup == null) return;
+
+        if (sellPopup.gameObject.activeSelf)
+            sellPopup.Close();
+        else
+            sellPopup.OpenFor(this);
+    }
 }
