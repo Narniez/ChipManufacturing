@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 {
-    [SerializeField] private MachineData data;   // (Optional) allow prefab default; factory may overwrite.
+    private MachineData data;   // (Optional) allow prefab default; factory may overwrite.
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
 
