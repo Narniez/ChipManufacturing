@@ -1,4 +1,6 @@
-﻿using TMPro;
+﻿using NUnit.Framework;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -15,7 +17,6 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     [SerializeField] private SellPopup sellPopup;
 
     [Header("Drag")]
-    [SerializeField] private Canvas dragCanvasOverride;
     [SerializeField] private CanvasGroup canvasGroup;
 
     private Canvas _canvas;
@@ -39,7 +40,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         CurrentSlot = GetComponentInParent<InventorySlot>();
         _originalParent = transform.parent;
 
-        _canvas = dragCanvasOverride != null ? dragCanvasOverride : GetComponentInParent<Canvas>();
+        _canvas = GetComponentInParent<Canvas>();
         SetStats();
     }
 
@@ -74,12 +75,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         SetStats();
     }
 
-    /*   public void OpenSellPopup()
-       {
-           if (slotItem == null || slotQuantity <= 0 || sellPopup == null) return;
-           sellPopup.gameObject.SetActive(true);
-           sellPopup.OpenFor(this);
-       }*/
+   
     // ---------------- DRAG / DROP ----------------
 
     public void OnBeginDrag(PointerEventData e)
@@ -117,6 +113,18 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
             var slot = _originalParent ? _originalParent.GetComponentInParent<InventorySlot>() : null;
             if (slot != null) CurrentSlot = slot;
+        }
+
+        // --- Unlock input if dropped on game view (not UI) ---
+        if (EventSystem.current != null && !EventSystem.current.IsPointerOverGameObject())
+        {
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                var camController = cam.GetComponent<CameraController>();
+                if (camController != null)
+                    camController.SetInputLocked(false);
+            }
         }
     }
     public void NotifyDroppedHandled() => _dropHandledThisDrag = true;
