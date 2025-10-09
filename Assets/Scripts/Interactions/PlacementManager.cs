@@ -24,6 +24,13 @@ public class PlacementManager : MonoBehaviour
     [Header("Selection UI")]
     [SerializeField] private SelectionUI selectionUI;
 
+    [Header("Conveyor Prefabs")]
+    [SerializeField] private GameObject conveyorStraightPrefab;
+    [SerializeField] private GameObject conveyorTurnPrefab;
+
+    [Header("Placement Preview")]
+    [SerializeField] private Material placementPreviewMaterial;
+
     private CameraController _camCtrl;
 
     // State machine
@@ -110,7 +117,7 @@ public class PlacementManager : MonoBehaviour
     private void OnHoldEnd(IInteractable interactable, Vector2 screen, Vector3 world) =>
         _state?.OnHoldEnd(interactable, screen, world);
 
-    // Buy spawns immediately at screen center (no confirm for now)
+    // Buy machine -> place at screen-center where the picked cell becomes the footprint bottom-left (center pivot)
     public void StartPlacement(MachineData machineData)
     {
         if (factory == null || machineData == null || machineData.prefab == null)
@@ -119,30 +126,113 @@ public class PlacementManager : MonoBehaviour
             return;
         }
 
-        var cam = Camera.main;
-        Vector3 screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-        Vector3 world = ScreenToGround(screenCenter, cam);
+        // Start the generic preview placement so the preview material is applied.
+        // The PreviewPlacementState handles bottom-left anchor, move/rotate, and confirm/restore.
+        StartPrefabPlacement(machineData.prefab, machineData.defaultOrientation, machineData);
 
-        Machine machine = factory.CreateMachine(machineData, world);
-        if (snapToGrid && gridService != null && machine.TryGetComponent<IGridOccupant>(out var occ))
+
+        //if (factory == null || machineData == null || machineData.prefab == null)
+        //{
+        //    Debug.LogError("PlacementManager.StartPlacement: Missing factory or data/prefab.");
+        //    return;
+        //}
+
+        //if (!snapToGrid || gridService == null || !gridService.HasGrid)
+        //{
+        //    // Fallback to original preview flow if grid not ready
+        //    StartPrefabPlacement(machineData.prefab, machineData.defaultOrientation);
+        //    return;
+        //}
+
+        //var cam = Camera.main;
+        //Vector2 screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+        //Vector3 world = ScreenToGround(screenCenter, cam);
+
+        //// Bottom-left anchor desired from the screen-center cell
+        //GridOrientation orientation = machineData.defaultOrientation;
+        //Vector2Int size = machineData.size.OrientedSize(orientation);
+        //Vector2Int desiredAnchor = gridService.WorldToCell(world);
+        //Vector2Int anchor = AdjustAnchorInsideGrid(desiredAnchor, size);
+
+        //// World for centered pivot at footprint center
+        //// Use a temporary instance to compute bottom offset accurately
+        //var temp = factory.CreateMachine(machineData, Vector3.zero);
+        //float yOff = ComputePivotBottomOffset(temp.transform);
+        //DestroyImmediate(temp.gameObject);
+
+        //world = AnchorToWorldCenter(anchor, size, yOff);
+
+        //// Instantiate and commit
+        //Machine machine = factory.CreateMachine(machineData, world);
+        //if (machine.TryGetComponent<IGridOccupant>(out var occ))
+        //{
+        //    if (PlacementRules.Validate(gridService, occ, anchor, orientation, out var error))
+        //    {
+        //        occ.SetPlacement(anchor, orientation);
+        //        machine.transform.position = world;
+        //        gridService.SetAreaOccupant(anchor, size, machine.gameObject);
+        //    }
+        //    else
+        //    {
+        //        Debug.LogWarning($"Cannot place new machine: {error}");
+        //        Destroy(machine.gameObject);
+        //    }
+        //}
+        //else
+        //{
+        //    Debug.LogError("Placed machine prefab is missing IGridOccupant.");
+        //    Destroy(machine.gameObject);
+        //}
+    }
+
+    // SHOP BUTTONS: call these from UI (OnClick)
+    public void StartBuyConveyorStraight()
+    {
+        if (conveyorStraightPrefab == null) { Debug.LogWarning("Straight belt prefab not assigned."); return; }
+        StartPrefabPlacement(conveyorStraightPrefab, GridOrientation.North);
+    }
+
+    public void StartBuyConveyorTurn()
+    {
+        if (conveyorTurnPrefab == null) { Debug.LogWarning("Turn belt prefab not assigned."); return; }
+        StartPrefabPlacement(conveyorTurnPrefab, GridOrientation.North);
+    }
+
+    // Generic preview placement for any IGridOccupant prefab
+    public void StartPrefabPlacement(GameObject prefab, GridOrientation? initialOrientation = null)
+    {
+        if (prefab == null) { Debug.LogError("StartPrefabPlacement: prefab is null"); return; }
+        if (gridService == null || !gridService.HasGrid)
         {
-            var size = occ.BaseSize.OrientedSize(machineData.defaultOrientation);
-            Vector2Int cell = gridService.WorldToCell(world);
-            Vector2Int anchor = gridService.ClampAnchor(cell, size);
-            world = AnchorToWorldCenter(anchor, size, ComputePivotBottomOffset(machine.transform));
-
-            // Validate with rules (optional here, recommended if later rules require specific tiles, etc.)
-            if (PlacementRules.Validate(gridService, occ, anchor, machineData.defaultOrientation, out var error))
-            {
-                occ.SetPlacement(anchor, machineData.defaultOrientation);
-                machine.transform.position = world;
-                gridService.SetAreaOccupant(anchor, size, machine.gameObject);
-            }
-            else
-            {
-                Debug.LogWarning($"Cannot place new machine: {error}");
-            }
+            Debug.LogWarning("Grid is not ready.");
+            return;
         }
+
+        SetState(new PreviewPlacementState(this, prefab, placementPreviewMaterial, initialOrientation));
+    }
+
+    // Overload that carries MachineData (so we can initialize on confirm)
+    public void StartPrefabPlacement(GameObject prefab, GridOrientation? initialOrientation, MachineData machineData)
+    {
+        if (prefab == null) { Debug.LogError("StartPrefabPlacement: prefab is null"); return; }
+        if (gridService == null || !gridService.HasGrid)
+        {
+            Debug.LogWarning("Grid is not ready.");
+            return;
+        }
+
+        SetState(new PreviewPlacementState(this, prefab, placementPreviewMaterial, initialOrientation, machineData));
+    }
+
+    // UI Confirm/Cancel buttons should call these
+    public void ConfirmPreview()
+    {
+        if (_state is PreviewPlacementState p) p.ConfirmPlacement();
+    }
+
+    public void CancelPreview()
+    {
+        if (_state is PreviewPlacementState p) p.CancelPlacement();
     }
 
     // Convenience: shared validation wrapper
@@ -204,6 +294,20 @@ public class PlacementManager : MonoBehaviour
 
         Vector3 move = (right * xDir + forward * yDir) * edgeScrollSpeed * Time.unscaledDeltaTime;
         _camCtrl.NudgeWorld(move);
+    }
+
+    public GameObject GetConveyorPrefab(bool isTurn) =>
+        isTurn ? conveyorTurnPrefab : conveyorStraightPrefab;
+
+    private Vector2Int AdjustAnchorInsideGrid(Vector2Int desiredAnchor, Vector2Int size)
+    {
+        if (gridService == null || !gridService.HasGrid) return desiredAnchor;
+        int maxX = gridService.Cols - size.x;
+        int maxY = gridService.Rows - size.y;
+        return new Vector2Int(
+            Mathf.Clamp(desiredAnchor.x, 0, Mathf.Max(0, maxX)),
+            Mathf.Clamp(desiredAnchor.y, 0, Mathf.Max(0, maxY))
+        );
     }
 
     private static Vector3 ScreenToGround(Vector2 screenPos, Camera cam)
