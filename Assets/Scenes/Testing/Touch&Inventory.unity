@@ -7183,19 +7183,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7163507921810912067}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7680888899592591459}
-        m_TargetAssemblyTypeName: InventoryItem, Assembly-CSharp
-        m_MethodName: OpenSellPopup
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!1 &4460929381202928344
 GameObject:
   m_ObjectHideFlags: 0
@@ -9514,7 +9502,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5a9e7a8d3138ff4399d2396af10a8c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slotItem: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
+  slotItem: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
   slotQuantity: 2
   itemIcon: {fileID: 7163507921810912067}
   quantityText: {fileID: 5218685411301897599}

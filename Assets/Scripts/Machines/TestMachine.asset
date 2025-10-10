@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultOrientation: 0
   machineName: BestMachine
-  prefab: {fileID: 9038231671212334539, guid: c9b619322d435f148a2f8a16fcf52b23, type: 3}
+  prefab: {fileID: 9038231671212334539, guid: 92cde54d152103846b886c0354dfc7a0, type: 3}
   icon: {fileID: 0}
   cost: 0
   inputMaterial: 1
