@@ -1,6 +1,4 @@
-﻿using NUnit.Framework;
-using System.Collections.Generic;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -118,6 +116,26 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         // --- Unlock input if dropped on game view (not UI) ---
         if (EventSystem.current != null && !EventSystem.current.IsPointerOverGameObject())
         {
+            // Raycast into the world to find a machine
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out RaycastHit hit, 100f))
+            {
+                var machine = hit.collider.GetComponentInParent<MachineDropTarget>();
+                if (machine != null && machine.AcceptMaterial(slotItem))
+                {
+                    // Remove all of this material from inventory
+                    if (InventoryService.Instance != null)
+                        InventoryService.Instance.TryRemove(slotItem.id, slotQuantity);
+
+                    // Start processing on the machine
+                    machine.StartProcessing(slotItem);
+
+                    // Destroy this inventory item GameObject
+                    Destroy(gameObject);
+                    return;
+                }
+            }
+
             var cam = Camera.main;
             if (cam != null)
             {
