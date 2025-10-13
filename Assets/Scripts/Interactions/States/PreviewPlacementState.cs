@@ -20,6 +20,7 @@ public class PreviewPlacementState : BasePlacementState
     private float _heightOffset;
 
     private bool _committed;
+    private bool _isConveyor;                // NEW: flag for belt previews
 
     public PreviewPlacementState(
         PlacementManager ctx,
@@ -59,12 +60,20 @@ public class PreviewPlacementState : BasePlacementState
             return;
         }
 
+        // Detect conveyor belt previews
+        _isConveyor = _instance.GetComponent<ConveyorBelt>() != null;
+
         ApplyPreviewMaterial(_instance);
 
         _orientation = _initialOrientation ?? _occ.Orientation;
         var size = GetOrientedSize();
 
+        // Anchor from desired, clamped
         _anchor = AdjustAnchorInsideGrid(desiredCell, size);
+
+        // If conveyor: avoid occupied cells by scanning to the right
+        if (_isConveyor)
+            _anchor = FindFreeToRight(_anchor, size);
 
         _heightOffset = PlaceMan.ComputePivotBottomOffset(_instance.transform);
         Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
@@ -105,6 +114,11 @@ public class PreviewPlacementState : BasePlacementState
         if (!_grid.IsInside(cell)) return;
 
         Vector2Int newAnchor = AdjustAnchorInsideGrid(cell, size);
+
+        // If conveyor: avoid occupied cells by scanning to the right
+        if (_isConveyor)
+            newAnchor = FindFreeToRight(newAnchor, size);
+
         if (newAnchor == _anchor) return;
 
         _anchor = newAnchor;
@@ -125,7 +139,13 @@ public class PreviewPlacementState : BasePlacementState
         _orientation = clockwise ? _orientation.RotatedCW() : _orientation.RotatedCCW();
 
         var size = GetOrientedSize();
-        _anchor = AdjustAnchorInsideGrid(_anchor, size);
+        var newAnchor = AdjustAnchorInsideGrid(_anchor, size);
+
+        // If conveyor: avoid occupied cells by scanning to the right
+        if (_isConveyor)
+            newAnchor = FindFreeToRight(newAnchor, size);
+
+        _anchor = newAnchor;
 
         Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
@@ -181,6 +201,31 @@ public class PreviewPlacementState : BasePlacementState
             Mathf.Clamp(desiredAnchor.x, 0, Mathf.Max(0, maxX)),
             Mathf.Clamp(desiredAnchor.y, 0, Mathf.Max(0, maxY))
         );
+    }
+
+    // NEW: for conveyors, if current area is occupied, scan to the right until free or edge reached
+    private Vector2Int FindFreeToRight(Vector2Int startAnchor, Vector2Int size)
+    {
+        if (_grid == null || !_grid.HasGrid) return startAnchor;
+
+        Vector2Int a = startAnchor;
+        int maxX = _grid.Cols - size.x;
+
+        // If starting position is free, keep it
+        if (_grid.IsAreaFree(a, size))
+            return a;
+
+        // Move right until a free area is found
+        while (a.x < maxX)
+        {
+            a.x++;
+            if (_grid.IsAreaFree(a, size))
+                return a;
+        }
+
+        // No free cell found to the right on this row; keep original (occupied) position
+        // Alternatively, you could hide the preview or scan left/up/down as needed.
+        return startAnchor;
     }
 
     private void ApplyPreviewMaterial(GameObject go)

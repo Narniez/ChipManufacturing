@@ -31,6 +31,9 @@ public class PlacementManager : MonoBehaviour
     [Header("Placement Preview")]
     [SerializeField] private Material placementPreviewMaterial;
 
+    [Header("Conveyor Test")]
+    [SerializeField] private GameObject conveyorItemPrefab;
+
     private CameraController _camCtrl;
 
     // State machine
@@ -47,6 +50,9 @@ public class PlacementManager : MonoBehaviour
     public KeyCode RotateKey => rotateKey;
     public bool EnableSecondFingerRotate => enableSecondFingerRotate;
     public SelectionUI SelectionUI => selectionUI;
+
+    // Track current selection for UI actions
+    public IGridOccupant CurrentSelection { get; private set; }
 
     void Awake()
     {
@@ -315,5 +321,41 @@ public class PlacementManager : MonoBehaviour
         Ray ray = cam.ScreenPointToRay(screenPos);
         Plane plane = new Plane(Vector3.up, Vector3.zero);
         return plane.Raycast(ray, out float enter) ? ray.GetPoint(enter) : Vector3.zero;
+    }
+
+    internal void SetCurrentSelection(IGridOccupant occ)
+    {
+        CurrentSelection = occ;
+    }
+
+    public void SpawnTestItemOnSelectedBelt() => SpawnTestItemOnSelectedBelt(MaterialType.Silicon);
+
+    // UI button: spawn a test item on the selected belt
+    public void SpawnTestItemOnSelectedBelt(MaterialType material = MaterialType.Silicon)
+    {
+        if (!(CurrentSelection is ConveyorBelt belt))
+        {
+            Debug.LogWarning("No conveyor belt selected.");
+            return;
+        }
+
+        if (belt.HasItem)
+        {
+            Debug.Log("Selected belt already has an item.");
+            return;
+        }
+
+        GameObject visual = null;
+        if (conveyorItemPrefab != null)
+        {
+            visual = Instantiate(conveyorItemPrefab);
+        }
+
+        var item = new ConveyorItem(material, visual);
+        if (!belt.TrySetItem(item))
+        {
+            if (visual != null) Destroy(visual);
+            Debug.Log("Failed to place item on belt.");
+        }
     }
 }

@@ -23,3 +23,10 @@ MonoBehaviour:
   size: {x: 2, y: 2}
   upgrades:
   - {fileID: 11400000, guid: 1e54abd3b0b52ee42b43195bb15e517a, type: 2}
+  ports:
+  - kind: 1
+    side: 0
+    offset: 0
+  - kind: 2
+    side: 2
+    offset: 0
