@@ -229,7 +229,6 @@ GameObject:
   - component: {fileID: 8172276249755967312}
   - component: {fileID: 2040697053072559305}
   - component: {fileID: 4296471298935805155}
-  - component: {fileID: 8017550460692091223}
   m_Layer: 3
   m_Name: TestMachinePrefab 1
   m_TagString: Untagged
@@ -341,16 +340,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   data: {fileID: 11400000, guid: d4ac0eeb666d84e42933ecf1459abe98, type: 2}
---- !u!114 &8017550460692091223
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9038231671212334539}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9552321a1c01c844a03da70e1e683ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  machineData: {fileID: 11400000, guid: d4ac0eeb666d84e42933ecf1459abe98, type: 2}

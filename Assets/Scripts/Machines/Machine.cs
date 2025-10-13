@@ -12,7 +12,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
 
-    private readonly Queue<MaterialType> _inputQueue = new Queue<MaterialType>();
+    private int inputBuffer = 0; //how many materials will go into the machine
 
     public event System.Action<MaterialType, Vector3> OnMaterialProduced;
 
@@ -23,10 +23,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public void Initialize(MachineData machineData)
     {
         data = machineData;
-        // StartProduction is triggered by input delivery (per item), not here
+        StartProduction();
     }
 
-    // Start one production cycle if there is pending input and not already producing
     private void StartProduction()
     {
         if (data == null)
@@ -43,6 +42,24 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     // Process exactly one input from the queue, produce output, then stop
     private IEnumerator ProcessOne()
+    public bool AcceptMaterial(MaterialData material)
+    {
+        if (data == null || material == null) return false;
+        return data.inputMaterial == material.materialType;
+    }
+
+    public void QueueInput(int quantity)
+    {
+        if (data == null || quantity <= 0) return;
+
+        inputBuffer += quantity;
+
+        if (productionRoutine == null)
+            productionRoutine = StartCoroutine(ProductionLoop());
+    }
+
+
+    private IEnumerator ProductionLoop()
     {
         var consumed = _inputQueue.Dequeue();
         yield return new WaitForSeconds(data.processingTime);
@@ -55,6 +72,13 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         // If more inputs are queued, start next cycle
         if (_inputQueue.Count > 0)
             StartProduction();
+        while (inputBuffer > 0)
+        {
+            yield return new WaitForSeconds(data.processingTime);
+            inputBuffer--;
+            ProduceOutput();
+        }
+        productionRoutine = null;
     }
 
     private void ProduceOutput()

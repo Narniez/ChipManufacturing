@@ -15,7 +15,6 @@ public class SellPopup : MonoBehaviour
     [SerializeField] private Canvas _popupCanvas;
     [SerializeField] private int LROfsset;
     [SerializeField] private int UDOffset;
-    private RectTransform popupPanel;
 
     [Header("Pricing (placeholder)")]
     [SerializeField] private int pricePerUnit = 1;
@@ -24,8 +23,6 @@ public class SellPopup : MonoBehaviour
     private int _have;
 
     private Transform _originalParent;
-
-    private Vector2 _prefabLocalOffset;
 
     void Awake()
     {
@@ -196,7 +193,7 @@ public class SellPopup : MonoBehaviour
 
     private void UpdateFooter(int amount)
     {
-      
+
         confirmBtn.interactable = _item != null && amount >= 1 && amount <= _have;
     }
 
