@@ -7,6 +7,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
 
+    private int inputBuffer = 0; //how many materials will go into the machine
+
     public event System.Action<MaterialType, Vector3> OnMaterialProduced;
 
     // --- Production / Data ---
@@ -16,10 +18,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public void Initialize(MachineData machineData)
     {
         data = machineData;
-        StartProduction();
+       // StartProduction();
     }
 
-    private void StartProduction()
+    public void StartProduction()
     {
         if (data == null)
         {
@@ -33,18 +35,38 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         productionRoutine = StartCoroutine(ProductionLoop());
     }
 
+    public bool AcceptMaterial(MaterialData material)
+    {
+        if (data == null || material == null) return false;
+        return data.inputMaterial == material.materialType;
+    }
+
+    public void QueueInput(int quantity)
+    {
+        if (data == null || quantity <= 0) return;
+
+        inputBuffer += quantity;
+
+        if (productionRoutine == null)
+            productionRoutine = StartCoroutine(ProductionLoop());
+    }
+
+
     private IEnumerator ProductionLoop()
     {
-        while (true)
+        while (inputBuffer > 0)
         {
             yield return new WaitForSeconds(data.processingTime);
+            inputBuffer--;
             ProduceOutput();
         }
+        productionRoutine = null;
     }
 
     private void ProduceOutput()
     {
         if (data == null) return;
+        Debug.Log($"Machine {data.machineName} produced {data.outputMaterial} at upgrade level {upgradeLevel}.");
         OnMaterialProduced?.Invoke(data.outputMaterial, transform.position);
     }
 

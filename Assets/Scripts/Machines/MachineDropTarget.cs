@@ -21,7 +21,7 @@ public class MachineDropTarget : MonoBehaviour
         Debug.Log($"Started processing {material.materialName} in {machineData.machineName}.");
         yield return new WaitForSeconds(machineData.processingTime);
         Debug.Log($"Finished processing {material.materialName} into {machineData.outputMaterial}.");
-        // Here you would typically notify the inventory system to add the output material
+        // add output material to conveyor belt or inventory here
         yield return null;
     }
 }

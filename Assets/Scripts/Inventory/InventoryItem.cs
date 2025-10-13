@@ -120,7 +120,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit, 100f))
             {
-                var machine = hit.collider.GetComponentInParent<MachineDropTarget>();
+                var machine = hit.collider.GetComponentInChildren<Machine>();
                 if (machine != null && machine.AcceptMaterial(slotItem))
                 {
                     // Remove all of this material from inventory
@@ -128,7 +128,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                         InventoryService.Instance.TryRemove(slotItem.id, slotQuantity);
 
                     // Start processing on the machine
-                    machine.StartProcessing(slotItem);
+                    machine.QueueInput(slotQuantity);
 
                     // Destroy this inventory item GameObject
                     Destroy(gameObject);
