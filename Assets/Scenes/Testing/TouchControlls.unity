@@ -3136,7 +3136,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d73adc4c74906b74c97184458a5fe115, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tickInterval: 0.25
+  tickInterval: 1
+  itemMoveDuration: 1
 --- !u!4 &1680303111
 Transform:
   m_ObjectHideFlags: 0
@@ -3409,6 +3410,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 212a52e4359d7d04b88c7a4903ca1cf9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  itemVisualPrefab: {fileID: 0}
 --- !u!1 &1768533102
 GameObject:
   m_ObjectHideFlags: 0
@@ -4086,6 +4088,55 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1928843704}
   m_CullTransparentMesh: 1
+--- !u!1 &1936187333
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1936187334}
+  - component: {fileID: 1936187335}
+  m_Layer: 0
+  m_Name: MaterialVisualRegistry
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1936187334
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1936187333}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 15.9937105, y: 1.0937155, z: 4.8084517}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1936187335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1936187333}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16e567bc8951f5a41aa5e1f68e2b0450, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  entries:
+  - material: 1
+    itemPrefab: {fileID: 8559448409965842562, guid: 645a15e76d0729c4084aa3d7e242accc, type: 3}
+  - material: 4
+    itemPrefab: {fileID: 8559448409965842562, guid: d98b8db6ba6029d4880a2d3b51624cdc, type: 3}
 --- !u!1 &1981739774
 GameObject:
   m_ObjectHideFlags: 0
@@ -4671,7 +4722,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
       propertyPath: testMode
-      value: 4
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
       propertyPath: mouseWheelZoomDelta
@@ -4705,3 +4756,4 @@ SceneRoots:
   - {fileID: 2107428086}
   - {fileID: 1785461582}
   - {fileID: 1680303111}
+  - {fileID: 1936187334}

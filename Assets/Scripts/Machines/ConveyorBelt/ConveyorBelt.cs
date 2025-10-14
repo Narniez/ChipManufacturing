@@ -13,7 +13,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     public Vector2Int Anchor { get; private set; }
     public Vector2Int BaseSize => Vector2Int.one;
 
-    private ConveyorItem _item;          // single-slot
+    private ConveyorItem _item;         
     private GridService _grid;
 
     private void Awake()
@@ -34,24 +34,26 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     public bool HasItem => _item != null;
     public ConveyorItem PeekItem() => _item;
 
-    public bool TrySetItem(ConveyorItem item)
+    // snapVisual: true for initial spawn; false for belt-to-belt handoff (we animate)
+    public bool TrySetItem(ConveyorItem item, bool snapVisual = true)
     {
         if (_item != null || item == null) return false;
         _item = item;
 
-        // On spawn, place visual at belt center with Y offset
-        if (_item.Visual != null && _grid != null)
+        if (snapVisual && _item.Visual != null && _grid != null)
         {
             _item.Visual.transform.position = GetWorldCenter();
+            _item.T = 1f;
+            _item.Duration = 0f;
         }
         return true;
     }
 
     public ConveyorItem TakeItem()
     {
-        var it = _item;
+        var item = _item;
         _item = null;
-        return it;
+        return item;
     }
 
     // IGridOccupant
@@ -65,11 +67,10 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation newOrientation)
     {
         if (grid == null) return false;
-        // Belts are 1x1
         return grid.IsAreaInside(anchor, Vector2Int.one) && grid.IsAreaFree(anchor, Vector2Int.one, this);
     }
 
-    // IDraggable (IGridOccupant extends IDraggable)
+    // IDraggable
     public bool CanDrag => true;
     public Transform DragTransform => transform;
     public void OnDragStart() { }
@@ -88,7 +89,6 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     {
         if (_item == null || _grid == null || !_grid.HasGrid) return;
 
-        // Candidate neighbors in priority: forward, right, left (relative to this belt)
         var forwardDir = orientation;
         var rightDir   = orientation.RotatedCW();
         var leftDir    = orientation.RotatedCCW();
@@ -97,12 +97,11 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         var rightCell   = Anchor + ToDelta(rightDir);
         var leftCell    = Anchor + ToDelta(leftDir);
 
-        // Try move onto a neighboring belt that is not facing opposite and is empty
         if (TryMoveOntoNeighborBelt(forwardCell)) return;
         if (TryMoveOntoNeighborBelt(rightCell))   return;
         if (TryMoveOntoNeighborBelt(leftCell))    return;
 
-        // Forward-only machine delivery (keep machine handoff only in front)
+        // Forward-only machine delivery
         if (TryDeliverToMachine(forwardCell)) return;
     }
 
@@ -121,21 +120,26 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         var nextBelt = occGO.GetComponent<ConveyorBelt>();
         if (nextBelt == null) return false;
 
-        // Block only if next belt faces exactly opposite this belt
         if (IsOpposite(nextBelt.Orientation, orientation)) return false;
         if (nextBelt.HasItem) return false;
 
-        // Move item; keep visual at previous position, let runtime animate to target
+        // Prepare animation from current center to next center
         var moving = TakeItem();
-        if (nextBelt.TrySetItem(moving))
+        if (moving.Visual != null)
         {
-            if (moving.Visual != null)
-            {
-                // Reset visual to current center so it slides to next center smoothly
-                moving.Visual.transform.position = GetWorldCenter();
-            }
+            var from = GetWorldCenter();
+            var to   = nextBelt.GetWorldCenter();
+            var dur  = BeltSystemRuntime.Instance != null ? BeltSystemRuntime.Instance.ItemMoveDuration : 0.2f;
+            moving.BeginMove(from, to, dur);
         }
-        return true;
+
+        // Handoff without snapping visual
+        if (nextBelt.TrySetItem(moving, snapVisual: false))
+            return true;
+
+        // Failed, put it back (rare)
+        TrySetItem(moving, snapVisual: true);
+        return false;
     }
 
     private bool TryDeliverToMachine(Vector2Int cell)

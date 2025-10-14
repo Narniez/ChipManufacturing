@@ -14,7 +14,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Testing/TouchCTestA.unity
     guid: 51926c57d92ad85469b31b1be40a8d27
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Inventory.unity
     guid: 32223e2b159c5fc4cacd2d0fa1cbc803
   m_configObjects:

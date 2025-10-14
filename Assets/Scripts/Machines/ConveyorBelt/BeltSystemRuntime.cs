@@ -5,12 +5,13 @@ public class BeltSystemRuntime : MonoBehaviour
 {
     public static BeltSystemRuntime Instance { get; private set; }
 
-    [SerializeField] private float tickInterval = 0.25f; // 4 ticks/sec
-    [SerializeField, Tooltip("Units per second for item visuals to slide between belts")]
-    private float itemMoveSpeed = 3.0f;
+    [SerializeField] private float tickInterval = 0.25f; // logical hop cadence
+    [SerializeField, Tooltip("Seconds for a visual to slide between belts")]
+    private float itemMoveDuration = 0.2f;
+
+    public float ItemMoveDuration => itemMoveDuration;
 
     private float _accum;
-
     private readonly List<ConveyorBelt> _belts = new List<ConveyorBelt>();
 
     private void Awake()
@@ -21,7 +22,6 @@ public class BeltSystemRuntime : MonoBehaviour
 
     private void Start()
     {
-        // Safety: auto-register any belts already in scene (in case they enabled before Instance existed)
         var belts = FindObjectsByType<ConveyorBelt>(FindObjectsSortMode.InstanceID);
         for (int i = 0; i < belts.Length; i++)
             Register(belts[i]);
@@ -29,7 +29,6 @@ public class BeltSystemRuntime : MonoBehaviour
 
     private void Update()
     {
-        // Tick logic (discrete cell-to-cell movement)
         _accum += Time.deltaTime;
         if (_accum >= tickInterval)
         {
@@ -37,7 +36,6 @@ public class BeltSystemRuntime : MonoBehaviour
             Tick();
         }
 
-        // Smoothly animate item visuals toward their belt centers
         AnimateItemVisuals(Time.deltaTime);
     }
 
@@ -49,28 +47,18 @@ public class BeltSystemRuntime : MonoBehaviour
 
     private void AnimateItemVisuals(float dt)
     {
-        if (_belts.Count == 0) return;
-
         for (int i = 0; i < _belts.Count; i++)
         {
-            var belt = _belts[i];
-            var item = belt.PeekItem();
-            if (item?.Visual == null) continue;
-
-            var target = belt.GetWorldCenter();
-            var current = item.Visual.transform.position;
-
-            // Move towards target at constant speed
-            var next = Vector3.MoveTowards(current, target, itemMoveSpeed * dt);
-            item.Visual.transform.position = next;
+            var item = _belts[i].PeekItem();
+            if (item == null) continue;
+            item.Animate(dt);
         }
     }
 
     public void Register(ConveyorBelt belt)
     {
         if (belt == null) return;
-        if (!_belts.Contains(belt))
-            _belts.Add(belt);
+        if (!_belts.Contains(belt)) _belts.Add(belt);
     }
 
     public void Unregister(ConveyorBelt belt)
