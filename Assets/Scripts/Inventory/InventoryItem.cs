@@ -121,18 +121,26 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             if (Physics.Raycast(ray, out RaycastHit hit, 100f))
             {
                 var machine = hit.collider.GetComponentInChildren<Machine>();
-                if (machine != null && machine.AcceptMaterial(slotItem))
+                
+                if (machine != null)
                 {
-                    // Remove all of this material from inventory
-                    if (InventoryService.Instance != null)
-                        InventoryService.Instance.TryRemove(slotItem.id, slotQuantity);
+                    Debug.Log($"Dropped item on machine: {machine?.name}");
+                    int used = machine.TryQueueInventoryItem(slotItem, slotQuantity);
+                    if (used > 0)
+                    {
+                        // Remove from inventory
+                        if (InventoryService.Instance != null)
+                            InventoryService.Instance.TryRemove(slotItem.id, used);
 
-                    // Start processing on the machine
-                    machine.QueueInput(slotQuantity);
+                        // Update UI item or destroy if empty
+                        slotQuantity -= used;
+                        if (slotQuantity <= 0)
+                            Destroy(gameObject);
+                        else
+                            SetStats();
 
-                    // Destroy this inventory item GameObject
-                    Destroy(gameObject);
-                    return;
+                        return;
+                    }
                 }
             }
 

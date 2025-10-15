@@ -12,7 +12,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
 
-    private int inputBuffer = 0; //how many materials will go into the machine
+    private readonly Queue<MaterialType> _inputQueue = new Queue<MaterialType>();
 
     public event System.Action<MaterialType, Vector3> OnMaterialProduced;
 
@@ -23,10 +23,11 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public void Initialize(MachineData machineData)
     {
         data = machineData;
-       // StartProduction();
+        // StartProduction is triggered by input delivery (per item), not here
     }
 
-    public void StartProduction()
+    // Start one production cycle if there is pending input and not already producing
+    private void StartProduction()
     {
         if (data == null)
         {
@@ -42,24 +43,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     // Process exactly one input from the queue, produce output, then stop
     private IEnumerator ProcessOne()
-    public bool AcceptMaterial(MaterialData material)
-    {
-        if (data == null || material == null) return false;
-        return data.inputMaterial == material.materialType;
-    }
-
-    public void QueueInput(int quantity)
-    {
-        if (data == null || quantity <= 0) return;
-
-        inputBuffer += quantity;
-
-        if (productionRoutine == null)
-            productionRoutine = StartCoroutine(ProductionLoop());
-    }
-
-
-    private IEnumerator ProductionLoop()
     {
         var consumed = _inputQueue.Dequeue();
         yield return new WaitForSeconds(data.processingTime);
@@ -72,13 +55,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         // If more inputs are queued, start next cycle
         if (_inputQueue.Count > 0)
             StartProduction();
-        while (inputBuffer > 0)
-        {
-            yield return new WaitForSeconds(data.processingTime);
-            inputBuffer--;
-            ProduceOutput();
-        }
-        productionRoutine = null;
     }
 
     private void ProduceOutput()
@@ -95,13 +71,13 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     private void TryPushOutputToBelt(MaterialType mat)
     {
+        // Find a connected output belt
         var grid = FindFirstObjectByType<GridService>();
         if (grid == null || !grid.HasGrid) return;
 
+        // Use declared ports or fallback to forward-center
         var orientedSize = BaseSize.OrientedSize(Orientation);
-
-        // Build candidate output cells with their world-side (used to reject opposite-facing belts)
-        var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
+        List<Vector2Int> outputCells = new List<Vector2Int>();
 
         if (data != null && data.ports != null && data.ports.Count > 0)
         {
@@ -109,25 +85,16 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             {
                 if (p.kind != MachinePortType.Output) continue;
                 var worldSide = RotateSide(p.side, Orientation);
-                var cell = ComputePortCell(p.side, orientedSize, p.offset);
-                outputs.Add((cell, worldSide));
+                outputCells.Add(ComputePortCell(p.side, orientedSize, p.offset));
             }
         }
         else
         {
-            // Fallback: single output on forward-center
-            var worldSide = Orientation;
-            var cell = ComputePortCell(Orientation, orientedSize, -1);
-            outputs.Add((cell, worldSide));
+            // Fallback: single output on forward side (center)
+            outputCells.Add(ComputePortCell(Orientation, orientedSize, -1));
         }
 
-        // Resolve visual prefab for this material (scene registry -> per-machine fallback)
-        GameObject visualPrefab = MaterialVisualRegistry.Instance != null
-            ? MaterialVisualRegistry.Instance.GetPrefab(mat)
-            : null;
-        if (visualPrefab == null) visualPrefab = itemVisualPrefab;
-
-        foreach (var (cell, worldSide) in outputs)
+        foreach (var cell in outputCells)
         {
             if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
 
@@ -142,26 +109,26 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             var belt = occGO.GetComponent<ConveyorBelt>();
             if (belt == null) continue;
 
-            // Reject belts facing back into the machine only; allow straight or turns
-            if (belt.Orientation == Opposite(worldSide)) continue;
+            // Must be a valid OUTPUT connection (belt facing away from machine)
+            if (!TryGetBeltConnection(belt, out var port, requireFacing: true) || port != MachinePortType.Output)
+                continue;
+
             if (belt.HasItem) continue;
 
+            // Create item (with optional visual); belt will place the visual at its center
             GameObject visual = null;
-            if (visualPrefab != null)
-                visual = Instantiate(visualPrefab);
+            if (itemVisualPrefab != null)
+                visual = Instantiate(itemVisualPrefab);
 
             var item = new ConveyorItem(mat, visual);
-
-            // Place on the belt; belt will snap/animate the visual as configured
             if (belt.TrySetItem(item))
-                return;
-
-            // Failed to place; cleanup visual and try next candidate
-            if (visual != null) Destroy(visual);
+                return; // successfully pushed
+            else if (visual != null)
+                Destroy(visual);
         }
     }
 
-    private void Upgrade()
+    public void Upgrade()
     {
         if (data == null)
         {
@@ -248,6 +215,35 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         _inputQueue.Enqueue(material);
         StartProduction(); // processes one item; stops; continues if queue has more
+    }
+
+    // PUBLIC: Can this machine accept this inventory item type?
+    public bool CanAcceptInventoryItem(MaterialData item)
+    {
+        if (item == null || Data == null) return false;
+        return Data.inputMaterial == MaterialType.None || Data.inputMaterial == item.materialType;
+    }
+
+    // PUBLIC: Try enqueue 'amount' units from inventory (by MaterialData). Returns how many were accepted.
+    public int TryQueueInventoryItem(MaterialData item, int amount)
+    {
+        if (item == null || amount <= 0) return 0;
+        return TryQueueInventoryMaterial(item.materialType, amount);
+    }
+
+    // PUBLIC: Try enqueue 'amount' units by material type. Returns how many were accepted.
+    public int TryQueueInventoryMaterial(MaterialType material, int amount)
+    {
+        if (Data == null || amount <= 0) return 0;
+        if (Data.inputMaterial != MaterialType.None && Data.inputMaterial != material) return 0;
+
+        // Enqueue all requested units (no capacity limit yet)
+        for (int i = 0; i < amount; i++)
+            _inputQueue.Enqueue(material);
+
+        // Kick off processing if idle
+        StartProduction();
+        return amount;
     }
 
     public bool TryGetBeltConnection(ConveyorBelt belt, out MachinePortType portType, bool requireFacing = true)
