@@ -116,11 +116,17 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             if (belt.HasItem) continue;
 
             // Create item (with optional visual); belt will place the visual at its center
-            GameObject visual = null;
-            if (itemVisualPrefab != null)
-                visual = Instantiate(itemVisualPrefab);
 
-            var item = new ConveyorItem(mat, visual);
+            Debug.Log("Should spawn output item");
+            GameObject visual = null;
+            if (MaterialVisualRegistry.Instance.GetPrefab(data.outputMaterial))
+                visual = Instantiate(MaterialVisualRegistry.Instance.GetPrefab(data.outputMaterial));
+            else
+            {
+                Debug.LogWarning($"Machine: No visual prefab for material {data.outputMaterial}");
+            }
+
+                var item = new ConveyorItem(mat, visual);
             if (belt.TrySetItem(item))
                 return; // successfully pushed
             else if (visual != null)
