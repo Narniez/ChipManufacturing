@@ -31,6 +31,9 @@ public class PlacementManager : MonoBehaviour
     [Header("Placement Preview")]
     [SerializeField] private Material placementPreviewMaterial;
 
+    [Header("Conveyor Test")]
+    [SerializeField] private GameObject conveyorItemPrefab;
+
     private CameraController _camCtrl;
 
     // State machine
@@ -47,6 +50,9 @@ public class PlacementManager : MonoBehaviour
     public KeyCode RotateKey => rotateKey;
     public bool EnableSecondFingerRotate => enableSecondFingerRotate;
     public SelectionUI SelectionUI => selectionUI;
+
+    // Track current selection for UI actions
+    public IGridOccupant CurrentSelection { get; private set; }
 
     void Awake()
     {
@@ -129,60 +135,6 @@ public class PlacementManager : MonoBehaviour
         // Start the generic preview placement so the preview material is applied.
         // The PreviewPlacementState handles bottom-left anchor, move/rotate, and confirm/restore.
         StartPrefabPlacement(machineData.prefab, machineData.defaultOrientation, machineData);
-
-
-        //if (factory == null || machineData == null || machineData.prefab == null)
-        //{
-        //    Debug.LogError("PlacementManager.StartPlacement: Missing factory or data/prefab.");
-        //    return;
-        //}
-
-        //if (!snapToGrid || gridService == null || !gridService.HasGrid)
-        //{
-        //    // Fallback to original preview flow if grid not ready
-        //    StartPrefabPlacement(machineData.prefab, machineData.defaultOrientation);
-        //    return;
-        //}
-
-        //var cam = Camera.main;
-        //Vector2 screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-        //Vector3 world = ScreenToGround(screenCenter, cam);
-
-        //// Bottom-left anchor desired from the screen-center cell
-        //GridOrientation orientation = machineData.defaultOrientation;
-        //Vector2Int size = machineData.size.OrientedSize(orientation);
-        //Vector2Int desiredAnchor = gridService.WorldToCell(world);
-        //Vector2Int anchor = AdjustAnchorInsideGrid(desiredAnchor, size);
-
-        //// World for centered pivot at footprint center
-        //// Use a temporary instance to compute bottom offset accurately
-        //var temp = factory.CreateMachine(machineData, Vector3.zero);
-        //float yOff = ComputePivotBottomOffset(temp.transform);
-        //DestroyImmediate(temp.gameObject);
-
-        //world = AnchorToWorldCenter(anchor, size, yOff);
-
-        //// Instantiate and commit
-        //Machine machine = factory.CreateMachine(machineData, world);
-        //if (machine.TryGetComponent<IGridOccupant>(out var occ))
-        //{
-        //    if (PlacementRules.Validate(gridService, occ, anchor, orientation, out var error))
-        //    {
-        //        occ.SetPlacement(anchor, orientation);
-        //        machine.transform.position = world;
-        //        gridService.SetAreaOccupant(anchor, size, machine.gameObject);
-        //    }
-        //    else
-        //    {
-        //        Debug.LogWarning($"Cannot place new machine: {error}");
-        //        Destroy(machine.gameObject);
-        //    }
-        //}
-        //else
-        //{
-        //    Debug.LogError("Placed machine prefab is missing IGridOccupant.");
-        //    Destroy(machine.gameObject);
-        //}
     }
 
     // SHOP BUTTONS: call these from UI (OnClick)
@@ -296,24 +248,43 @@ public class PlacementManager : MonoBehaviour
         _camCtrl.NudgeWorld(move);
     }
 
-    public GameObject GetConveyorPrefab(bool isTurn) =>
-        isTurn ? conveyorTurnPrefab : conveyorStraightPrefab;
+    public GameObject GetConveyorPrefab(bool isTurn) => isTurn ? conveyorTurnPrefab : conveyorStraightPrefab;
 
-    private Vector2Int AdjustAnchorInsideGrid(Vector2Int desiredAnchor, Vector2Int size)
+    internal void SetCurrentSelection(IGridOccupant occ)
     {
-        if (gridService == null || !gridService.HasGrid) return desiredAnchor;
-        int maxX = gridService.Cols - size.x;
-        int maxY = gridService.Rows - size.y;
-        return new Vector2Int(
-            Mathf.Clamp(desiredAnchor.x, 0, Mathf.Max(0, maxX)),
-            Mathf.Clamp(desiredAnchor.y, 0, Mathf.Max(0, maxY))
-        );
+        CurrentSelection = occ;
     }
 
-    private static Vector3 ScreenToGround(Vector2 screenPos, Camera cam)
+    public void SpawnTestItemOnSelectedBelt() => SpawnTestItemOnSelectedBelt(MaterialType.Silicon);
+
+    // UI button: spawn a test item on the selected belt
+    public void SpawnTestItemOnSelectedBelt(MaterialType material)
     {
-        Ray ray = cam.ScreenPointToRay(screenPos);
-        Plane plane = new Plane(Vector3.up, Vector3.zero);
-        return plane.Raycast(ray, out float enter) ? ray.GetPoint(enter) : Vector3.zero;
+        if (!(CurrentSelection is ConveyorBelt belt))
+        {
+            Debug.LogWarning("No conveyor belt selected.");
+            return;
+        }
+
+        if (belt.HasItem)
+        {
+            Debug.Log("Selected belt already has an item.");
+            return;
+        }
+
+        // Prefer material registry, fallback to global test prefab
+        GameObject visualPrefab = MaterialVisualRegistry.Instance != null ? MaterialVisualRegistry.Instance.GetPrefab(material) : null;
+        if (visualPrefab == null) visualPrefab = conveyorItemPrefab;
+
+        GameObject visual = null;
+        if (visualPrefab != null)
+            visual = Instantiate(visualPrefab);
+
+        var item = new ConveyorItem(material, visual);
+        if (!belt.TrySetItem(item))
+        {
+            if (visual != null) Destroy(visual);
+            Debug.Log("Failed to place item on belt.");
+        }
     }
 }

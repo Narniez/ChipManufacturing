@@ -1,11 +1,18 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 {
+    [Header("Optional visuals")]
+    [SerializeField, Tooltip("Visual prefab used for produced items on belts (optional)")]
+    private GameObject itemVisualPrefab;
+
     private MachineData data;   // (Optional) allow prefab default; factory may overwrite.
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
+
+    private readonly Queue<MaterialType> _inputQueue = new Queue<MaterialType>();
 
     public event System.Action<MaterialType, Vector3> OnMaterialProduced;
 
@@ -16,9 +23,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public void Initialize(MachineData machineData)
     {
         data = machineData;
-        StartProduction();
+        // StartProduction is triggered by input delivery (per item), not here
     }
 
+    // Start one production cycle if there is pending input and not already producing
     private void StartProduction()
     {
         if (data == null)
@@ -27,25 +35,103 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             return;
         }
 
-        if (productionRoutine != null)
-            StopCoroutine(productionRoutine);
+        if (productionRoutine != null) return;          // already processing one
+        if (_inputQueue.Count == 0) return;             // nothing to process
 
-        productionRoutine = StartCoroutine(ProductionLoop());
+        productionRoutine = StartCoroutine(ProcessOne());
     }
 
-    private IEnumerator ProductionLoop()
+    // Process exactly one input from the queue, produce output, then stop
+    private IEnumerator ProcessOne()
     {
-        while (true)
-        {
-            yield return new WaitForSeconds(data.processingTime);
-            ProduceOutput();
-        }
+        var consumed = _inputQueue.Dequeue();
+        yield return new WaitForSeconds(data.processingTime);
+
+        ProduceOutput();
+
+        // Stop this cycle
+        productionRoutine = null;
+
+        // If more inputs are queued, start next cycle
+        if (_inputQueue.Count > 0)
+            StartProduction();
     }
 
     private void ProduceOutput()
     {
         if (data == null) return;
+
+        // Optional external signal
         OnMaterialProduced?.Invoke(data.outputMaterial, transform.position);
+        Debug.Log($"Machine produced {data.outputMaterial}");
+
+        // Try push onto an output belt (if connected and facing away)
+        TryPushOutputToBelt(data.outputMaterial);
+    }
+
+    private void TryPushOutputToBelt(MaterialType mat)
+    {
+        // Find a connected output belt
+        var grid = FindFirstObjectByType<GridService>();
+        if (grid == null || !grid.HasGrid) return;
+
+        // Use declared ports or fallback to forward-center
+        var orientedSize = BaseSize.OrientedSize(Orientation);
+        List<Vector2Int> outputCells = new List<Vector2Int>();
+
+        if (data != null && data.ports != null && data.ports.Count > 0)
+        {
+            foreach (var p in data.ports)
+            {
+                if (p.kind != MachinePortType.Output) continue;
+                var worldSide = RotateSide(p.side, Orientation);
+                outputCells.Add(ComputePortCell(p.side, orientedSize, p.offset));
+            }
+        }
+        else
+        {
+            // Fallback: single output on forward side (center)
+            outputCells.Add(ComputePortCell(Orientation, orientedSize, -1));
+        }
+
+        foreach (var cell in outputCells)
+        {
+            if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
+
+            GameObject occGO = cd.occupant as GameObject;
+            if (occGO == null)
+            {
+                var comp = cd.occupant as Component;
+                occGO = comp != null ? comp.gameObject : null;
+            }
+            if (occGO == null) continue;
+
+            var belt = occGO.GetComponent<ConveyorBelt>();
+            if (belt == null) continue;
+
+            // Must be a valid OUTPUT connection (belt facing away from machine)
+            if (!TryGetBeltConnection(belt, out var port, requireFacing: true) || port != MachinePortType.Output)
+                continue;
+
+            if (belt.HasItem) continue;
+
+            // Create item (with optional visual); belt will place the visual at its center
+
+            Debug.Log("Should spawn output item");
+            GameObject visual = null;
+            if (MaterialVisualRegistry.Instance.GetPrefab(data.outputMaterial))
+                visual = Instantiate(MaterialVisualRegistry.Instance.GetPrefab(data.outputMaterial));
+            else
+            {
+                Debug.LogWarning($"Machine: No visual prefab for material {data.outputMaterial}");
+            }
+
+                var item = new ConveyorItem(mat, visual);
+            if (belt.TrySetItem(item))
+                return; // successfully pushed
+            else if (visual != null)
+                Destroy(visual);
+        }
     }
 
     public void Upgrade()
@@ -61,7 +147,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             var upgrade = data.upgrades[upgradeLevel];
             data.processingTime *= upgrade.prrocessingSpeedMultiplier;
             upgradeLevel++;
-            StartProduction();
+            // Production continues per-item; no need to restart here
         }
     }
 
@@ -74,12 +160,12 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             Debug.LogError("Machine.OnTap: MachineData not set.");
             return;
         }
-        Debug.Log($"Machine {data.machineName} tapped. Upgrade level: {upgradeLevel}");
+        Debug.Log($"Machine {data.machineName} tapped. Upgrade level: {upgradeLevel}, inQ={_inputQueue.Count}, producing={(productionRoutine != null)}");
     }
 
     public void OnHold()
     {
-        // Optional: highlight / feedback when hold begins before drag.
+        // Optional
     }
 
     // --- Drag (IDraggable) ---
@@ -87,39 +173,22 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public bool CanDrag => true;
     public Transform DragTransform => transform;
 
-    public void OnDragStart()
-    {
-        // Optional: visual pickup (e.g., raise slightly, glow)
-    }
-
-    public void OnDrag(Vector3 worldPosition)
-    {
-        DragTransform.position = worldPosition;
-    }
-
-    public void OnDragEnd()
-    {
-        // Optional: finalize visual, drop animation
-    }
-
-
+    public void OnDragStart() { }
+    public void OnDrag(Vector3 worldPosition) { DragTransform.position = worldPosition; }
+    public void OnDragEnd() { }
 
     // --- Grid Footprint & Placement (IGridOccupant) ---
 
-    // Base (unrotated) grid size from MachineData
     public Vector2Int BaseSize => data != null ? data.size : Vector2Int.one;
 
     public GridOrientation Orientation { get; private set; } = GridOrientation.North;
-    public Vector2Int Anchor { get; private set; }   // Bottom-left cell occupied in current orientation
+    public Vector2Int Anchor { get; private set; }
 
     public void SetPlacement(Vector2Int anchor, GridOrientation orientation)
     {
         Anchor = anchor;
         Orientation = orientation;
-
         transform.rotation = orientation.ToRotation();
-        // World position is applied externally during drag; optionally sync here if needed:
-        ///ApplyWorldFromPlacement(gridServiceReference);
     }
 
     public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation orientation)
@@ -129,7 +198,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         return grid.IsAreaInside(anchor, size) && grid.IsAreaFree(anchor, size, this);
     }
 
-    // Optional helper if you store a gridService and want to recompute world from anchor later:
     public void ApplyWorldFromPlacement(GridService grid)
     {
         if (grid == null) return;
@@ -139,4 +207,130 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         float wz = grid.Origin.z + (Anchor.y + size.y * 0.5f) * grid.CellSize;
         transform.position = new Vector3(wx, y, wz);
     }
+
+    // --- Conveyor I/O ---
+
+    // Called by belts when a conveyor item arrives on an INPUT port
+    public void OnConveyorItemArrived(MaterialType material)
+    {
+        if (Data == null) return;
+
+        // Accept only matching inputs (or None = any)
+        if (Data.inputMaterial != MaterialType.None && Data.inputMaterial != material)
+            return;
+
+        _inputQueue.Enqueue(material);
+        StartProduction(); // processes one item; stops; continues if queue has more
+    }
+
+    // PUBLIC: Can this machine accept this inventory item type?
+    public bool CanAcceptInventoryItem(MaterialData item)
+    {
+        if (item == null || Data == null) return false;
+        return Data.inputMaterial == MaterialType.None || Data.inputMaterial == item.materialType;
+    }
+
+    // PUBLIC: Try enqueue 'amount' units from inventory (by MaterialData). Returns how many were accepted.
+    public int TryQueueInventoryItem(MaterialData item, int amount)
+    {
+        if (item == null || amount <= 0) return 0;
+        return TryQueueInventoryMaterial(item.materialType, amount);
+    }
+
+    // PUBLIC: Try enqueue 'amount' units by material type. Returns how many were accepted.
+    public int TryQueueInventoryMaterial(MaterialType material, int amount)
+    {
+        if (Data == null || amount <= 0) return 0;
+        if (Data.inputMaterial != MaterialType.None && Data.inputMaterial != material) return 0;
+
+        // Enqueue all requested units (no capacity limit yet)
+        for (int i = 0; i < amount; i++)
+            _inputQueue.Enqueue(material);
+
+        // Kick off processing if idle
+        StartProduction();
+        return amount;
+    }
+
+    public bool TryGetBeltConnection(ConveyorBelt belt, out MachinePortType portType, bool requireFacing = true)
+    {
+        portType = MachinePortType.None;
+        if (belt == null) return false;
+
+        if (data == null || data.ports == null || data.ports.Count == 0)
+        {
+            // Fallback: single output on the machine forward side, centered
+            if (IsBeltOnSide(belt, Orientation, MachinePortType.Output, offset: -1, requireFacing))
+            {
+                portType = MachinePortType.Output;
+                return true;
+            }
+            return false;
+        }
+
+        foreach (var port in data.ports)
+        {
+            if (IsBeltOnSide(belt, port.side, port.kind, port.offset, requireFacing))
+            {
+                portType = port.kind;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public IEnumerable<Vector2Int> GetPortCells(MachinePortType kind)
+    {
+        var orientedSize = BaseSize.OrientedSize(Orientation);
+
+        if (data == null || data.ports == null || data.ports.Count == 0)
+        {
+            if (kind == MachinePortType.Output)
+                yield return ComputePortCell(Orientation, orientedSize, -1);
+            yield break;
+        }
+
+        foreach (var port in data.ports)
+        {
+            if (port.kind != kind) continue;
+            yield return ComputePortCell(port.side, orientedSize, port.offset);
+        }
+    }
+
+    private bool IsBeltOnSide(ConveyorBelt belt, GridOrientation localSide, MachinePortType kind, int offset, bool requireFacing)
+    {
+        var orientedSize = BaseSize.OrientedSize(Orientation);
+        GridOrientation worldSide = RotateSide(localSide, Orientation);
+        Vector2Int portCell = ComputePortCell(localSide, orientedSize, offset);
+
+        if (belt.Anchor != portCell) return false;
+
+        if (!requireFacing) return true;
+
+        if (kind == MachinePortType.Output) return belt.Orientation == worldSide;            // away
+        if (kind == MachinePortType.Input)  return belt.Orientation == Opposite(worldSide);  // toward
+        return false;
+    }
+
+    private Vector2Int ComputePortCell(GridOrientation localSide, Vector2Int size, int offset)
+    {
+        GridOrientation side = RotateSide(localSide, Orientation);
+        int sideLen = (side == GridOrientation.North || side == GridOrientation.South) ? size.x : size.y;
+        int idx = offset < 0 ? Mathf.Max(0, (sideLen - 1) / 2) : Mathf.Clamp(offset, 0, Mathf.Max(0, sideLen - 1));
+
+        switch (side)
+        {
+            case GridOrientation.North: return new Vector2Int(Anchor.x + idx, Anchor.y + size.y);
+            case GridOrientation.South: return new Vector2Int(Anchor.x + idx, Anchor.y - 1);
+            case GridOrientation.East:  return new Vector2Int(Anchor.x + size.x, Anchor.y + idx);
+            case GridOrientation.West:  return new Vector2Int(Anchor.x - 1, Anchor.y + idx);
+            default: return Anchor;
+        }
+    }
+
+    private static GridOrientation RotateSide(GridOrientation local, GridOrientation by)
+        => (GridOrientation)(((int)local + (int)by) & 3);
+
+    private static GridOrientation Opposite(GridOrientation o)
+        => (GridOrientation)(((int)o + 2) & 3);
 }

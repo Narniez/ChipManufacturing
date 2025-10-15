@@ -1,15 +1,19 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
-public class ConveyorBelt : MonoBehaviour, IGridOccupant, IConveyorReciever, IInteractable
+public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
 {
     [SerializeField] private GridOrientation orientation = GridOrientation.North;
-    public GridOrientation Orientation => orientation;
 
+    [Header("Item Visual")]
+    [SerializeField, Tooltip("Y offset for item visuals above ground.")] 
+    private float itemHeight = 0.8f;
+
+    public GridOrientation Orientation => orientation;
     public Vector2Int Anchor { get; private set; }
     public Vector2Int BaseSize => Vector2Int.one;
 
-    private ConveyorItem _item;    
+    private ConveyorItem _item;         
     private GridService _grid;
 
     private void Awake()
@@ -30,18 +34,26 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IConveyorReciever, IIn
     public bool HasItem => _item != null;
     public ConveyorItem PeekItem() => _item;
 
-    public bool TrySetItem(ConveyorItem item)
+    // snapVisual: true for initial spawn; false for belt-to-belt handoff (we animate)
+    public bool TrySetItem(ConveyorItem item, bool snapVisual = true)
     {
-        if (_item != null) return false;
+        if (_item != null || item == null) return false;
         _item = item;
+
+        if (snapVisual && _item.Visual != null && _grid != null)
+        {
+            _item.Visual.transform.position = GetWorldCenter();
+            _item.T = 1f;
+            _item.Duration = 0f;
+        }
         return true;
     }
 
     public ConveyorItem TakeItem()
     {
-        var it = _item;
+        var item = _item;
         _item = null;
-        return it;
+        return item;
     }
 
     // IGridOccupant
@@ -52,7 +64,13 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IConveyorReciever, IIn
         transform.rotation = newOrientation.ToRotation();
     }
 
-    // IDraggable (through IGridOccupant chain) – you can disable dragging if not needed
+    public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation newOrientation)
+    {
+        if (grid == null) return false;
+        return grid.IsAreaInside(anchor, Vector2Int.one) && grid.IsAreaFree(anchor, Vector2Int.one, this);
+    }
+
+    // IDraggable
     public bool CanDrag => true;
     public Transform DragTransform => transform;
     public void OnDragStart() { }
@@ -62,49 +80,115 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IConveyorReciever, IIn
     // IInteractable
     public void OnTap()
     {
-        Debug.Log($"Belt tapped at {Anchor}, item={(HasItem ? _item.Material.ToString() : "None")}");
+        Debug.Log($"Belt {Anchor}, orientation {orientation}, hasItem={HasItem}");
     }
     public void OnHold() { }
-
-    // Receiver interface
-    public bool CanAccept(MaterialType material) => _item == null;
-    public bool TryAccept(ConveyorItem item) => TrySetItem(item);
 
     // Movement logic invoked by tick system
     public void TickMoveAttempt()
     {
-        if (_item == null) return;
+        if (_item == null || _grid == null || !_grid.HasGrid) return;
 
-        Vector2Int nextCell = Anchor + Orientation.ToDirection().ToDelta();
-        if (_grid == null || !_grid.IsInside(nextCell)) return;
+        var forwardDir = orientation;
+        var rightDir   = orientation.RotatedCW();
+        var leftDir    = orientation.RotatedCCW();
 
-        if (_grid.TryGetCell(nextCell, out var data) && data.occupant != null)
-        {
-            var go = (data.occupant as Component)?.gameObject;
-            if (go == null) return;
+        var forwardCell = Anchor + ToDelta(forwardDir);
+        var rightCell   = Anchor + ToDelta(rightDir);
+        var leftCell    = Anchor + ToDelta(leftDir);
 
-            // Next belt?
-            if (go.TryGetComponent<ConveyorBelt>(out var nextBelt))
-            {
-                if (nextBelt.CanAccept(_item.Material))
-                {
-                    var moving = TakeItem();
-                    nextBelt.TryAccept(moving);
-                }
-                return;
-            }
+        if (TryMoveOntoNeighborBelt(forwardCell)) return;
+        if (TryMoveOntoNeighborBelt(rightCell))   return;
+        if (TryMoveOntoNeighborBelt(leftCell))    return;
 
-            // A machine? (Optional future)
-            if (go.TryGetComponent<Machine>(out var machine))
-            {
-                // Implement machine.TryAcceptMaterial if desired
-                // if(machine.TryAcceptMaterial(_item.Material, Orientation.ToDirection())) { TakeItem(); }
-            }
-        }
+        // Forward-only machine delivery
+        if (TryDeliverToMachine(forwardCell)) return;
     }
 
-    public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation orientation)
+    private bool TryMoveOntoNeighborBelt(Vector2Int cell)
     {
-        throw new System.NotImplementedException();
+        if (!_grid.TryGetCell(cell, out var data) || data.occupant == null) return false;
+
+        GameObject occGO = data.occupant as GameObject;
+        if (occGO == null)
+        {
+            var comp = data.occupant as Component;
+            occGO = comp != null ? comp.gameObject : null;
+        }
+        if (occGO == null) return false;
+
+        var nextBelt = occGO.GetComponent<ConveyorBelt>();
+        if (nextBelt == null) return false;
+
+        if (IsOpposite(nextBelt.Orientation, orientation)) return false;
+        if (nextBelt.HasItem) return false;
+
+        // Prepare animation from current center to next center
+        var moving = TakeItem();
+        if (moving.Visual != null)
+        {
+            var from = GetWorldCenter();
+            var to   = nextBelt.GetWorldCenter();
+            var dur  = BeltSystemRuntime.Instance != null ? BeltSystemRuntime.Instance.ItemMoveDuration : 0.2f;
+            moving.BeginMove(from, to, dur);
+        }
+
+        // Handoff without snapping visual
+        if (nextBelt.TrySetItem(moving, snapVisual: false))
+            return true;
+
+        // Failed, put it back (rare)
+        TrySetItem(moving, snapVisual: true);
+        return false;
+    }
+
+    private bool TryDeliverToMachine(Vector2Int cell)
+    {
+        if (!_grid.TryGetCell(cell, out var data) || data.occupant == null) return false;
+
+        GameObject occGO = data.occupant as GameObject;
+        if (occGO == null)
+        {
+            var comp = data.occupant as Component;
+            occGO = comp != null ? comp.gameObject : null;
+        }
+        if (occGO == null) return false;
+
+        var machine = occGO.GetComponent<Machine>();
+        if (machine == null) return false;
+
+        if (machine.TryGetBeltConnection(this, out var portType, requireFacing: true) &&
+            portType == MachinePortType.Input)
+        {
+            var moving = TakeItem();
+            if (moving.Visual != null) Destroy(moving.Visual);
+            machine.OnConveyorItemArrived(moving.Material);
+            return true;
+        }
+        return false;
+    }
+
+    public Vector3 GetWorldCenter()
+    {
+        float yBase = _grid != null ? _grid.Origin.y : 0f;
+        return (_grid != null
+            ? _grid.CellToWorldCenter(Anchor, yBase)
+            : transform.position)
+            + Vector3.up * itemHeight;
+    }
+
+    private static bool IsOpposite(GridOrientation a, GridOrientation b)
+        => (int)a == (((int)b + 2) & 3);
+
+    private static Vector2Int ToDelta(GridOrientation o)
+    {
+        switch (o)
+        {
+            case GridOrientation.North: return Vector2Int.up;
+            case GridOrientation.East:  return Vector2Int.right;
+            case GridOrientation.South: return Vector2Int.down;
+            case GridOrientation.West:  return Vector2Int.left;
+            default: return Vector2Int.zero;
+        }
     }
 }

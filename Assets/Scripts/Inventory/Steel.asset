@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: 1
   materialName: Steel
-  materialType: 0
+  materialType: 1
   materialCategory: 0
   icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   unit: pcs

@@ -3,10 +3,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
     [Header("Bound Data")]
-    [SerializeField] private MaterialData slotItem;  
+    [SerializeField] private MaterialData slotItem;
     [SerializeField] private int slotQuantity = 0;
 
     [Header("UI")]
@@ -15,7 +15,6 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     [SerializeField] private SellPopup sellPopup;
 
     [Header("Drag")]
-    [SerializeField] private Canvas dragCanvasOverride;
     [SerializeField] private CanvasGroup canvasGroup;
 
     private Canvas _canvas;
@@ -39,7 +38,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         CurrentSlot = GetComponentInParent<InventorySlot>();
         _originalParent = transform.parent;
 
-        _canvas = dragCanvasOverride != null ? dragCanvasOverride : GetComponentInParent<Canvas>();
+        _canvas = GetComponentInParent<Canvas>();
         SetStats();
     }
 
@@ -74,12 +73,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         SetStats();
     }
 
-    public void OpenSellPopup()
-    {
-        if (slotItem == null || slotQuantity <= 0 || sellPopup == null) return;
-        sellPopup.gameObject.SetActive(true);
-        sellPopup.OpenFor(this);
-    }
+   
     // ---------------- DRAG / DROP ----------------
 
     public void OnBeginDrag(PointerEventData e)
@@ -118,6 +112,56 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             var slot = _originalParent ? _originalParent.GetComponentInParent<InventorySlot>() : null;
             if (slot != null) CurrentSlot = slot;
         }
+
+        // --- Unlock input if dropped on game view (not UI) ---
+        if (EventSystem.current != null && !EventSystem.current.IsPointerOverGameObject())
+        {
+            // Raycast into the world to find a machine
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out RaycastHit hit, 100f))
+            {
+                var machine = hit.collider.GetComponentInChildren<Machine>();
+                
+                if (machine != null)
+                {
+                    Debug.Log($"Dropped item on machine: {machine?.name}");
+                    int used = machine.TryQueueInventoryItem(slotItem, slotQuantity);
+                    if (used > 0)
+                    {
+                        // Remove from inventory
+                        if (InventoryService.Instance != null)
+                            InventoryService.Instance.TryRemove(slotItem.id, used);
+
+                        // Update UI item or destroy if empty
+                        slotQuantity -= used;
+                        if (slotQuantity <= 0)
+                            Destroy(gameObject);
+                        else
+                            SetStats();
+
+                        return;
+                    }
+                }
+            }
+
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                var camController = cam.GetComponent<CameraController>();
+                if (camController != null)
+                    camController.SetInputLocked(false);
+            }
+        }
     }
     public void NotifyDroppedHandled() => _dropHandledThisDrag = true;
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (sellPopup == null) return;
+
+        if (sellPopup.gameObject.activeSelf)
+            sellPopup.Close();
+        else
+            sellPopup.OpenFor(this);
+    }
 }

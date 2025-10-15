@@ -184,6 +184,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cellSize: 1
   origin: {x: 0, y: 0, z: 0}
+  cols: -1
+  rows: -1
 --- !u!1 &848853607
 GameObject:
   m_ObjectHideFlags: 0
