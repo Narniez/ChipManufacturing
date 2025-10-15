@@ -80,7 +80,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     // IInteractable
     public void OnTap()
     {
-        Debug.Log($"Belt {Anchor}, orientation {orientation}, hasItem={HasItem}");
+        //Debug.Log($"Belt {Anchor}, orientation {orientation}, hasItem={HasItem}");
     }
     public void OnHold() { }
 

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 {
@@ -8,76 +9,141 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     [SerializeField, Tooltip("Visual prefab used for produced items on belts (optional)")]
     private GameObject itemVisualPrefab;
 
-    private MachineData data;   // (Optional) allow prefab default; factory may overwrite.
+    private MachineData data;   // Factory sets this via Initialize
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
 
+    // Legacy single-input queue (used only if no recipes defined)
     private readonly Queue<MaterialType> _inputQueue = new Queue<MaterialType>();
 
-    public event System.Action<MaterialType, Vector3> OnMaterialProduced;
+    // Recipe-mode input buffer per material
+    private readonly Dictionary<MaterialType, int> _buffer = new Dictionary<MaterialType, int>();
+    private MachineRecipe _currentRecipe;
 
-    // --- Production / Data ---
+    public event Action<MaterialType, Vector3> OnMaterialProduced;
+    public event Action<Machine> OnQueueChanged; // UI can subscribe
 
+    // Expose minimal state
     public MachineData Data => data;
+    public bool IsProducing => productionRoutine != null;
 
     public void Initialize(MachineData machineData)
     {
         data = machineData;
-        // StartProduction is triggered by input delivery (per item), not here
+        _buffer.Clear();
+        _inputQueue.Clear();
+        _currentRecipe = null;
     }
 
-    // Start one production cycle if there is pending input and not already producing
+    // Try to start one cycle if inputs are ready
     private void StartProduction()
     {
-        if (data == null)
+        if (data == null) { Debug.LogError("Machine.StartProduction: MachineData not set."); return; }
+        if (productionRoutine != null) return;
+
+        if (data.HasRecipes)
         {
-            Debug.LogError("Machine.StartProduction: MachineData not set.");
-            return;
+            // Find a satisfiable recipe
+            var recipe = FindReadyRecipe();
+            if (recipe == null) return;
+
+            // Consume inputs up-front
+            ConsumeInputs(recipe);
+            _currentRecipe = recipe;
+
+            float dur = recipe.processingTimeOverride > 0f ? recipe.processingTimeOverride : data.processingTime;
+            productionRoutine = StartCoroutine(ProcessOneRecipe(dur));
+        }
+        else
+        {
+            if (_inputQueue.Count == 0) return;
+            productionRoutine = StartCoroutine(ProcessOneLegacy());
+        }
+    }
+
+    private MachineRecipe FindReadyRecipe()
+    {
+        if (!data.HasRecipes) return null;
+
+        for (int i = 0; i < data.recipes.Count; i++)
+        {
+            var r = data.recipes[i];
+            bool ok = true;
+            for (int j = 0; j < r.inputs.Count; j++)
+            {
+                var req = r.inputs[j];
+                _buffer.TryGetValue(req.material, out int have);
+                if (have < Mathf.Max(1, req.amount)) { ok = false; break; }
+            }
+            if (ok) return r;
+        }
+        return null;
+    }
+
+    private void ConsumeInputs(MachineRecipe recipe)
+    {
+        for (int i = 0; i < recipe.inputs.Count; i++)
+        {
+            var req = recipe.inputs[i];
+            if (_buffer.TryGetValue(req.material, out int have))
+            {
+                _buffer[req.material] = Mathf.Max(0, have - Mathf.Max(1, req.amount));
+            }
+        }
+        OnQueueChanged?.Invoke(this);
+    }
+
+    private IEnumerator ProcessOneRecipe(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+
+        // Produce all outputs of current recipe
+        if (_currentRecipe != null)
+        {
+            for (int i = 0; i < _currentRecipe.outputs.Count; i++)
+            {
+                var outStack = _currentRecipe.outputs[i];
+                int count = Mathf.Max(1, outStack.amount);
+                for (int c = 0; c < count; c++)
+                    ProduceOneOutput(outStack.material);
+            }
         }
 
-        if (productionRoutine != null) return;          // already processing one
-        if (_inputQueue.Count == 0) return;             // nothing to process
+        productionRoutine = null;
+        _currentRecipe = null;
 
-        productionRoutine = StartCoroutine(ProcessOne());
+        // Attempt next recipe if inputs are available
+        StartProduction();
     }
 
-    // Process exactly one input from the queue, produce output, then stop
-    private IEnumerator ProcessOne()
+    private IEnumerator ProcessOneLegacy()
     {
+        // Consume one and process
         var consumed = _inputQueue.Dequeue();
+        OnQueueChanged?.Invoke(this);
+
         yield return new WaitForSeconds(data.processingTime);
 
-        ProduceOutput();
+        // Produce legacy single output (data.outputMaterial)
+        ProduceOneOutput(data.outputMaterial);
 
-        // Stop this cycle
         productionRoutine = null;
-
-        // If more inputs are queued, start next cycle
-        if (_inputQueue.Count > 0)
-            StartProduction();
+        StartProduction();
     }
 
-    private void ProduceOutput()
+    private void ProduceOneOutput(MaterialType mat)
     {
-        if (data == null) return;
-
-        // Optional external signal
-        OnMaterialProduced?.Invoke(data.outputMaterial, transform.position);
-        Debug.Log($"Machine produced {data.outputMaterial}");
-
-        // Try push onto an output belt (if connected and facing away)
-        TryPushOutputToBelt(data.outputMaterial);
+        OnMaterialProduced?.Invoke(mat, transform.position);
+        TryPushOutputToBelt(mat);
     }
 
     private void TryPushOutputToBelt(MaterialType mat)
     {
-        // Find a connected output belt
         var grid = FindFirstObjectByType<GridService>();
         if (grid == null || !grid.HasGrid) return;
 
-        // Use declared ports or fallback to forward-center
         var orientedSize = BaseSize.OrientedSize(Orientation);
-        List<Vector2Int> outputCells = new List<Vector2Int>();
+        var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
 
         if (data != null && data.ports != null && data.ports.Count > 0)
         {
@@ -85,16 +151,22 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             {
                 if (p.kind != MachinePortType.Output) continue;
                 var worldSide = RotateSide(p.side, Orientation);
-                outputCells.Add(ComputePortCell(p.side, orientedSize, p.offset));
+                var cell = ComputePortCell(p.side, orientedSize, p.offset);
+                outputs.Add((cell, worldSide));
             }
         }
         else
         {
-            // Fallback: single output on forward side (center)
-            outputCells.Add(ComputePortCell(Orientation, orientedSize, -1));
+            var worldSide = Orientation;
+            var cell = ComputePortCell(Orientation, orientedSize, -1);
+            outputs.Add((cell, worldSide));
         }
 
-        foreach (var cell in outputCells)
+        // Resolve item visual
+        GameObject visualPrefab = MaterialVisualRegistry.Instance != null ? MaterialVisualRegistry.Instance.GetPrefab(mat) : null;
+        if (visualPrefab == null) visualPrefab = itemVisualPrefab;
+
+        foreach (var (cell, worldSide) in outputs)
         {
             if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
 
@@ -109,50 +181,33 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             var belt = occGO.GetComponent<ConveyorBelt>();
             if (belt == null) continue;
 
-            // Must be a valid OUTPUT connection (belt facing away from machine)
-            if (!TryGetBeltConnection(belt, out var port, requireFacing: true) || port != MachinePortType.Output)
-                continue;
-
+            // Allow straight or turns; only reject if pointed back into the machine
+            if (belt.Orientation == Opposite(worldSide)) continue;
             if (belt.HasItem) continue;
 
-            // Create item (with optional visual); belt will place the visual at its center
-
-            Debug.Log("Should spawn output item");
             GameObject visual = null;
-            if (MaterialVisualRegistry.Instance.GetPrefab(data.outputMaterial))
-                visual = Instantiate(MaterialVisualRegistry.Instance.GetPrefab(data.outputMaterial));
-            else
-            {
-                Debug.LogWarning($"Machine: No visual prefab for material {data.outputMaterial}");
-            }
+            if (visualPrefab != null) visual = Instantiate(visualPrefab);
 
-                var item = new ConveyorItem(mat, visual);
+            var item = new ConveyorItem(mat, visual);
             if (belt.TrySetItem(item))
-                return; // successfully pushed
-            else if (visual != null)
-                Destroy(visual);
+                return;
+
+            if (visual != null) Destroy(visual);
         }
     }
 
     public void Upgrade()
     {
-        if (data == null)
-        {
-            Debug.LogError("Machine.Upgrade: MachineData not set.");
-            return;
-        }
-
+        if (data == null) { Debug.LogError("Machine.Upgrade: MachineData not set."); return; }
         if (upgradeLevel < data.upgrades.Count)
         {
             var upgrade = data.upgrades[upgradeLevel];
             data.processingTime *= upgrade.prrocessingSpeedMultiplier;
             upgradeLevel++;
-            // Production continues per-item; no need to restart here
         }
     }
 
     // --- Interaction (IInteractable) ---
-
     public void OnTap()
     {
         if (data == null)
@@ -160,27 +215,19 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             Debug.LogError("Machine.OnTap: MachineData not set.");
             return;
         }
-        Debug.Log($"Machine {data.machineName} tapped. Upgrade level: {upgradeLevel}, inQ={_inputQueue.Count}, producing={(productionRoutine != null)}");
+        Debug.Log($"Machine {data.machineName} tapped.");
     }
-
-    public void OnHold()
-    {
-        // Optional
-    }
+    public void OnHold() { }
 
     // --- Drag (IDraggable) ---
-
     public bool CanDrag => true;
     public Transform DragTransform => transform;
-
     public void OnDragStart() { }
     public void OnDrag(Vector3 worldPosition) { DragTransform.position = worldPosition; }
     public void OnDragEnd() { }
 
     // --- Grid Footprint & Placement (IGridOccupant) ---
-
     public Vector2Int BaseSize => data != null ? data.size : Vector2Int.one;
-
     public GridOrientation Orientation { get; private set; } = GridOrientation.North;
     public Vector2Int Anchor { get; private set; }
 
@@ -208,50 +255,83 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         transform.position = new Vector3(wx, y, wz);
     }
 
-    // --- Conveyor I/O ---
+    // --- Conveyor I/O & Inventory bridge ---
 
     // Called by belts when a conveyor item arrives on an INPUT port
     public void OnConveyorItemArrived(MaterialType material)
     {
         if (Data == null) return;
 
-        // Accept only matching inputs (or None = any)
-        if (Data.inputMaterial != MaterialType.None && Data.inputMaterial != material)
+        if (data.HasRecipes)
+        {
+            // Accept only materials that appear in at least one recipe
+            if (!AppearsInAnyRecipe(material)) return;
+            AddToBuffer(material, 1);
+            OnQueueChanged?.Invoke(this);
+            StartProduction();
             return;
+        }
 
+        // Legacy single input
+        if (Data.inputMaterial != MaterialType.None && Data.inputMaterial != material) return;
         _inputQueue.Enqueue(material);
-        StartProduction(); // processes one item; stops; continues if queue has more
+        OnQueueChanged?.Invoke(this);
+        StartProduction();
     }
 
-    // PUBLIC: Can this machine accept this inventory item type?
     public bool CanAcceptInventoryItem(MaterialData item)
     {
         if (item == null || Data == null) return false;
+        if (data.HasRecipes) return AppearsInAnyRecipe(item.materialType);
         return Data.inputMaterial == MaterialType.None || Data.inputMaterial == item.materialType;
     }
 
-    // PUBLIC: Try enqueue 'amount' units from inventory (by MaterialData). Returns how many were accepted.
     public int TryQueueInventoryItem(MaterialData item, int amount)
     {
         if (item == null || amount <= 0) return 0;
         return TryQueueInventoryMaterial(item.materialType, amount);
     }
 
-    // PUBLIC: Try enqueue 'amount' units by material type. Returns how many were accepted.
     public int TryQueueInventoryMaterial(MaterialType material, int amount)
     {
         if (Data == null || amount <= 0) return 0;
+
+        if (data.HasRecipes)
+        {
+            if (!AppearsInAnyRecipe(material)) return 0;
+            AddToBuffer(material, amount);
+            OnQueueChanged?.Invoke(this);
+            StartProduction();
+            return amount;
+        }
+
+        // Legacy single input
         if (Data.inputMaterial != MaterialType.None && Data.inputMaterial != material) return 0;
-
-        // Enqueue all requested units (no capacity limit yet)
-        for (int i = 0; i < amount; i++)
-            _inputQueue.Enqueue(material);
-
-        // Kick off processing if idle
+        for (int i = 0; i < amount; i++) _inputQueue.Enqueue(material);
+        OnQueueChanged?.Invoke(this);
         StartProduction();
         return amount;
     }
 
+    private bool AppearsInAnyRecipe(MaterialType mat)
+    {
+        if (!data.HasRecipes) return false;
+        for (int i = 0; i < data.recipes.Count; i++)
+        {
+            var r = data.recipes[i];
+            for (int j = 0; j < r.inputs.Count; j++)
+                if (r.inputs[j].material == mat) return true;
+        }
+        return false;
+    }
+
+    private void AddToBuffer(MaterialType mat, int amount)
+    {
+        if (!_buffer.TryGetValue(mat, out int have)) have = 0;
+        _buffer[mat] = have + Mathf.Max(1, amount);
+    }
+
+    // --- Port helpers (unchanged) ---
     public bool TryGetBeltConnection(ConveyorBelt belt, out MachinePortType portType, bool requireFacing = true)
     {
         portType = MachinePortType.None;
@@ -259,7 +339,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         if (data == null || data.ports == null || data.ports.Count == 0)
         {
-            // Fallback: single output on the machine forward side, centered
             if (IsBeltOnSide(belt, Orientation, MachinePortType.Output, offset: -1, requireFacing))
             {
                 portType = MachinePortType.Output;
@@ -279,24 +358,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         return false;
     }
 
-    public IEnumerable<Vector2Int> GetPortCells(MachinePortType kind)
-    {
-        var orientedSize = BaseSize.OrientedSize(Orientation);
-
-        if (data == null || data.ports == null || data.ports.Count == 0)
-        {
-            if (kind == MachinePortType.Output)
-                yield return ComputePortCell(Orientation, orientedSize, -1);
-            yield break;
-        }
-
-        foreach (var port in data.ports)
-        {
-            if (port.kind != kind) continue;
-            yield return ComputePortCell(port.side, orientedSize, port.offset);
-        }
-    }
-
     private bool IsBeltOnSide(ConveyorBelt belt, GridOrientation localSide, MachinePortType kind, int offset, bool requireFacing)
     {
         var orientedSize = BaseSize.OrientedSize(Orientation);
@@ -304,11 +365,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         Vector2Int portCell = ComputePortCell(localSide, orientedSize, offset);
 
         if (belt.Anchor != portCell) return false;
-
         if (!requireFacing) return true;
 
-        if (kind == MachinePortType.Output) return belt.Orientation == worldSide;            // away
-        if (kind == MachinePortType.Input)  return belt.Orientation == Opposite(worldSide);  // toward
+        if (kind == MachinePortType.Output) return belt.Orientation == worldSide;
+        if (kind == MachinePortType.Input)  return belt.Orientation == Opposite(worldSide);
         return false;
     }
 
