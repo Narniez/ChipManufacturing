@@ -203,7 +203,7 @@ public class PreviewPlacementState : BasePlacementState
         );
     }
 
-    // NEW: for conveyors, if current area is occupied, scan to the right until free or edge reached
+    //For conveyors, if current area is occupied, scan to the right until free or edge reached
     private Vector2Int FindFreeToRight(Vector2Int startAnchor, Vector2Int size)
     {
         if (_grid == null || !_grid.HasGrid) return startAnchor;
@@ -224,7 +224,7 @@ public class PreviewPlacementState : BasePlacementState
         }
 
         // No free cell found to the right on this row; keep original (occupied) position
-        // Alternatively, you could hide the preview or scan left/up/down as needed.
+        // Alternatively, could hide the preview or scan left/up/down as needed.
         return startAnchor;
     }
 

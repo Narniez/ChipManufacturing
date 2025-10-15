@@ -64,7 +64,6 @@ public class PlacementManager : MonoBehaviour
             .Add(new AreaFreeRule());
 
         History = new CommandHistory();
-
         SetState(new IdleState(this));
     }
 

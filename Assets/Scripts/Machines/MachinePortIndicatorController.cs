@@ -41,7 +41,11 @@ public class MachinePortIndicatorController
 
         var size = machine.BaseSize.OrientedSize(machine.Orientation);
 
-        // Outputs (yellow)
+        // Read prefabs from MachineData (optional)
+        GameObject inPrefab = machine.Data != null ? machine.Data.inputPortIndicatorPrefab : null;
+        GameObject outPrefab = machine.Data != null ? machine.Data.outputPortIndicatorPrefab : null;
+
+        // Outputs (point away)
         bool hadExplicitPorts = machine.Data != null && machine.Data.ports != null && machine.Data.ports.Count > 0;
         if (hadExplicitPorts)
         {
@@ -50,8 +54,7 @@ public class MachinePortIndicatorController
                 if (p.kind != MachinePortType.Output) continue;
                 GridOrientation worldSide = RotateSide(p.side, machine.Orientation);
                 Vector2Int cell = ComputePortCell(machine.Anchor, size, worldSide, p.offset);
-                // Arrow faces away from machine (same as worldSide)
-                SpawnIndicator(cell, worldSide, _matOut);
+                SpawnIndicator(cell, worldSide, outPrefab, _matOut);
             }
         }
         else
@@ -59,10 +62,10 @@ public class MachinePortIndicatorController
             // Fallback: single output on front-center
             GridOrientation worldSide = machine.Orientation;
             Vector2Int cell = ComputePortCell(machine.Anchor, size, worldSide, -1);
-            SpawnIndicator(cell, worldSide, _matOut);
+            SpawnIndicator(cell, worldSide, outPrefab, _matOut);
         }
 
-        // Inputs (blue)
+        // Inputs (point toward)
         if (hadExplicitPorts)
         {
             foreach (var p in machine.Data.ports)
@@ -70,31 +73,45 @@ public class MachinePortIndicatorController
                 if (p.kind != MachinePortType.Input) continue;
                 GridOrientation worldSide = RotateSide(p.side, machine.Orientation);
                 Vector2Int cell = ComputePortCell(machine.Anchor, size, worldSide, p.offset);
-                // Arrow faces toward the machine (opposite of worldSide)
-                SpawnIndicator(cell, Opposite(worldSide), _matIn);
+                // Face toward machine = opposite of worldSide
+                SpawnIndicator(cell, Opposite(worldSide), inPrefab, _matIn);
             }
         }
     }
 
-    private void SpawnIndicator(Vector2Int cell, GridOrientation faceDir, Material mat)
+    // Prefab-first spawn; if prefab is null, fallback to colored cube
+    private void SpawnIndicator(Vector2Int cell, GridOrientation faceDir, GameObject prefab, Material fallbackMat)
     {
         if (!_grid.IsInside(cell)) return;
 
-        // Lift to avoid z-fighting; scale generous for visibility
         Vector3 pos = _grid.CellToWorldCenter(cell, _grid.Origin.y + 0.05f);
-        float s = Mathf.Max(0.5f, _grid.CellSize * 0.6f);
 
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = "PortIndicator";
-        go.transform.position = pos;
-        go.transform.rotation = Quaternion.Euler(90f, faceDir.ToYaw(), 0f); // lie flat + yaw
-        go.transform.localScale = new Vector3(s, s, 1f);
+        GameObject go;
+        if (prefab != null)
+        {
+            go = Object.Instantiate(prefab, pos, Quaternion.Euler(0f, faceDir.ToYaw(), 0f));
+            go.name = $"PortIndicator({faceDir})";
+            // Disable colliders to avoid blocking interactions
+            foreach (var col in go.GetComponentsInChildren<Collider>())
+                col.enabled = false;
+        }
+        else
+        {
+            // Fallback debug cube
+            float s = Mathf.Max(0.5f, _grid.CellSize * 0.6f);
+            go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = "PortIndicator";
+            go.transform.position = pos;
+            // Lie flat on ground and then apply yaw (cube fallback)
+            go.transform.rotation = Quaternion.Euler(90f, faceDir.ToYaw(), 0f);
+            go.transform.localScale = new Vector3(s, s, 1f);
 
-        var mr = go.GetComponent<MeshRenderer>();
-        if (mr != null && mat != null) mr.sharedMaterial = mat;
+            var mr = go.GetComponent<MeshRenderer>();
+            if (mr != null && fallbackMat != null) mr.sharedMaterial = fallbackMat;
 
-        var col = go.GetComponent<Collider>();
-        if (col != null) col.enabled = false;
+            var col = go.GetComponent<Collider>();
+            if (col != null) col.enabled = false;
+        }
 
         _indicators.Add(go);
     }
