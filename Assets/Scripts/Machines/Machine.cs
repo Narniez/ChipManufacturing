@@ -23,10 +23,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public void Initialize(MachineData machineData)
     {
         data = machineData;
-        StartProduction();
+       // StartProduction();
     }
 
-    private void StartProduction()
+    public void StartProduction()
     {
         if (data == null)
         {
