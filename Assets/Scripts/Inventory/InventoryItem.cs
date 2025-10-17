@@ -73,7 +73,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         SetStats();
     }
 
-   
+
     // ---------------- DRAG / DROP ----------------
 
     public void OnBeginDrag(PointerEventData e)
@@ -118,13 +118,23 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         {
             // Raycast into the world to find a machine
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
             if (Physics.Raycast(ray, out RaycastHit hit, 100f))
             {
                 var machine = hit.collider.GetComponentInChildren<Machine>();
-                
+
+                // Unlock camera on end drag
+                var cam = Camera.main;
+                if (cam != null)
+                {
+                    var camController = cam.GetComponent<CameraController>();
+                    if (camController != null)
+                        camController.SetInputLocked(false);
+                }
+
                 if (machine != null)
                 {
-                    Debug.Log($"Dropped item on machine: {machine?.name}");
+                    Debug.Log($"Dropped item on machine: {machine.name}");
                     int used = machine.TryQueueInventoryItem(slotItem, slotQuantity);
                     if (used > 0)
                     {
@@ -144,13 +154,6 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                 }
             }
 
-            var cam = Camera.main;
-            if (cam != null)
-            {
-                var camController = cam.GetComponent<CameraController>();
-                if (camController != null)
-                    camController.SetInputLocked(false);
-            }
         }
     }
     public void NotifyDroppedHandled() => _dropHandledThisDrag = true;

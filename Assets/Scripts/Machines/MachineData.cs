@@ -21,7 +21,8 @@ public struct MachinePortDef
 [System.Serializable]
 public struct MaterialStack
 {
-    public MaterialType material;
+    //public MaterialType material;
+    public MaterialData material;
     [Min(1)] public int amount;
 }
 
@@ -55,9 +56,9 @@ public class MachineData : ScriptableObject
 
     [Header("Production (Legacy)")]
     [Tooltip("Legacy single-input mode. If Recipes list is NOT empty, this is ignored.")]
-    public MaterialType inputMaterial = MaterialType.None;
+    public MaterialData inputMaterial; /*= MaterialType.None;*/
     [Tooltip("Legacy single-output mode. If Recipes list is NOT empty, this is ignored.")]
-    public MaterialType outputMaterial = MaterialType.None;
+    public MaterialData outputMaterial; /*= MaterialType.None;*/
     [Tooltip("Default processing time. Recipes can override per-recipe.")]
     public float processingTime = 2f;
 
