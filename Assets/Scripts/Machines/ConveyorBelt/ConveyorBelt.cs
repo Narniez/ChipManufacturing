@@ -162,7 +162,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         {
             var moving = TakeItem();
             if (moving.Visual != null) Destroy(moving.Visual);
-            machine.OnConveyorItemArrived(moving.Material);
+            machine.OnConveyorItemArrived(moving.materialData);
             return true;
         }
         return false;
