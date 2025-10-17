@@ -7,16 +7,41 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
     [Header("Overlay")]
     [SerializeField] private Canvas rootCanvas;
     [SerializeField] private Image dimmer;
-    [SerializeField] private RectTransform holeRect; // optional visual
+    [SerializeField] private RectTransform holeRect; // optional
 
     [Header("Hint UI")]
-    [SerializeField] private FingerHint finger;       
+    [SerializeField] private FingerHint finger;
     [SerializeField] private RectTransform bubble;
     [SerializeField] private Image bubbleSpeaker;
     [SerializeField] private TextMeshProUGUI bubbleText;
 
+    [Header("Behavior")]
+    [SerializeField, Tooltip("If true, Show(false) deactivates this GameObject. Leave OFF to avoid disabling the manager object.")]
+    private bool deactivateRootOnHide = false;
+
+    [SerializeField, Tooltip("Temporarily lift the highlighted UI above the dimmer so it renders on top.")]
+    private bool bringTargetAboveDimmer = true;
+
+    [Header("Layout")]
+    [SerializeField, Tooltip("Padding from the screen edges for the speech bubble (in canvas units).")]
+    private Vector2 bubbleEdgePadding = new Vector2(24f, 24f);
+
     private RectTransform _highlightTarget;
     private bool _gateOutside;
+
+    // Lifter state
+    private RectTransform _liftedTarget;
+    private Canvas _liftedCanvas;
+    private bool _liftedCanvasWasAdded;
+    private bool _prevOverrideSorting;
+    private int _prevSortingOrder;
+    private GraphicRaycaster _addedRaycaster;
+
+    // Finger canvas state
+    private Canvas _fingerCanvas;
+    private bool _fingerCanvasWasAdded;
+    private bool _fingerPrevOverrideSorting;
+    private int _fingerPrevSortingOrder;
 
     void Awake()
     {
@@ -26,30 +51,59 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
 
     public void Show(bool visible)
     {
-        gameObject.SetActive(visible);
-        if (dimmer) dimmer.enabled = visible;
+        if (deactivateRootOnHide && !visible)
+        {
+            // Restore any lifted target/finger before hiding
+            RestoreLiftedTarget();
+            RestoreFingerCanvas();
+            gameObject.SetActive(false);
+            return;
+        }
+
         if (!visible)
         {
-            _highlightTarget = null;
-            finger?.Hide();
+            // Restore any lifted target/finger before hiding
+            RestoreLiftedTarget();
+            RestoreFingerCanvas();
         }
+
+        if (dimmer) dimmer.gameObject.SetActive(visible);
+        if (bubble) bubble.gameObject.SetActive(visible);
+        if (bubbleSpeaker) bubbleSpeaker.gameObject.SetActive(visible);
+        if (bubbleText) bubbleText.gameObject.SetActive(visible);
+
+        if (finger)
+        {
+            if (!visible) finger.Hide();
+            finger.gameObject.SetActive(visible);
+        }
+
+        _highlightTarget = null;
+        _gateOutside = false;
+        enabled = true;
     }
 
     public void ConfigureStep(TutorialStep step, RectTransform highlightTarget)
     {
+        // Switching target: restore previous lifted state
+        if (_liftedTarget != null && _liftedTarget != highlightTarget)
+            RestoreLiftedTarget();
+
         _highlightTarget = highlightTarget;
         _gateOutside = step.gateInputOutsideHighlight;
 
-        // Bubble
         if (bubbleText) bubbleText.text = step.text ?? "";
+
         if (bubbleSpeaker)
         {
-            bubbleSpeaker.enabled = step.speaker != null;
             bubbleSpeaker.sprite = step.speaker;
+            bubbleSpeaker.enabled = step.speaker != null;
+            bubbleSpeaker.gameObject.SetActive(step.speaker != null);
         }
-        PositionBubble(step.anchor);
 
-        // Finger
+        PlaceBubble(step.anchor);
+
+        // Finger hint
         finger?.Hide();
         if (step.showFinger && highlightTarget != null && finger != null)
         {
@@ -60,14 +114,25 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
             else if (step.fingerMode == FingerMode.Drag)
             {
                 RectTransform to = ResolveRect(step.dragTargetPath);
-                if (to != null) finger.ShowDrag(highlightTarget, to, step.fingerOffset, Mathf.Max(0.1f, step.dragDuration), step.dragLoop);
+                if (to != null)
+                    finger.ShowDrag(highlightTarget, to, step.fingerOffset, Mathf.Max(0.1f, step.dragDuration), step.dragLoop);
             }
         }
+
+        // Lift the target above dimmer so it renders on top
+        if (bringTargetAboveDimmer && highlightTarget != null)
+            LiftTargetCanvas(highlightTarget);
+
+        // Ensure finger renders above the lifted target and overlay
+        EnsureFingerOnTop();
     }
 
-    private void PositionBubble(TutorialBubbleAnchor anchor)
+    private void PlaceBubble(TutorialBubbleAnchor anchor)
     {
+        if (bubble == null || rootCanvas == null) return;
+
         var canvasRect = (RectTransform)rootCanvas.transform;
+        // Desired position in canvas local space (0,0 at canvas center)
         Vector2 anchorPos = anchor switch
         {
             TutorialBubbleAnchor.TopLeft => new Vector2(0.1f, 0.9f),
@@ -75,22 +140,139 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
             TutorialBubbleAnchor.BottomLeft => new Vector2(0.1f, 0.1f),
             _ => new Vector2(0.9f, 0.1f),
         };
-        if (bubble && canvasRect)
-        {
-            Vector2 world = Vector2.Scale(anchorPos, canvasRect.rect.size) - (canvasRect.rect.size * 0.5f);
-            bubble.anchoredPosition = world;
-        }
+        Vector2 desired = Vector2.Scale(anchorPos, canvasRect.rect.size) - (canvasRect.rect.size * 0.5f);
+
+        // Clamp so the bubble rect stays fully on-screen (with padding)
+        Vector2 size = bubble.rect.size; // in canvas units
+        Vector2 pivot = bubble.pivot;
+        Rect canvasBounds = canvasRect.rect;
+
+        float minX = canvasBounds.xMin + bubbleEdgePadding.x + pivot.x * size.x;
+        float maxX = canvasBounds.xMax - bubbleEdgePadding.x - (1f - pivot.x) * size.x;
+        float minY = canvasBounds.yMin + bubbleEdgePadding.y + pivot.y * size.y;
+        float maxY = canvasBounds.yMax - bubbleEdgePadding.y - (1f - pivot.y) * size.y;
+
+        desired.x = Mathf.Clamp(desired.x, minX, maxX);
+        desired.y = Mathf.Clamp(desired.y, minY, maxY);
+
+        bubble.anchoredPosition = desired;
     }
 
-    // Highlight gating
+    // Lift target: add/adjust a Canvas on the target to render above the overlay
+    private void LiftTargetCanvas(RectTransform target)
+    {
+        if (rootCanvas == null) return;
+
+        _liftedTarget = target;
+        _liftedCanvas = target.GetComponent<Canvas>();
+        _liftedCanvasWasAdded = false;
+        _addedRaycaster = null;
+
+        if (_liftedCanvas == null)
+        {
+            _liftedCanvas = target.gameObject.AddComponent<Canvas>();
+            _liftedCanvasWasAdded = true;
+            // Ensure it can receive clicks
+            _addedRaycaster = target.gameObject.AddComponent<GraphicRaycaster>();
+        }
+        else
+        {
+            _prevOverrideSorting = _liftedCanvas.overrideSorting;
+            _prevSortingOrder = _liftedCanvas.sortingOrder;
+        }
+
+        _liftedCanvas.overrideSorting = true;
+        // Ensure it's above the overlay's sorting order
+        int overlayOrder = rootCanvas.sortingOrder;
+        _liftedCanvas.sortingOrder = overlayOrder + 1;
+    }
+
+    private void RestoreLiftedTarget()
+    {
+        if (_liftedTarget == null || _liftedCanvas == null) { _liftedTarget = null; return; }
+
+        if (_liftedCanvasWasAdded)
+        {
+            if (_addedRaycaster != null) Destroy(_addedRaycaster);
+            Destroy(_liftedCanvas);
+        }
+        else
+        {
+            _liftedCanvas.overrideSorting = _prevOverrideSorting;
+            _liftedCanvas.sortingOrder = _prevSortingOrder;
+        }
+
+        _liftedTarget = null;
+        _liftedCanvas = null;
+        _addedRaycaster = null;
+        _liftedCanvasWasAdded = false;
+    }
+
+    // Put the finger on its own top-most sub-canvas (above lifted target)
+    private void EnsureFingerOnTop()
+    {
+        if (finger == null || rootCanvas == null) return;
+
+        var go = finger.gameObject;
+        _fingerCanvas = go.GetComponent<Canvas>();
+        _fingerCanvasWasAdded = false;
+
+        if (_fingerCanvas == null)
+        {
+            _fingerCanvas = go.AddComponent<Canvas>();
+            _fingerCanvasWasAdded = true;
+        }
+
+        // Keep same render pipeline/camera
+        _fingerCanvas.renderMode = rootCanvas.renderMode;
+        _fingerCanvas.worldCamera = rootCanvas.worldCamera;
+        _fingerCanvas.overrideSorting = true;
+
+        // Overlay order (X), target lifted at X+1, finger at X+2
+        int overlayOrder = rootCanvas.sortingOrder;
+        _fingerPrevOverrideSorting = _fingerCanvas.overrideSorting;
+        _fingerPrevSortingOrder = _fingerCanvas.sortingOrder;
+
+        _fingerCanvas.sortingOrder = overlayOrder + 2;
+
+        // Make sure finger never blocks input
+        foreach (var img in go.GetComponentsInChildren<Image>(true))
+            img.raycastTarget = false;
+        foreach (var txt in go.GetComponentsInChildren<TMP_Text>(true))
+            txt.raycastTarget = false;
+    }
+
+    private void RestoreFingerCanvas()
+    {
+        if (_fingerCanvas == null) return;
+
+        if (_fingerCanvasWasAdded)
+        {
+            Destroy(_fingerCanvas);
+        }
+        else
+        {
+            _fingerCanvas.overrideSorting = _fingerPrevOverrideSorting;
+            _fingerCanvas.sortingOrder = _fingerPrevSortingOrder;
+        }
+
+        _fingerCanvas = null;
+        _fingerCanvasWasAdded = false;
+    }
+
+    // ICanvasRaycastFilter — NOTE the inversion to pass clicks inside highlight
     public bool IsRaycastLocationValid(Vector2 sp, Camera eventCamera)
     {
-        if (!_gateOutside || _highlightTarget == null) return true;
+        if (!_gateOutside || _highlightTarget == null) return false;
+
         RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)rootCanvas.transform, sp, eventCamera, out var local);
         RectTransform canvasRect = (RectTransform)rootCanvas.transform;
+
         Rect highlight = GetRectInCanvasSpace(_highlightTarget, canvasRect);
         Vector2 canvasSpacePoint = local + canvasRect.rect.size * 0.5f;
-        return highlight.Contains(canvasSpacePoint);
+
+        // false inside highlight (let click through), true outside (block)
+        return !highlight.Contains(canvasSpacePoint);
     }
 
     private Rect GetRectInCanvasSpace(RectTransform target, RectTransform canvasRect)

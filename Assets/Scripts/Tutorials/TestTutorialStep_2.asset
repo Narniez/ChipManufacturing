@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a7087c4abf7f59e44a712449f9d793f8, type: 3}
-  m_Name: TestTutorialStep_1
+  m_Name: TestTutorialStep_2
   m_EditorClassIdentifier: 
-  text: 'Greetings, factory is fucked I will show you how to undo this fuckery. '
+  text: Open the shop
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
   anchor: 3
-  waitForSignal: 0
+  waitForSignal: 1
   machineFilter: {fileID: 0}
-  highlightTargetPath: 
-  gateInputOutsideHighlight: 0
-  fingerMode: 0
-  showFinger: 0
+  highlightTargetPath: Canvas/ShopButton
+  gateInputOutsideHighlight: 1
+  fingerMode: 1
+  showFinger: 1
   fingerOffset: {x: 0, y: -30}
   dragTargetPath: 
   dragDuration: 1.25
-  dragLoop: 0
+  dragLoop: 1
