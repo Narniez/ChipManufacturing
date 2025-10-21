@@ -96,9 +96,6 @@ public class TutorialManager : MonoBehaviour
         var step = sequence.steps[_index];
         if (step.waitForSignal != sig) return;
 
-        if (step.machineFilter != null && payload is MachineData md && md != step.machineFilter)
-            return;
-
         Advance();
     }
 
