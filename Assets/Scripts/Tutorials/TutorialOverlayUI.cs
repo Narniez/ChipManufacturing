@@ -7,7 +7,6 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
     [Header("Overlay")]
     [SerializeField] private Canvas rootCanvas;
     [SerializeField] private Image dimmer;
-    [SerializeField] private RectTransform holeRect; // optional
 
     [Header("Hint UI")]
     [SerializeField] private FingerHint finger;
@@ -131,31 +130,34 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
     {
         if (bubble == null || rootCanvas == null) return;
 
-        var canvasRect = (RectTransform)rootCanvas.transform;
-        // Desired position in canvas local space (0,0 at canvas center)
-        Vector2 anchorPos = anchor switch
+        // Set the pivot based on the anchor
+        bubble.pivot = anchor switch
         {
-            TutorialBubbleAnchor.TopLeft => new Vector2(0.1f, 0.9f),
-            TutorialBubbleAnchor.TopRight => new Vector2(0.9f, 0.9f),
-            TutorialBubbleAnchor.BottomLeft => new Vector2(0.1f, 0.1f),
-            _ => new Vector2(0.9f, 0.1f),
+            TutorialBubbleAnchor.TopLeft => new Vector2(0f, 1f),
+            TutorialBubbleAnchor.TopRight => new Vector2(1f, 1f),
+            TutorialBubbleAnchor.BottomLeft => new Vector2(0f, 0f),
+            TutorialBubbleAnchor.BottomRight => new Vector2(1f, 0f),
+            TutorialBubbleAnchor.Middle => new Vector2(0.5f, 0.5f), // Center pivot
+            _ => bubble.pivot
         };
-        Vector2 desired = Vector2.Scale(anchorPos, canvasRect.rect.size) - (canvasRect.rect.size * 0.5f);
 
-        // Clamp so the bubble rect stays fully on-screen (with padding)
-        Vector2 size = bubble.rect.size; // in canvas units
-        Vector2 pivot = bubble.pivot;
-        Rect canvasBounds = canvasRect.rect;
+        // Set the anchors to the same position as the pivot
+        bubble.anchorMin = bubble.pivot;
+        bubble.anchorMax = bubble.pivot;
 
-        float minX = canvasBounds.xMin + bubbleEdgePadding.x + pivot.x * size.x;
-        float maxX = canvasBounds.xMax - bubbleEdgePadding.x - (1f - pivot.x) * size.x;
-        float minY = canvasBounds.yMin + bubbleEdgePadding.y + pivot.y * size.y;
-        float maxY = canvasBounds.yMax - bubbleEdgePadding.y - (1f - pivot.y) * size.y;
+        // Apply padding to keep the bubble within the screen bounds
+        Vector2 offset = anchor switch
+        {
+            TutorialBubbleAnchor.TopLeft => new Vector2(bubbleEdgePadding.x, -bubbleEdgePadding.y),
+            TutorialBubbleAnchor.TopRight => new Vector2(-bubbleEdgePadding.x, -bubbleEdgePadding.y),
+            TutorialBubbleAnchor.BottomLeft => new Vector2(bubbleEdgePadding.x, bubbleEdgePadding.y),
+            TutorialBubbleAnchor.BottomRight => new Vector2(-bubbleEdgePadding.x, bubbleEdgePadding.y),
+            TutorialBubbleAnchor.Middle => Vector2.zero, // No offset for the middle
+            _ => Vector2.zero
+        };
 
-        desired.x = Mathf.Clamp(desired.x, minX, maxX);
-        desired.y = Mathf.Clamp(desired.y, minY, maxY);
-
-        bubble.anchoredPosition = desired;
+        // Set the anchored position with the offset
+        bubble.anchoredPosition = offset;
     }
 
     // Lift target: add/adjust a Canvas on the target to render above the overlay
@@ -189,7 +191,11 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
 
     private void RestoreLiftedTarget()
     {
-        if (_liftedTarget == null || _liftedCanvas == null) { _liftedTarget = null; return; }
+        if (_liftedTarget == null || _liftedCanvas == null)
+        {
+            _liftedTarget = null;
+            return;
+        }
 
         if (_liftedCanvasWasAdded)
         {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum TutorialBubbleAnchor { TopLeft, TopRight, BottomLeft, BottomRight }
+public enum TutorialBubbleAnchor { TopLeft, TopRight, BottomLeft, BottomRight, Middle }
 public enum FingerMode { None, Tap, Drag }
 
 [CreateAssetMenu(fileName = "TutorialStep", menuName = "Scriptable Objects/Tutorial/Step")]
@@ -13,8 +13,6 @@ public class TutorialStep : ScriptableObject
 
     [Header("Progress condition")]
     public TutorialSignal waitForSignal = TutorialSignal.None;
-    [Tooltip("Optional MachineData filter for Shop events; leave null to accept any.")]
-    public MachineData machineFilter;
 
     [Header("Highlight (optional)")]
     [Tooltip("Unity scene path or GameObject name to find RectTransform to highlight (e.g., \"Canvas/ShopButton\").")]
