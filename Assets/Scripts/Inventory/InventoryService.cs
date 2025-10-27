@@ -15,10 +15,17 @@ public class InventoryService : MonoBehaviour, IInventory
 
     private InventoryItem _inventoryItem;
     private List<InventorySlot> _inventorySlots = new List<InventorySlot>();
-    private List<InventoryItem> _inventoryItems = new List<InventoryItem>();
+    //private List<InventoryItem> _inventoryItems = new List<InventoryItem>();
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         for (int i = 0; i < transform.childCount; i++)
         {
             if (transform.GetChild(i).TryGetComponent<InventorySlot>(out var slot))
@@ -72,21 +79,54 @@ public class InventoryService : MonoBehaviour, IInventory
         return true;
     }
 
-    public void AddToInventoryPanel(InventoryItem item, int amount)
+    public void AddOrStack(MaterialData mat, int amount)
     {
-        _inventoryItem = item;
-        _inventoryItem.Setup(_inventoryItem.SlotItem, amount);
+        if (mat == null || amount <= 0) return;
 
-        foreach(InventorySlot slot in _inventorySlots)
+        // Try stack into existing slot with same material
+        foreach (var slot in _inventorySlots)
         {
-            if (slot.CurrentItem == null)
+            if (!slot.IsEmpty && slot.Item == mat)
             {
-                slot.PlaceItem(_inventoryItem);
-                _inventoryItems.Add(_inventoryItem);
-                Add(_inventoryItem.SlotItem.id, amount);
+                slot.AddAmount(amount);
+                TryApply(new Dictionary<int, int> { { mat.id, amount } });
                 return;
             }
         }
+
+        // Find an empty slot
+        foreach (var slot in _inventorySlots)
+        {
+            if (slot.IsEmpty)
+            {
+                slot.SetItem(mat, amount);
+                TryApply(new Dictionary<int, int> { { mat.id, amount } });
+                return;
+            }
+        }
+
+        if (debug) Debug.LogWarning("[InventoryService] No free inventory slots available.");
     }
+
+    /* public void AddToInventoryPanel(InventoryItem item, int amount)
+     {
+         _inventoryItem = item;
+         _inventoryItem.Setup(_inventoryItem.SlotItem, amount);
+
+         Debug.Log("Inv: add request");
+
+
+         foreach (InventorySlot slot in _inventorySlots)
+         {
+             if (slot.CurrentItem == null)
+             {
+                 slot.PlaceItem(_inventoryItem);
+                 Debug.Log("Inv: placed in free slot");
+                 _inventoryItems.Add(_inventoryItem);
+                 Add(_inventoryItem.SlotItem.id, amount);
+                 return;
+             }
+         }
+     }*/
 
 }

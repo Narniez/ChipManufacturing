@@ -1,53 +1,133 @@
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(UnityEngine.UI.Image))]
-public class InventorySlot : MonoBehaviour, IDropHandler
+public class InventorySlot : MonoBehaviour, IDropHandler, IPointerClickHandler
 {
-    [Tooltip("Where the InventoryItem should live. Defaults to this.transform if null.")]
-    public RectTransform content;
+    [Header("Debug")]
+    [SerializeField] private bool debug = true;
+
+    [Header("UI")]
+    [Tooltip("Icon image to display the item's sprite")]
+    [SerializeField] private Image icon;
+    [Tooltip("Text to display the stack count")]
+    [SerializeField] private TextMeshProUGUI amountText;
+
+    [SerializeField] private SellPopup sellPopup;
+
+
+
+    // Backing data for this slot
+    public MaterialData Item { get; private set; }
+    public int Amount { get; private set; }
+    public bool IsEmpty => Item == null || Amount <= 0;
+
+    private Sprite _slotSprite;
+    private TextMeshProUGUI _itemAmount;
 
     private void Awake()
     {
-        if (content == null) content = (RectTransform)transform;
-        var img = GetComponent<UnityEngine.UI.Image>();
+        var img = GetComponent<Image>();
         img.raycastTarget = true;
-    }
 
-    public InventoryItem CurrentItem =>
-        content.childCount > 0 ? content.GetChild(0).GetComponent<InventoryItem>() : null;
+        //UpdateUi();
+    }
 
     public void PlaceItem(InventoryItem item)
     {
         if (item == null) return;
-        item.transform.SetParent(content, false);
-        var rt = (RectTransform)item.transform;
-        rt.anchorMin = new Vector2(0.5f, 0.5f);
-        rt.anchorMax = new Vector2(0.5f, 0.5f);
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = Vector2.zero;
-        rt.localScale = Vector3.one;
-        item.SetCurrentSlot(this);
+
+        // Copy data from the InventoryItem, then destroy it.
+        SetItem(item.SlotItem, item.SlotQuantity);
+
+        // We no longer keep UI children
+        Destroy(item.gameObject);
     }
+
+    // Directly assign material + amount
+    public void SetItem(MaterialData mat, int amount)
+    {
+        Item = mat;
+        Amount = Mathf.Max(0, amount);
+        if (Amount == 0) Item = null;
+
+        UpdateUI();
+    }
+
+    public void AddAmount(int delta)
+    {
+        if (IsEmpty && delta <= 0) return;
+        Amount += delta;
+        if (Amount <= 0)
+        {
+            Clear();
+        }
+        else
+        {
+            UpdateUI();
+        }
+    }
+
+    public void Clear()
+    {
+        Item = null;
+        Amount = 0;
+        UpdateUI();
+    }
+
+    private void UpdateUI()
+    {
+        if (icon != null)
+        {
+            if (!IsEmpty && Item.icon != null)
+            {
+                icon.enabled = true;
+                icon.sprite = Item.icon;
+                icon.color = Color.white;
+            }
+            else
+            {
+                icon.enabled = false;
+                icon.sprite = null;
+            }
+        }
+
+        if (amountText != null)
+        {
+            amountText.text = !IsEmpty ? Amount.ToString() : string.Empty;
+        }
+    }
+
 
     public void OnDrop(PointerEventData eventData)
     {
+        // Accept drops of InventoryItem: copy its data into this slot and destroy it
         var dragged = eventData.pointerDrag ? eventData.pointerDrag.GetComponent<InventoryItem>() : null;
         if (dragged == null) return;
 
-        var sourceSlot = dragged.CurrentSlot;
-        if (sourceSlot == this) { dragged.NotifyDroppedHandled(); return; }
+        // If same item, stack; else overwrite (or add your swap logic)
+        if (!IsEmpty && Item == dragged.SlotItem)
+        {
+            AddAmount(dragged.SlotQuantity);
+            if (InventoryService.Instance != null)
+                InventoryService.Instance.TryApply(new Dictionary<int, int> { { dragged.SlotItem.id, dragged.SlotQuantity } });
+            Destroy(dragged.gameObject);
+            return;
+        }
 
-        var here = CurrentItem;
-
-        // If this slot already has an item, send it back to the source slot (swap).
-        if (here != null && sourceSlot != null)
-            sourceSlot.PlaceItem(here);
-
-        // Place the dragged item here.
         PlaceItem(dragged);
+    }
 
-        // Tell the item the drop was handled so it doesn't snap back on EndDrag.
-        dragged.NotifyDroppedHandled();
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (sellPopup == null) return;
+
+        if (sellPopup.gameObject.activeSelf)
+            sellPopup.Close();
+        else
+            sellPopup.OpenForSlot(this);
     }
 }
