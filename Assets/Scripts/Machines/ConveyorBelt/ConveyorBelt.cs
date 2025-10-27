@@ -105,6 +105,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         if (TryDeliverToMachine(forwardCell)) return;
     }
 
+
     private bool TryMoveOntoNeighborBelt(Vector2Int cell)
     {
         if (!_grid.TryGetCell(cell, out var data) || data.occupant == null) return false;
@@ -162,7 +163,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         {
             var moving = TakeItem();
             if (moving.Visual != null) Destroy(moving.Visual);
-            machine.OnConveyorItemArrived(moving.Material);
+            machine.OnConveyorItemArrived(moving.materialData);
             return true;
         }
         return false;

@@ -17,16 +17,16 @@ MonoBehaviour:
   prefab: {fileID: 3142147857028635265, guid: 733babe8ed6c5ca4d87b8f1584574655, type: 3}
   icon: {fileID: 0}
   cost: 0
-  inputMaterial: 1
-  outputMaterial: 4
+  inputMaterial: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
+  outputMaterial: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
   processingTime: 4
   recipes:
   - name: TestChip
     inputs:
-    - material: 1
+    - material: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
       amount: 3
     outputs:
-    - material: 4
+    - material: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
       amount: 1
     processingTimeOverride: 0
   size: {x: 2, y: 2}

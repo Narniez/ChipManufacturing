@@ -8,10 +8,13 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     [Header("Optional visuals")]
     [SerializeField, Tooltip("Visual prefab used for produced items on belts (optional)")]
     private GameObject itemVisualPrefab;
+    [SerializeField] private InventoryItem inventoryItemPrefab;
 
     private MachineData data;   // Factory sets this via Initialize
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
+
+    private InventoryItem inventoryItem;
 
     // Legacy single-input queue (used only if no recipes defined)
     private readonly Queue<MaterialType> _inputQueue = new Queue<MaterialType>();
@@ -19,6 +22,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // Recipe-mode input buffer per material
     private readonly Dictionary<MaterialType, int> _buffer = new Dictionary<MaterialType, int>();
     private MachineRecipe _currentRecipe;
+    private bool _inventoryDumpedThisCycle = false;
+
 
     public event Action<MaterialType, Vector3> OnMaterialProduced;
     public event Action<Machine> OnQueueChanged; // UI can subscribe
@@ -72,7 +77,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             for (int j = 0; j < r.inputs.Count; j++)
             {
                 var req = r.inputs[j];
-                _buffer.TryGetValue(req.material, out int have);
+                _buffer.TryGetValue(req.material.materialType, out int have);
                 if (have < Mathf.Max(1, req.amount)) { ok = false; break; }
             }
             if (ok) return r;
@@ -85,16 +90,18 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         for (int i = 0; i < recipe.inputs.Count; i++)
         {
             var req = recipe.inputs[i];
-            if (_buffer.TryGetValue(req.material, out int have))
+            if (_buffer.TryGetValue(req.material.materialType, out int have))
             {
-                _buffer[req.material] = Mathf.Max(0, have - Mathf.Max(1, req.amount));
+                _buffer[req.material.materialType] = Mathf.Max(0, have - Mathf.Max(1, req.amount));
             }
         }
+        _inventoryDumpedThisCycle = false;
         OnQueueChanged?.Invoke(this);
     }
 
     private IEnumerator ProcessOneRecipe(float duration)
     {
+        Debug.Log("M: start recipe");
         yield return new WaitForSeconds(duration);
 
         // Produce all outputs of current recipe
@@ -131,19 +138,21 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         StartProduction();
     }
 
-    private void ProduceOneOutput(MaterialType mat)
+    private void ProduceOneOutput(MaterialData mat)
     {
-        OnMaterialProduced?.Invoke(mat, transform.position);
+        Debug.Log("M: produce one");
+        OnMaterialProduced?.Invoke(mat.materialType, transform.position);
         TryPushOutputToBelt(mat);
     }
 
-    private void TryPushOutputToBelt(MaterialType mat)
+    private void TryPushOutputToBelt(MaterialData mat)
     {
         var grid = FindFirstObjectByType<GridService>();
         if (grid == null || !grid.HasGrid) return;
 
         var orientedSize = BaseSize.OrientedSize(Orientation);
         var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
+        Debug.Log("M: outputs ready");
 
         if (data != null && data.ports != null && data.ports.Count > 0)
         {
@@ -163,8 +172,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         }
 
         // Resolve item visual
-        GameObject visualPrefab = MaterialVisualRegistry.Instance != null ? MaterialVisualRegistry.Instance.GetPrefab(mat) : null;
+        GameObject visualPrefab = MaterialVisualRegistry.Instance != null ? MaterialVisualRegistry.Instance.GetPrefab(mat.materialType) : null;
         if (visualPrefab == null) visualPrefab = itemVisualPrefab;
+
+        bool foundBeltAtOutput = false;
 
         foreach (var (cell, worldSide) in outputs)
         {
@@ -181,20 +192,58 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             var belt = occGO.GetComponent<ConveyorBelt>();
             if (belt == null) continue;
 
-            // Allow straight or turns; only reject if pointed back into the machine
-            if (belt.Orientation == Opposite(worldSide)) continue;
-            if (belt.HasItem) continue;
+            //Debug.Log("M: belt ahead has no valid forward sink (dead-end)");
+            foundBeltAtOutput = true;
 
             GameObject visual = null;
             if (visualPrefab != null) visual = Instantiate(visualPrefab);
 
             var item = new ConveyorItem(mat, visual);
             if (belt.TrySetItem(item))
-                return;
+            {
+                Debug.Log("M: placed on belt");
+                break;
+            }
 
             if (visual != null) Destroy(visual);
         }
+
+        if (!foundBeltAtOutput)
+        {
+            AddOutputToInventory(mat, 1);
+            Debug.Log("M: added to inventory (dead-end)");
+        }
     }
+
+    // Add a single material to inventory
+    private void AddOutputToInventory(MaterialData mat, int amount)
+    {
+        if (/*mat == null ||*/ inventoryItemPrefab == null) return;
+        var svc = InventoryService.Instance;
+        if (svc == null) return;
+
+        //InventoryItem item = Instantiate(inventoryItemPrefab);
+       // item.Setup(mat, amount);
+        svc.AddOrStack(mat, amount);
+        Debug.Log("M: should have been added to inventory");
+    }
+
+  /*  public void AddOutputToInventory(MachineRecipe recipe)
+    {
+        if (recipe == null || recipe.outputs == null) return;
+
+        foreach (var outStack in recipe.outputs)
+        {
+            if (outStack.material == null)
+            {
+                Debug.LogWarning("MaterialStack is missing MaterialData");
+                continue;
+            }
+            InventoryItem item = Instantiate(inventoryItemPrefab);
+            item.Setup(outStack.material, outStack.amount);
+            InventoryService.Instance.AddToInventoryPanel(item, outStack.amount);
+        }
+    }*/
 
     public void Upgrade()
     {
@@ -258,23 +307,23 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // --- Conveyor I/O & Inventory bridge ---
 
     // Called by belts when a conveyor item arrives on an INPUT port
-    public void OnConveyorItemArrived(MaterialType material)
+    public void OnConveyorItemArrived(MaterialData material)
     {
         if (Data == null) return;
 
         if (data.HasRecipes)
         {
             // Accept only materials that appear in at least one recipe
-            if (!AppearsInAnyRecipe(material)) return;
-            AddToBuffer(material, 1);
+            if (!AppearsInAnyRecipe(material.materialType)) return;
+            AddToBuffer(material.materialType, 1);
             OnQueueChanged?.Invoke(this);
             StartProduction();
             return;
         }
 
         // Legacy single input
-        if (Data.inputMaterial != MaterialType.None && Data.inputMaterial != material) return;
-        _inputQueue.Enqueue(material);
+        if (Data.inputMaterial.materialType != MaterialType.None && Data.inputMaterial.materialType != material.materialType) return;
+        _inputQueue.Enqueue(material.materialType);
         OnQueueChanged?.Invoke(this);
         StartProduction();
     }
@@ -283,7 +332,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     {
         if (item == null || Data == null) return false;
         if (data.HasRecipes) return AppearsInAnyRecipe(item.materialType);
-        return Data.inputMaterial == MaterialType.None || Data.inputMaterial == item.materialType;
+        return Data.inputMaterial.materialType == MaterialType.None || Data.inputMaterial.materialType == item.materialType;
     }
 
     public int TryQueueInventoryItem(MaterialData item, int amount)
@@ -306,7 +355,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         }
 
         // Legacy single input
-        if (Data.inputMaterial != MaterialType.None && Data.inputMaterial != material) return 0;
+        if (Data.inputMaterial.materialType != MaterialType.None && Data.inputMaterial.materialType != material) return 0;
         for (int i = 0; i < amount; i++) _inputQueue.Enqueue(material);
         OnQueueChanged?.Invoke(this);
         StartProduction();
@@ -320,7 +369,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         {
             var r = data.recipes[i];
             for (int j = 0; j < r.inputs.Count; j++)
-                if (r.inputs[j].material == mat) return true;
+                if (r.inputs[j].material.materialType == mat) return true;
         }
         return false;
     }
@@ -368,7 +417,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         if (!requireFacing) return true;
 
         if (kind == MachinePortType.Output) return belt.Orientation == worldSide;
-        if (kind == MachinePortType.Input)  return belt.Orientation == Opposite(worldSide);
+        if (kind == MachinePortType.Input) return belt.Orientation == Opposite(worldSide);
         return false;
     }
 
@@ -382,12 +431,13 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         {
             case GridOrientation.North: return new Vector2Int(Anchor.x + idx, Anchor.y + size.y);
             case GridOrientation.South: return new Vector2Int(Anchor.x + idx, Anchor.y - 1);
-            case GridOrientation.East:  return new Vector2Int(Anchor.x + size.x, Anchor.y + idx);
-            case GridOrientation.West:  return new Vector2Int(Anchor.x - 1, Anchor.y + idx);
+            case GridOrientation.East: return new Vector2Int(Anchor.x + size.x, Anchor.y + idx);
+            case GridOrientation.West: return new Vector2Int(Anchor.x - 1, Anchor.y + idx);
             default: return Anchor;
         }
     }
 
+  
     private static GridOrientation RotateSide(GridOrientation local, GridOrientation by)
         => (GridOrientation)(((int)local + (int)by) & 3);
 

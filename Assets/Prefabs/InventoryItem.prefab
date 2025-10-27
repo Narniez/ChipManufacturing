@@ -1319,7 +1319,6 @@ MonoBehaviour:
   itemIcon: {fileID: 1035836519244861566}
   quantityText: {fileID: 1732054624172256524}
   sellPopup: {fileID: 3015750335196992232}
-  dragCanvasOverride: {fileID: 0}
   canvasGroup: {fileID: 6351883151611032328}
 --- !u!225 &6351883151611032328
 CanvasGroup:

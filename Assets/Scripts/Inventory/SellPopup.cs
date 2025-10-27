@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
-using System.Collections.Generic;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using static UnityEditor.Progress;
 
 public class SellPopup : MonoBehaviour
 {
@@ -20,6 +21,8 @@ public class SellPopup : MonoBehaviour
     [SerializeField] private int pricePerUnit = 1;
 
     private InventoryItem _item;
+    private InventorySlot _slot;
+
     private int _have;
 
     private Transform _originalParent;
@@ -92,14 +95,62 @@ public class SellPopup : MonoBehaviour
             InventoryService.Instance.OnChanged += OnInventoryChanged;
     }
 
-    // Call to reposition the popup to match the inventory item's current position.
-    // Useful immediately after reparenting and also to follow the item if it moves.
-    public void RepositionToItem()
+    // New: open popup for a slot
+    public void OpenForSlot(InventorySlot slot)
     {
-        if (_item == null || _popupCanvas == null) return;
+        _slot = slot;
+        _item = null;
+        gameObject.SetActive(true);
+        RefreshStockFromService();
+      
+        //nameText.text = _item.SlotItem.materialName;
+
+        amountSlider.minValue = 1;
+        amountSlider.maxValue = Mathf.Max(1, _have);
+        amountSlider.value = Mathf.Clamp(_have, (int)amountSlider.minValue, (int)amountSlider.maxValue);
+        amountInput.text = ((int)amountSlider.value).ToString();
+
+        UpdateFooter((int)amountSlider.value);
+        confirmBtn.interactable = _have > 0;
+
+        _originalParent = transform.parent;
+
+        if (_popupCanvas == null)
+            _popupCanvas = GameObject.FindGameObjectWithTag("PopupCanvas")?.GetComponent<Canvas>();
 
         var popupRT = transform as RectTransform;
-        var itemRT = _item.transform as RectTransform;
+        Vector3 worldPos = popupRT.position;
+
+        if (_popupCanvas != null)
+        {
+            transform.SetParent(_popupCanvas.transform, worldPositionStays: false);
+            transform.SetAsLastSibling();
+            gameObject.SetActive(true);
+            RepositionToItem();
+        }
+        else
+        {
+            Debug.LogWarning("SellPopup.OpenFor: no popup Canvas found. Popup may render under other UI.");
+            gameObject.SetActive(true);
+        }
+
+        if (InventoryService.Instance != null)
+            InventoryService.Instance.OnChanged += OnInventoryChanged;
+    }
+
+    public void Close()
+    {
+        gameObject.SetActive(false);
+        _item = null;
+        _slot = null;
+    }
+
+    public void RepositionToItem()
+    {
+        if (_slot == null || _popupCanvas == null) return;
+
+        var popupRT = transform as RectTransform;
+        var itemRT = _slot.transform as RectTransform;
         if (popupRT == null || itemRT == null) return;
 
         Camera canvasCam = _popupCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _popupCanvas.worldCamera;
@@ -114,20 +165,6 @@ public class SellPopup : MonoBehaviour
         Vector2 offset = new Vector2(LROfsset, UDOffset);
         popupRT.anchoredPosition = localPoint + offset;
     }
-
-    public void Close()
-    {
-        if (InventoryService.Instance != null)
-            InventoryService.Instance.OnChanged -= OnInventoryChanged;
-
-        // --- Restore original parent ---
-        if (_originalParent != null)
-            transform.SetParent(_originalParent, worldPositionStays: false);
-
-        gameObject.SetActive(false);
-        _item = null;
-    }
-
 
     private void OnInventoryChanged(IDictionary<int, int> _, IReadOnlyDictionary<int, int> all)
     {
