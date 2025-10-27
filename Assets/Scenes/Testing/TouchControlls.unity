@@ -616,6 +616,7 @@ MonoBehaviour:
   deactivateRootOnHide: 0
   bringTargetAboveDimmer: 1
   bubbleEdgePadding: {x: 24, y: 24}
+  defaultTypewriterCharsPerSecond: 20
 --- !u!1 &283493382
 GameObject:
   m_ObjectHideFlags: 0
