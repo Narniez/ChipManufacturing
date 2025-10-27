@@ -5,11 +5,6 @@ using System;
 
 public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 {
-    [Header("Optional visuals")]
-    [SerializeField, Tooltip("Visual prefab used for produced items on belts (optional)")]
-    private GameObject itemVisualPrefab;
-    [SerializeField] private InventoryItem inventoryItemPrefab;
-
     private MachineData data;   // Factory sets this via Initialize
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
@@ -173,7 +168,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         // Resolve item visual
         GameObject visualPrefab = MaterialVisualRegistry.Instance != null ? MaterialVisualRegistry.Instance.GetPrefab(mat.materialType) : null;
-        if (visualPrefab == null) visualPrefab = itemVisualPrefab;
 
         bool foundBeltAtOutput = false;
 
@@ -218,7 +212,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // Add a single material to inventory
     private void AddOutputToInventory(MaterialData mat, int amount)
     {
-        if (/*mat == null ||*/ inventoryItemPrefab == null) return;
         var svc = InventoryService.Instance;
         if (svc == null) return;
 

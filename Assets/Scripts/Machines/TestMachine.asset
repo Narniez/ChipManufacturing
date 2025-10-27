@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultOrientation: 0
   machineName: BestMachine
-  prefab: {fileID: 3142147857028635265, guid: 733babe8ed6c5ca4d87b8f1584574655, type: 3}
+  prefab: {fileID: 495015138674993689, guid: ac07a5391b3638e4a89e9f3e766851eb, type: 3}
   icon: {fileID: 0}
   cost: 0
   inputMaterial: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
@@ -29,18 +29,18 @@ MonoBehaviour:
     - material: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
       amount: 1
     processingTimeOverride: 0
-  size: {x: 2, y: 2}
+  size: {x: 1, y: 1}
   upgrades:
   - {fileID: 11400000, guid: 1e54abd3b0b52ee42b43195bb15e517a, type: 2}
   ports:
   - kind: 1
     side: 0
-    offset: 0
+    offset: -1
   - kind: 2
     side: 2
-    offset: 0
+    offset: -1
   - kind: 1
     side: 1
-    offset: 0
+    offset: -1
   inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
   outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
