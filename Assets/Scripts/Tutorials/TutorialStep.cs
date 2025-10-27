@@ -1,4 +1,7 @@
+using NUnit.Framework;
+using System.Net.NetworkInformation;
 using UnityEngine;
+using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 public enum TutorialBubbleAnchor { TopLeft, TopRight, BottomLeft, BottomRight, Middle }
 public enum FingerMode { None, Tap, Drag }
@@ -31,4 +34,7 @@ public class TutorialStep : ScriptableObject
     public float dragDuration = 1.25f;
     [Tooltip("For Drag mode, repeat drag loop.")]
     public bool dragLoop = true;
+
+    [Tooltip("Characters per second for dialogue typing. < 0 shows all instantly. If 0, the overlay default is used.")]
+    public float typewriterCharsPerSecond = 0f;
 }

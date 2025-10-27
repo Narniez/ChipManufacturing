@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -25,6 +26,10 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
     [SerializeField, Tooltip("Padding from the screen edges for the speech bubble (in canvas units).")]
     private Vector2 bubbleEdgePadding = new Vector2(24f, 24f);
 
+    [Header("Typewriter")]
+    [SerializeField, Tooltip("Default characters-per-second when a step doesn't override. 0 = instant.")]
+    private float defaultTypewriterCharsPerSecond = 40f;
+
     private RectTransform _highlightTarget;
     private bool _gateOutside;
 
@@ -42,10 +47,26 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
     private bool _fingerPrevOverrideSorting;
     private int _fingerPrevSortingOrder;
 
+    // Typewriter state
+    private Coroutine _typewriterRoutine;
+
     void Awake()
     {
         if (rootCanvas == null) rootCanvas = GetComponentInParent<Canvas>();
         Show(false);
+    }
+
+    public bool IsTyping => _typewriterRoutine != null;
+
+    public void SkipTypewriter()
+    {
+        if (bubbleText == null) return;
+        if (_typewriterRoutine != null)
+        {
+            StopCoroutine(_typewriterRoutine);
+            _typewriterRoutine = null;
+        }
+        bubbleText.maxVisibleCharacters = int.MaxValue; // reveal all
     }
 
     public void Show(bool visible)
@@ -55,6 +76,8 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
             // Restore any lifted target/finger before hiding
             RestoreLiftedTarget();
             RestoreFingerCanvas();
+            // Ensure typewriter ends cleanly
+            SkipTypewriter();
             gameObject.SetActive(false);
             return;
         }
@@ -64,6 +87,7 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
             // Restore any lifted target/finger before hiding
             RestoreLiftedTarget();
             RestoreFingerCanvas();
+            SkipTypewriter();
         }
 
         if (dimmer) dimmer.gameObject.SetActive(visible);
@@ -91,7 +115,15 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
         _highlightTarget = highlightTarget;
         _gateOutside = step.gateInputOutsideHighlight;
 
-        if (bubbleText) bubbleText.text = step.text ?? "";
+        if (bubbleText)
+        {
+            // Reset text and start typewriter
+            bubbleText.text = step.text ?? "";
+            float cps = step.typewriterCharsPerSecond == 0f
+                ? defaultTypewriterCharsPerSecond
+                : step.typewriterCharsPerSecond;
+            StartTypewriter(cps);
+        }
 
         if (bubbleSpeaker)
         {
@@ -158,6 +190,46 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
 
         // Set the anchored position with the offset
         bubble.anchoredPosition = offset;
+    }
+
+    private void StartTypewriter(float charsPerSecond)
+    {
+        Debug.Log(charsPerSecond);
+        if (bubbleText == null) return;
+
+        if (_typewriterRoutine != null)
+        {
+            StopCoroutine(_typewriterRoutine);
+            _typewriterRoutine = null;
+        }
+
+        if (charsPerSecond <= 0f)
+        {
+            bubbleText.maxVisibleCharacters = int.MaxValue; 
+            return;
+        }
+
+        bubbleText.ForceMeshUpdate();
+        bubbleText.maxVisibleCharacters = 0;
+        _typewriterRoutine = StartCoroutine(TypewriterRoutine(charsPerSecond));
+    }
+
+    private IEnumerator TypewriterRoutine(float charsPerSecond)
+    {
+        bubbleText.ForceMeshUpdate();
+        int total = bubbleText.textInfo.characterCount;
+        float shown = 0f;
+
+        while (shown < total)
+        {
+            shown += charsPerSecond * Time.unscaledDeltaTime;
+            int count = Mathf.Clamp(Mathf.FloorToInt(shown), 0, total);
+            bubbleText.maxVisibleCharacters = count;
+            yield return null;
+        }
+
+        bubbleText.maxVisibleCharacters = int.MaxValue;
+        _typewriterRoutine = null;
     }
 
     // Lift target: add/adjust a Canvas on the target to render above the overlay
