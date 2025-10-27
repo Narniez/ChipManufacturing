@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7087c4abf7f59e44a712449f9d793f8, type: 3}
   m_Name: TestTutorialStep_3
   m_EditorClassIdentifier: 
-  text: Good job bitch, now you need to buy a machine okay ?
+  text: Good job, now lets buy our first machine!
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
   anchor: 1
   waitForSignal: 3
