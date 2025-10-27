@@ -63,6 +63,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -86,6 +88,7 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
@@ -123,3 +126,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 212a52e4359d7d04b88c7a4903ca1cf9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  itemVisualPrefab: {fileID: 0}
+  inventoryItemPrefab: {fileID: 4732989784102188928, guid: 824548cb7a45a2a46b48620070012af8, type: 3}

@@ -22,6 +22,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // Recipe-mode input buffer per material
     private readonly Dictionary<MaterialType, int> _buffer = new Dictionary<MaterialType, int>();
     private MachineRecipe _currentRecipe;
+    private bool _inventoryDumpedThisCycle = false;
+
 
     public event Action<MaterialType, Vector3> OnMaterialProduced;
     public event Action<Machine> OnQueueChanged; // UI can subscribe
@@ -93,11 +95,13 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
                 _buffer[req.material.materialType] = Mathf.Max(0, have - Mathf.Max(1, req.amount));
             }
         }
+        _inventoryDumpedThisCycle = false;
         OnQueueChanged?.Invoke(this);
     }
 
     private IEnumerator ProcessOneRecipe(float duration)
     {
+        Debug.Log("M: start recipe");
         yield return new WaitForSeconds(duration);
 
         // Produce all outputs of current recipe
@@ -136,6 +140,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     private void ProduceOneOutput(MaterialData mat)
     {
+        Debug.Log("M: produce one");
         OnMaterialProduced?.Invoke(mat.materialType, transform.position);
         TryPushOutputToBelt(mat);
     }
@@ -147,6 +152,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         var orientedSize = BaseSize.OrientedSize(Orientation);
         var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
+        Debug.Log("M: outputs ready");
 
         if (data != null && data.ports != null && data.ports.Count > 0)
         {
@@ -169,6 +175,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         GameObject visualPrefab = MaterialVisualRegistry.Instance != null ? MaterialVisualRegistry.Instance.GetPrefab(mat.materialType) : null;
         if (visualPrefab == null) visualPrefab = itemVisualPrefab;
 
+        bool foundBeltAtOutput = false;
+
         foreach (var (cell, worldSide) in outputs)
         {
             if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
@@ -182,28 +190,45 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             if (occGO == null) continue;
 
             var belt = occGO.GetComponent<ConveyorBelt>();
-            if (belt == null)
-            {
-               // AddOutputToInventory()
-                continue;
-            }
+            if (belt == null) continue;
 
-            // Allow straight or turns; only reject if pointed back into the machine
-            if (belt.Orientation == Opposite(worldSide)) continue;
-            if (belt.HasItem) continue;
+            //Debug.Log("M: belt ahead has no valid forward sink (dead-end)");
+            foundBeltAtOutput = true;
 
             GameObject visual = null;
             if (visualPrefab != null) visual = Instantiate(visualPrefab);
 
             var item = new ConveyorItem(mat, visual);
             if (belt.TrySetItem(item))
-                return;
+            {
+                Debug.Log("M: placed on belt");
+                break;
+            }
 
             if (visual != null) Destroy(visual);
         }
+
+        if (!foundBeltAtOutput)
+        {
+            AddOutputToInventory(mat, 1);
+            Debug.Log("M: added to inventory (dead-end)");
+        }
     }
 
-    public void AddOutputToInventory(MachineRecipe recipe)
+    // Add a single material to inventory
+    private void AddOutputToInventory(MaterialData mat, int amount)
+    {
+        if (/*mat == null ||*/ inventoryItemPrefab == null) return;
+        var svc = InventoryService.Instance;
+        if (svc == null) return;
+
+        //InventoryItem item = Instantiate(inventoryItemPrefab);
+       // item.Setup(mat, amount);
+        svc.AddOrStack(mat, amount);
+        Debug.Log("M: should have been added to inventory");
+    }
+
+  /*  public void AddOutputToInventory(MachineRecipe recipe)
     {
         if (recipe == null || recipe.outputs == null) return;
 
@@ -218,7 +243,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             item.Setup(outStack.material, outStack.amount);
             InventoryService.Instance.AddToInventoryPanel(item, outStack.amount);
         }
-    }
+    }*/
 
     public void Upgrade()
     {
@@ -412,6 +437,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         }
     }
 
+  
     private static GridOrientation RotateSide(GridOrientation local, GridOrientation by)
         => (GridOrientation)(((int)local + (int)by) & 3);
 
