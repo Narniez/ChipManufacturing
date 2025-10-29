@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 // Shows a prefab with preview material, lets you move (hold-drag) and rotate,
 // and waits for external confirm/cancel via PlacementManager.ConfirmPreview/CancelPreview.
@@ -20,7 +20,7 @@ public class PreviewPlacementState : BasePlacementState
     private float _heightOffset;
 
     private bool _committed;
-    private bool _isConveyor;
+    private bool _isConveyor;             
 
     public PreviewPlacementState(
         PlacementManager pm,
