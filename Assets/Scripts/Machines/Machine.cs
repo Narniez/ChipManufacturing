@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using NUnit.Framework.Internal;
 
 public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 {
@@ -19,6 +20,14 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private MachineRecipe _currentRecipe;
     private bool _inventoryDumpedThisCycle = false;
 
+    // Machine breaking 
+    private float _chanceToBreak = 0f;
+    private float _chanceToBreakIncrement = 2f;
+    private float _miniMimumChanceToBreak = 0;
+    private bool _isBroken = false;
+
+    public static event Action<Machine, Vector3> OnMachineBroken;
+    public static event Action<Machine> OnMachineRepaired;
 
     public event Action<MaterialType, Vector3> OnMaterialProduced;
     public event Action<Machine> OnQueueChanged; // UI can subscribe
@@ -26,6 +35,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // Expose minimal state
     public MachineData Data => data;
     public bool IsProducing => productionRoutine != null;
+    public bool IsBroken => _isBroken;
 
     public void Initialize(MachineData machineData)
     {
@@ -33,6 +43,11 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _buffer.Clear();
         _inputQueue.Clear();
         _currentRecipe = null;
+
+        _chanceToBreak = 0f;
+        _chanceToBreakIncrement = data.chanceIncreasePerOutput;
+        _miniMimumChanceToBreak = data.minimunChanceToBreak;
+        _isBroken = false;
     }
 
     // Try to start one cycle if inputs are ready
@@ -40,6 +55,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     {
         if (data == null) { Debug.LogError("Machine.StartProduction: MachineData not set."); return; }
         if (productionRoutine != null) return;
+        if (_isBroken) return; // do not produce while broken
 
         if (data.HasRecipes)
         {
@@ -107,7 +123,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
                 var outStack = _currentRecipe.outputs[i];
                 int count = Mathf.Max(1, outStack.amount);
                 for (int c = 0; c < count; c++)
-                    ProduceOneOutput(outStack.material);
+                    ProduceOneOutput(outStack.material); // if we break, subsequent calls early-exit
             }
         }
 
@@ -135,9 +151,48 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     private void ProduceOneOutput(MaterialData mat)
     {
+        if (_isBroken) return;
+
         Debug.Log("M: produce one");
         OnMaterialProduced?.Invoke(mat.materialType, transform.position);
+
+        // Increase break chance per produced output
+        _chanceToBreak += _chanceToBreakIncrement;
+
+        if (BreakCheck())
+        {
+            Debug.Log("M: machine broke!");
+            Break();
+            return; // do not push output to belt if we broke at this output (optional rule)
+        }
+
         TryPushOutputToBelt(mat);
+    }
+
+    public void Break()
+    {
+        if (_isBroken) return;
+        _isBroken = true;
+
+        // Stop ongoing production cycle
+        if (productionRoutine != null)
+        {
+            StopCoroutine(productionRoutine);
+            productionRoutine = null;
+        }
+
+        OnQueueChanged?.Invoke(this); // allow UI to reflect stopped state
+        OnMachineBroken?.Invoke(this, transform.position);
+    }
+
+    public void Repair()
+    {
+        if (!_isBroken) return;
+        _isBroken = false;
+        _chanceToBreak = 0f;
+
+        OnMachineRepaired?.Invoke(this);
+        StartProduction(); // resume if inputs available
     }
 
     private void TryPushOutputToBelt(MaterialData mat)
@@ -186,7 +241,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             var belt = occGO.GetComponent<ConveyorBelt>();
             if (belt == null) continue;
 
-            //Debug.Log("M: belt ahead has no valid forward sink (dead-end)");
             foundBeltAtOutput = true;
 
             GameObject visual = null;
@@ -215,29 +269,28 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         var svc = InventoryService.Instance;
         if (svc == null) return;
 
-        //InventoryItem item = Instantiate(inventoryItemPrefab);
-       // item.Setup(mat, amount);
         svc.AddOrStack(mat, amount);
         Debug.Log("M: should have been added to inventory");
     }
 
-  /*  public void AddOutputToInventory(MachineRecipe recipe)
-    {
-        if (recipe == null || recipe.outputs == null) return;
+    /*  public void AddOutputToInventory(MachineRecipe recipe)
+      {
+          if (recipe == null || recipe.outputs == null) return;
 
-        foreach (var outStack in recipe.outputs)
-        {
-            if (outStack.material == null)
-            {
-                Debug.LogWarning("MaterialStack is missing MaterialData");
-                continue;
-            }
-            InventoryItem item = Instantiate(inventoryItemPrefab);
-            item.Setup(outStack.material, outStack.amount);
-            InventoryService.Instance.AddToInventoryPanel(item, outStack.amount);
-        }
-    }*/
+          foreach (var outStack in recipe.outputs)
+          {
+              if (outStack.material == null)
+              {
+                  Debug.LogWarning("MaterialStack is missing MaterialData");
+                  continue;
+              }
+              InventoryItem item = Instantiate(inventoryItemPrefab);
+              item.Setup(outStack.material, outStack.amount);
+              InventoryService.Instance.AddToInventoryPanel(item, outStack.amount);
+          }
+      }*/
 
+    //Not used currently
     public void Upgrade()
     {
         if (data == null) { Debug.LogError("Machine.Upgrade: MachineData not set."); return; }
@@ -249,6 +302,13 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         }
     }
 
+    private bool BreakCheck()
+    {
+        float random = UnityEngine.Random.Range(_miniMimumChanceToBreak, 100f);
+        Debug.Log("M: break check with chance " + _chanceToBreak + " and random: " + random);
+        return random < _chanceToBreak;
+    }
+
     // --- Interaction (IInteractable) ---
     public void OnTap()
     {
@@ -258,6 +318,12 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             return;
         }
         Debug.Log($"Machine {data.machineName} tapped.");
+        if (_isBroken)
+        {
+            // Optional: forward to BrokenMachineManager to open UI if tapping the machine itself
+            var mgr = FindFirstObjectByType<BrokenMachineManager>();
+            if (mgr != null) mgr.OpenRepairUI(this);
+        }
     }
     public void OnHold() { }
 

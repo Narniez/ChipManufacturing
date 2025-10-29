@@ -156,7 +156,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         if (occGO == null) return false;
 
         var machine = occGO.GetComponent<Machine>();
-        if (machine == null) return false;
+        if (machine == null || machine.IsBroken) return false;
 
         if (machine.TryGetBeltConnection(this, out var portType, requireFacing: true) &&
             portType == MachinePortType.Input)
