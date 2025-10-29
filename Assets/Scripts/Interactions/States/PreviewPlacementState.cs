@@ -2,8 +2,8 @@ using UnityEngine;
 
 // Shows a prefab with preview material, lets you move (hold-drag) and rotate,
 // and waits for external confirm/cancel via PlacementManager.ConfirmPreview/CancelPreview.
-// Uses bottom-left anchor semantics with centered pivot. If MachineData is provided,
-// its size/name are used during preview (Machine.Initialize happens on confirm).
+// Uses bottom-left anchor with centered pivot. If MachineData is provided,
+// its size/name are used during preview.
 public class PreviewPlacementState : BasePlacementState
 {
     private readonly GameObject _prefab;
@@ -20,14 +20,14 @@ public class PreviewPlacementState : BasePlacementState
     private float _heightOffset;
 
     private bool _committed;
-    private bool _isConveyor;                // NEW: flag for belt previews
+    private bool _isConveyor;             
 
     public PreviewPlacementState(
-        PlacementManager ctx,
+        PlacementManager pm,
         GameObject prefab,
         Material previewMaterial,
         GridOrientation? initialOrientation = null,
-        MachineData machineData = null) : base(ctx)
+        MachineData machineData = null) : base(pm)
     {
         _prefab = prefab;
         _previewMaterial = previewMaterial;

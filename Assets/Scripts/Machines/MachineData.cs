@@ -83,4 +83,9 @@ public class MachineData : ScriptableObject
     public GameObject outputPortIndicatorPrefab;
 
     public bool HasRecipes => recipes != null && recipes.Count > 0;
+
+    [Header("Machine breaking")]
+    public float chanceIncreasePerOutput = 2f;
+    public float minimunChanceToBreak = 20f;
+    public ParticleSystem brokenMachineParticleEffect;
 }
