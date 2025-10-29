@@ -53,7 +53,6 @@ public class InventoryService : MonoBehaviour, IInventory
     {
         if (change == null || change.Count == 0) return true;
 
-        //check if we have enough items
         foreach (var kv in change)
         {
             var have = GetCount(kv.Key);
@@ -107,26 +106,4 @@ public class InventoryService : MonoBehaviour, IInventory
 
         if (debug) Debug.LogWarning("[InventoryService] No free inventory slots available.");
     }
-
-    /* public void AddToInventoryPanel(InventoryItem item, int amount)
-     {
-         _inventoryItem = item;
-         _inventoryItem.Setup(_inventoryItem.SlotItem, amount);
-
-         Debug.Log("Inv: add request");
-
-
-         foreach (InventorySlot slot in _inventorySlots)
-         {
-             if (slot.CurrentItem == null)
-             {
-                 slot.PlaceItem(_inventoryItem);
-                 Debug.Log("Inv: placed in free slot");
-                 _inventoryItems.Add(_inventoryItem);
-                 Add(_inventoryItem.SlotItem.id, amount);
-                 return;
-             }
-         }
-     }*/
-
 }
