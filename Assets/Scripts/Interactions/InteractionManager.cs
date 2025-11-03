@@ -25,7 +25,7 @@ public class InteractionManager : MonoBehaviour
     public event Action<IInteractable, Vector2, Vector3> OnHoldMove;
     public event Action<IInteractable, Vector2, Vector3> OnHoldEnd;
 
-    // fires when a valid tap occurs that doesn't hit any IInteractable (used to dismiss selection UI)
+    // fires when a valid tap occurs that doesn't hit any IInteractable 
     public event Action<Vector2, Vector3> OnTapEmpty;
 
     private Camera _cam;
@@ -36,7 +36,7 @@ public class InteractionManager : MonoBehaviour
     private float fingerDownTime;
     private bool isHolding;
     private IInteractable activeTarget;
-    private bool touchGestureOverUI; // new: track if this gesture started/ended over UI
+    private bool touchGestureOverUI;
 
     // Mouse tracking
     private bool mouseDown;
@@ -44,7 +44,7 @@ public class InteractionManager : MonoBehaviour
     private float mouseDownTime;
     private bool mouseHolding;
     private IInteractable mouseTarget;
-    private bool mouseGestureOverUI; // new: track if this gesture started/ended over UI
+    private bool mouseGestureOverUI; 
 
     // cache for UI raycasts
     private static readonly List<RaycastResult> _uiRaycastResults = new List<RaycastResult>();

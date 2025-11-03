@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(Collider))]
 public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
@@ -24,6 +25,15 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     private void OnEnable()
     {
         BeltSystemRuntime.Instance?.Register(this);
+
+        // Notify adjacent machines next frame (ensures grid occupancy is up-to-date)
+        StartCoroutine(NotifyMachines());
+    }
+
+    private IEnumerator NotifyMachines()
+    {
+        yield return null;
+        NotifyAdjacentMachinesOfConnection();
     }
 
     private void OnDisable()
@@ -34,7 +44,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     public bool HasItem => _item != null;
     public ConveyorItem PeekItem() => _item;
 
-    // snapVisual: true for initial spawn; false for belt-to-belt handoff (we animate)
+    // snapVisual: true for initial spawn; false for belt-to-belt handoff
     public bool TrySetItem(ConveyorItem item, bool snapVisual = true)
     {
         if (_item != null || item == null) return false;
@@ -62,6 +72,9 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         Anchor = anchor;
         orientation = newOrientation;
         transform.rotation = newOrientation.ToRotation();
+
+        // Also ping when placement changes
+        NotifyAdjacentMachinesOfConnection();
     }
 
     public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation newOrientation)
@@ -138,7 +151,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         if (nextBelt.TrySetItem(moving, snapVisual: false))
             return true;
 
-        // Failed, put it back (rare)
+        // Failed, put it back
         TrySetItem(moving, snapVisual: true);
         return false;
     }
@@ -190,6 +203,34 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
             case GridOrientation.South: return Vector2Int.down;
             case GridOrientation.West:  return Vector2Int.left;
             default: return Vector2Int.zero;
+        }
+    }
+
+    private void NotifyAdjacentMachinesOfConnection()
+    {
+        if (_grid == null || !_grid.HasGrid) return;
+
+        // Check the four neighbors; any machine that considers this an OUTPUT port should be nudged to start
+        foreach (var nb in _grid.GetNeighbors(Anchor))
+        {
+            if (!_grid.TryGetCell(nb.coord, out var data) || data.occupant == null) continue;
+
+            GameObject occGO = data.occupant as GameObject;
+            if (occGO == null)
+            {
+                var comp = data.occupant as Component;
+                occGO = comp != null ? comp.gameObject : null;
+            }
+            if (occGO == null) continue;
+
+            var machine = occGO.GetComponent<Machine>();
+            if (machine == null || machine.IsBroken) continue;
+
+            if (machine.TryGetBeltConnection(this, out var portType, requireFacing: true) &&
+                portType == MachinePortType.Output)
+            {
+                machine.TryStartIfIdle();
+            }
         }
     }
 }

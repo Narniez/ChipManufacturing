@@ -79,6 +79,10 @@ public class BeltChainPreviewController
         _grid.SetAreaOccupant(p.Cell, Vector2Int.one, go);
 
         var belt = go.GetComponent<ConveyorBelt>();
+
+        if (belt != null)
+            ShowOptionsFrom(belt);
+
         return belt;
     }
 
@@ -91,6 +95,14 @@ public class BeltChainPreviewController
 
         Vector3 pos = _pm.AnchorToWorldCenter(cell, Vector2Int.one, 0f);
         var go = Object.Instantiate(prefab, pos, ori.ToRotation());
+
+        // If the prefab has a ConveyorBelt, unregister and remove it so this is a pure ghost
+        var beltComp = go.GetComponent<ConveyorBelt>();
+        if (beltComp != null)
+        {
+            BeltSystemRuntime.Instance?.Unregister(beltComp);
+            Object.Destroy(beltComp);
+        }
 
         // Apply preview material (no color changes)
         ApplyPreviewMaterial(go);
@@ -125,26 +137,14 @@ public class BeltChainPreviewController
         switch (o)
         {
             case GridOrientation.North: return Vector2Int.up;
-            case GridOrientation.East: return Vector2Int.right;
+            case GridOrientation.East:  return Vector2Int.right;
             case GridOrientation.South: return Vector2Int.down;
-            case GridOrientation.West: return Vector2Int.left;
+            case GridOrientation.West:  return Vector2Int.left;
             default: return Vector2Int.up;
         }
     }
 
-    private static GameObject GetStraightPrefab(PlacementManager pm)
-    {
-        return pm.GetConveyorPrefab(false);
-    }
-
-    private static GameObject GetTurnPrefab(PlacementManager pm)
-    {
-        return pm.GetConveyorPrefab(true);
-    }
-
-    private static Material GetPreviewMaterial(PlacementManager pm)
-    {
-        var field = typeof(PlacementManager).GetField("placementPreviewMaterial", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        return field?.GetValue(pm) as Material;
-    }
+    private GameObject GetStraightPrefab(PlacementManager pm) => pm.GetConveyorPrefab(false);
+    private GameObject GetTurnPrefab(PlacementManager pm) => pm.GetConveyorPrefab(true);
+    private Material GetPreviewMaterial(PlacementManager pm) => pm.GetPreviewMaterial();
 }

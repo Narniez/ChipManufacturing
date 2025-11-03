@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8967eb2bc9f92e94cb009538a9497d84, type: 3}
+  m_Name: TestSiliconMaterialDepotMachine
+  m_EditorClassIdentifier: Assembly-CSharp::MachineData
+  defaultOrientation: 0
+  machineName: Sillicon Material Depo
+  prefab: {fileID: 1170729706568534031, guid: 21061b7bda2d74c4e971395f303d253a, type: 3}
+  icon: {fileID: 0}
+  cost: 0
+  inputMaterial: {fileID: 0}
+  outputMaterial: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
+  processingTime: 4
+  recipes: []
+  size: {x: 1, y: 1}
+  upgrades: []
+  ports:
+  - kind: 2
+    side: 0
+    offset: 0
+  - kind: 2
+    side: 1
+    offset: 0
+  - kind: 2
+    side: 2
+    offset: 0
+  - kind: 2
+    side: 3
+    offset: 0
+  inputPortIndicatorPrefab: {fileID: 0}
+  outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
+  chanceIncreasePerOutput: 1
+  minimunChanceToBreak: 60
+  brokenMachineParticleEffect: {fileID: 6957141498569091356, guid: b7191a096fb3fc74fb80033db4ccaa7d, type: 3}
