@@ -22,7 +22,15 @@ public class SelectingState : BasePlacementState
         var comp = (_selected as Component);
 
         string name = ResolveDisplayName(comp);
+
         bool isBelt = comp?.GetComponent<ConveyorBelt>() != null;
+
+        ui.Show(
+            name,
+            onRotateLeft:  () => RotateAndRefresh(clockwise: false),
+            onRotateRight: () => RotateAndRefresh(clockwise: true),
+            isBelt
+        );
 
         // Show UI only if available
         var ui = PlaceMan.SelectionUI;

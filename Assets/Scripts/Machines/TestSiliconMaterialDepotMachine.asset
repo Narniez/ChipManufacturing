@@ -14,24 +14,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
   machineName: Sillicon Material Depo
-  prefab: {fileID: 4423430148241660529, guid: 247b70cae7a8ff44ca94e85a7c945b62, type: 3}
+  prefab: {fileID: 1170729706568534031, guid: 21061b7bda2d74c4e971395f303d253a, type: 3}
   icon: {fileID: 0}
   cost: 0
   inputMaterial: {fileID: 0}
   outputMaterial: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
   processingTime: 4
   recipes: []
-  size: {x: 3, y: 3}
+  size: {x: 1, y: 1}
   upgrades: []
   ports:
   - kind: 2
     side: 0
-    offset: -1
+    offset: 0
+  - kind: 2
+    side: 1
+    offset: 0
   - kind: 2
     side: 2
-    offset: -1
+    offset: 0
+  - kind: 2
+    side: 3
+    offset: 0
   inputPortIndicatorPrefab: {fileID: 0}
   outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
-  chanceIncreasePerOutput: 0
-  minimunChanceToBreak: 100
+  chanceIncreasePerOutput: 1
+  minimunChanceToBreak: 60
   brokenMachineParticleEffect: {fileID: 6957141498569091356, guid: b7191a096fb3fc74fb80033db4ccaa7d, type: 3}

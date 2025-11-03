@@ -79,7 +79,9 @@ public class BeltChainPreviewController
         _grid.SetAreaOccupant(p.Cell, Vector2Int.one, go);
 
         var belt = go.GetComponent<ConveyorBelt>();
-            //ShowOptionsFrom(belt);
+
+        if (belt != null)
+            ShowOptionsFrom(belt);
 
         return belt;
     }

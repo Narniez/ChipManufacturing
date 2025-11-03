@@ -80,6 +80,14 @@ public class PreviewPlacementState : BasePlacementState
         Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
         _instance.transform.position = snapped;
         _occ.SetPlacement(_anchor, _orientation);
+
+        // Show selection UI while in preview (name + rotate buttons)
+        //string title = _machineData != null ? _machineData.machineName : _instance.name;
+        //PlaceMan.SelectionUI?.Show(
+        //    title,
+        //    onRotateLeft: () => Rotate(clockwise: false),
+        //    onRotateRight: () => Rotate(clockwise: true)
+        //);
     }
 
     public override void Exit()

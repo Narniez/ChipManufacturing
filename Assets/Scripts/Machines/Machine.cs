@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using NUnit.Framework.Internal;
 
 public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 {
@@ -30,7 +29,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public static event Action<Machine> OnMachineRepaired;
 
     public event Action<MaterialType, Vector3> OnMaterialProduced;
-    public event Action<Machine> OnQueueChanged; // UI can subscribe
 
     public static event Action<MaterialType, Vector3> OnMaterialProduced;
 
@@ -57,6 +55,15 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _chanceToBreakIncrement = data.chanceIncreasePerOutput;
         _miniMimumChanceToBreak = data.minimunChanceToBreak;
         _isBroken = false;
+
+        StartProduction();
+    }
+
+    // Allow external systems to start production 
+    public void TryStartIfIdle()
+    {
+        if (!_isBroken && productionRoutine == null)
+            StartProduction();
     }
 
     // Allow external systems to start production 
@@ -71,7 +78,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     {
         if (data == null) { Debug.LogError("Machine.StartProduction: MachineData not set."); return; }
         if (productionRoutine != null) return;
-        if (_isBroken) return; // do not produce while broken
+        if (_isBroken) return;
 
         if (data.HasRecipes)
         {
@@ -148,7 +155,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
                 var outStack = _currentRecipe.outputs[i];
                 int count = Mathf.Max(1, outStack.amount);
                 for (int c = 0; c < count; c++)
-                    ProduceOneOutput(outStack.material); // if we break, subsequent calls early-exit
+                    ProduceOneOutput(outStack.material);
             }
         }
 
@@ -226,7 +233,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         {
             Debug.Log("M: machine broke!");
             Break();
-            return; // do not push output to belt if we broke at this output (optional rule)
+            return; 
         }
 
         TryPushOutputToBelt(mat);
@@ -244,7 +251,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             productionRoutine = null;
         }
 
-        OnQueueChanged?.Invoke(this); // allow UI to reflect stopped state
         OnMachineBroken?.Invoke(this, transform.position);
     }
 
@@ -255,7 +261,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _chanceToBreak = 0f;
 
         OnMachineRepaired?.Invoke(this);
-        StartProduction(); // resume if inputs available
+        StartProduction();
     }
 
     private void TryPushOutputToBelt(MaterialData mat)
@@ -305,6 +311,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
             var belt = occGO.GetComponent<ConveyorBelt>();
             if (belt == null) continue;
+
+            // Require belt to face outward to receive
+            if (belt.Orientation != worldSide) continue;
 
             foundBeltAtOutput = true;
 
@@ -434,7 +443,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         Debug.Log($"Machine {data.machineName} tapped.");
         if (_isBroken)
         {
-            // Optional: forward to BrokenMachineManager to open UI if tapping the machine itself
+            // Forward to BrokenMachineManager to open UI if tapping the machine itself
             var mgr = FindFirstObjectByType<BrokenMachineManager>();
             if (mgr != null) mgr.OpenRepairUI(this);
         }

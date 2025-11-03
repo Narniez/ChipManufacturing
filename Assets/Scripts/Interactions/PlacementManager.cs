@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlacementManager : MonoBehaviour
@@ -140,6 +140,7 @@ public class PlacementManager : MonoBehaviour
         StartPrefabPlacement(machineData.prefab, machineData.defaultOrientation, machineData);
     }
 
+    // SHOP BUTTONS
     public void StartBuyConveyorStraight()
     {
         if (conveyorStraightPrefab == null) { Debug.LogWarning("Straight belt prefab not assigned."); return; }
@@ -245,97 +246,51 @@ public class PlacementManager : MonoBehaviour
 
     public Material GetPreviewMaterial() => placementPreviewMaterial;
 
+    internal void SetCurrentSelection(IGridOccupant occ)
+    {
+        CurrentSelection = occ;
+    }
+
     internal void SetCurrentSelection(IGridOccupant occ) => CurrentSelection = occ;
 
     // Robust swap (prevents overlap). No neighbor auto-resolution here.
     public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefab, GridOrientation overrideOrientation, ConveyorBelt.BeltTurnKind turnKind = ConveyorBelt.BeltTurnKind.None)
     {
-        if (gridService == null || !gridService.HasGrid || source == null) return source;
+        if (testMaterialData == null)
+        {
+            Debug.LogWarning("PlacementManager: No MaterialData set.");
+            return;
+        }
+        SpawnTestItemOnSelectedBelt(testMaterialData);
+    }
 
-        var anchor = source.Anchor;
-        var size = Vector2Int.one;
+    // UI button: spawn a test item on the selected belt
+    public void SpawnTestItemOnSelectedBelt(MaterialData testMaterialData)
+    {
+        if (!(CurrentSelection is ConveyorBelt belt))
+        {
+            Debug.LogWarning("No conveyor belt selected.");
+            return;
+        }
 
         // Re-entrancy guard per cell
         if (!_beltSwapInProgress.Add(anchor))
             return source;
 
-        try
-        {
-            var prefab = GetConveyorPrefab(useTurnPrefab);
-            if (prefab == null)
-            {
-                Debug.LogWarning("ReplaceConveyorPrefab: missing conveyor prefab.");
-                return source;
-            }
-
-            var world = AnchorToWorldCenter(anchor, size, 0f);
-
-            // Transfer item if present
-            ConveyorItem item = null;
-            if (source.HasItem)
-            {
-                item = source.TakeItem();
-                if (item != null && item.Visual != null)
-                {
-                    item.Visual.transform.position = world;
-                }
-            }
-
-            // Hide and clear the old belt before spawning to avoid visual overlap
-            source.gameObject.SetActive(false);
-            gridService.SetAreaOccupant(anchor, size, null);
-
-            // Spawn new belt
-            var go = Instantiate(prefab, world, overrideOrientation.ToRotation());
-            var newBelt = go.GetComponent<ConveyorBelt>();
-            if (newBelt == null)
-            {
-                Destroy(go);
-                // Restore old
-                source.gameObject.SetActive(true);
-                gridService.SetAreaOccupant(anchor, size, source.gameObject);
-                Debug.LogError("ReplaceConveyorPrefab: new prefab missing ConveyorBelt.");
-                return source;
-            }
-
-            // Configure and set occupancy
-            newBelt.SetTurnKind(turnKind);
-            newBelt.SetPlacement(anchor, overrideOrientation);
-            gridService.SetAreaOccupant(anchor, size, go);
-
-            // Restore item
-            if (item != null)
-                newBelt.TrySetItem(item, snapVisual: true);
-
-            // Remove old
-            Destroy(source.gameObject);
-
-            return newBelt;
-        }
-        finally
-        {
-            _beltSwapInProgress.Remove(anchor);
-        }
-    }
-
-    public void DestroyCurrentSelection()
-    {
-        var occ = CurrentSelection;
-        if (occ == null) return;
-
-        if (gridService != null && gridService.HasGrid)
-        {
-            var size = occ.BaseSize.OrientedSize(occ.Orientation);
-            gridService.SetAreaOccupant(occ.Anchor, size, null);
-        }
-
-        var go = (occ as Component)?.gameObject;
+        // Prefer registry for visuals, fallback to generic prefab
+        GameObject visualPrefab = MaterialVisualRegistry.Instance != null
+            ? MaterialVisualRegistry.Instance.GetPrefab(testMaterialData.materialType)
+            : null;
+        if (visualPrefab == null) visualPrefab = conveyorItemPrefab;
 
         SetCurrentSelection(null);
         selectionUI?.Hide();
 
-        if (go != null) Destroy(go);
-
-        SetState(new IdleState(this));
+        var item = new ConveyorItem(testMaterialData, visual);
+        if (!belt.TrySetItem(item))
+        {
+            if (visual != null) Destroy(visual);
+            Debug.Log("Failed to place item on belt.");
+        }
     }
 }
