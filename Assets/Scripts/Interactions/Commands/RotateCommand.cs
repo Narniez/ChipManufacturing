@@ -23,17 +23,20 @@ public class RotateCommand : ICommand
 
     public bool Execute()
     {
-        if (_occ == null || _grid == null || !_grid.HasGrid) return false;
+        if (_grid == null || !_grid.HasGrid) return false;
+
+        var comp = _occ as Component; 
+        if (comp == null) return false;
 
         _oldOri = _occ.Orientation;
-        _oldAnchor = _occ.Anchor;
+        _oldAnchor = _occ.Anchor; // removed dynamic
         _oldSize = _occ.BaseSize.OrientedSize(_oldOri);
 
         _newOri = _clockwise ? _oldOri.RotatedCW() : _oldOri.RotatedCCW();
         _newSize = _occ.BaseSize.OrientedSize(_newOri);
         _newAnchor = _grid.ClampAnchor(_oldAnchor, _newSize);
 
-        var go = (_occ as Component)?.gameObject;
+        var go = comp.gameObject;
         if (!_grid.IsAreaInside(_newAnchor, _newSize) || !_grid.IsAreaFree(_newAnchor, _newSize, go))
             return false;
 
@@ -52,14 +55,16 @@ public class RotateCommand : ICommand
 
     public void Undo()
     {
-        if (_occ == null || _grid == null) return;
-        var go = (_occ as Component)?.gameObject;
+        if (_grid == null) return;
 
-        // Revert occupancy
+        var comp = _occ as Component;
+        if (comp == null) return;
+
+        var go = comp.gameObject;
+
         _grid.SetAreaOccupant(_newAnchor, _newSize, null);
         _grid.SetAreaOccupant(_oldAnchor, _oldSize, go);
 
-        // Revert placement + world
         _occ.SetPlacement(_oldAnchor, _oldOri);
         float yOff = ComputePivotBottomOffset(_occ.DragTransform);
         Vector3 world = AnchorToWorldCenter(_oldAnchor, _oldSize, yOff);

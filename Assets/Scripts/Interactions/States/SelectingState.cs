@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class SelectingState : BasePlacementState
@@ -19,12 +20,16 @@ public class SelectingState : BasePlacementState
         if (ui == null || _selected == null) return;
 
         var comp = (_selected as Component);
-        string name = comp.GetComponent<Machine>()?.Data?.machineName ?? comp.name;
+
+        string name = ResolveDisplayName(comp);
+
+        bool isBelt = comp?.GetComponent<ConveyorBelt>() != null;
 
         ui.Show(
             name,
             onRotateLeft:  () => RotateAndRefresh(clockwise: false),
-            onRotateRight: () => RotateAndRefresh(clockwise: true)
+            onRotateRight: () => RotateAndRefresh(clockwise: true),
+            isBelt
         );
 
         var belt = comp.GetComponent<ConveyorBelt>();
@@ -119,5 +124,28 @@ public class SelectingState : BasePlacementState
     {
         PlaceMan.ExecuteRotateCommand(_selected, clockwise);
         OnRotateRequested();
+    }
+
+    private static string ResolveDisplayName(Component comp)
+    {
+        if (comp == null) return string.Empty;
+
+        var machine = comp.GetComponent<Machine>();
+        if (machine?.Data != null && !string.IsNullOrEmpty(machine.Data.machineName))
+            return machine.Data.machineName;
+
+        if (comp.GetComponent<ConveyorBelt>() != null)
+            return "Conveyor Belt";
+
+        return StripClone(comp.name);
+    }
+
+    private static string StripClone(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return name;
+        const string suffix = "(Clone)";
+        if (name.EndsWith(suffix, StringComparison.Ordinal))
+            return name.Substring(0, name.Length - suffix.Length).TrimEnd();
+        return name;
     }
 }

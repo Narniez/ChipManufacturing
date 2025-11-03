@@ -34,7 +34,7 @@ public class PlacementManager : MonoBehaviour
     [Header("Conveyor Test")]
     [SerializeField] private GameObject conveyorItemPrefab;
     [SerializeField, Tooltip("Default machine to use when spawning a test item without arguments.")]
-    private MachineData defaultTestMachine;
+    private MaterialData testMaterialData;
 
     private CameraController _camCtrl;
 
@@ -138,7 +138,7 @@ public class PlacementManager : MonoBehaviour
         StartPrefabPlacement(machineData.prefab, machineData.defaultOrientation, machineData);
     }
 
-    // SHOP BUTTONS: call these from UI (OnClick)
+    // SHOP BUTTONS
     public void StartBuyConveyorStraight()
     {
         if (conveyorStraightPrefab == null) { Debug.LogWarning("Straight belt prefab not assigned."); return; }
@@ -251,6 +251,8 @@ public class PlacementManager : MonoBehaviour
 
     public GameObject GetConveyorPrefab(bool isTurn) => isTurn ? conveyorTurnPrefab : conveyorStraightPrefab;
 
+    public Material GetPreviewMaterial() => placementPreviewMaterial;
+
     internal void SetCurrentSelection(IGridOccupant occ)
     {
         CurrentSelection = occ;
@@ -260,16 +262,16 @@ public class PlacementManager : MonoBehaviour
 
     public void SpawnTestItemOnSelectedBelt()
     {
-        if (defaultTestMachine == null)
+        if (testMaterialData == null)
         {
-            Debug.LogWarning("PlacementManager: No defaultTestMachine assigned.");
+            Debug.LogWarning("PlacementManager: No MaterialData set.");
             return;
         }
-        SpawnTestItemOnSelectedBelt(defaultTestMachine);
+        SpawnTestItemOnSelectedBelt(testMaterialData);
     }
 
     // UI button: spawn a test item on the selected belt
-    public void SpawnTestItemOnSelectedBelt(MachineData machineData)
+    public void SpawnTestItemOnSelectedBelt(MaterialData testMaterialData)
     {
         if (!(CurrentSelection is ConveyorBelt belt))
         {
@@ -283,36 +285,9 @@ public class PlacementManager : MonoBehaviour
             return;
         }
 
-        if (machineData == null)
-        {
-            Debug.LogWarning("SpawnTestItemOnSelectedBelt: machineData is null.");
-            return;
-        }
-
-        // Resolve which MaterialData to spawn:
-        // 1) First recipe input, 2) legacy outputMaterial, 3) legacy inputMaterial
-        MaterialData matData = null;
-
-        if (machineData.HasRecipes && machineData.recipes.Count > 0)
-        {
-            var r = machineData.recipes[0];
-            if (r.inputs != null && r.inputs.Count > 0)
-                matData = r.inputs[0].material;
-        }
-        if (matData == null && machineData.inputMaterial != null)
-            matData = machineData.inputMaterial;
-        if (matData == null && machineData.outputMaterial != null)
-            matData = machineData.outputMaterial;
-
-        if (matData == null)
-        {
-            Debug.LogWarning($"SpawnTestItemOnSelectedBelt: Could not resolve MaterialData from '{machineData.name}'.");
-            return;
-        }
-
         // Prefer registry for visuals, fallback to generic prefab
         GameObject visualPrefab = MaterialVisualRegistry.Instance != null
-            ? MaterialVisualRegistry.Instance.GetPrefab(matData.materialType)
+            ? MaterialVisualRegistry.Instance.GetPrefab(testMaterialData.materialType)
             : null;
         if (visualPrefab == null) visualPrefab = conveyorItemPrefab;
 
@@ -320,7 +295,7 @@ public class PlacementManager : MonoBehaviour
         if (visualPrefab != null)
             visual = Instantiate(visualPrefab);
 
-        var item = new ConveyorItem(matData, visual);
+        var item = new ConveyorItem(testMaterialData, visual);
         if (!belt.TrySetItem(item))
         {
             if (visual != null) Destroy(visual);

@@ -81,12 +81,12 @@ public class PreviewPlacementState : BasePlacementState
         _occ.SetPlacement(_anchor, _orientation);
 
         // Show selection UI while in preview (name + rotate buttons)
-        string title = _machineData != null ? _machineData.machineName : _instance.name;
-        PlaceMan.SelectionUI?.Show(
-            title,
-            onRotateLeft: () => Rotate(clockwise: false),
-            onRotateRight: () => Rotate(clockwise: true)
-        );
+        //string title = _machineData != null ? _machineData.machineName : _instance.name;
+        //PlaceMan.SelectionUI?.Show(
+        //    title,
+        //    onRotateLeft: () => Rotate(clockwise: false),
+        //    onRotateRight: () => Rotate(clockwise: true)
+        //);
     }
 
     public override void Exit()

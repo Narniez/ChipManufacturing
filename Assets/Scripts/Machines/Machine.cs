@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using NUnit.Framework.Internal;
 
 public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 {
@@ -30,12 +29,18 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public static event Action<Machine> OnMachineRepaired;
 
     public event Action<MaterialType, Vector3> OnMaterialProduced;
-    public event Action<Machine> OnQueueChanged; // UI can subscribe
 
     // Expose minimal state
     public MachineData Data => data;
     public bool IsProducing => productionRoutine != null;
     public bool IsBroken => _isBroken;
+
+    // Treat as "generator" if no recipes, no input, but has an output
+    private bool IsLegacyGenerator =>
+        data != null &&
+        !data.HasRecipes &&
+        (data.inputMaterial == null || data.inputMaterial.materialType == MaterialType.None) &&
+        data.outputMaterial != null && data.outputMaterial.materialType != MaterialType.None;
 
     public void Initialize(MachineData machineData)
     {
@@ -48,6 +53,15 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _chanceToBreakIncrement = data.chanceIncreasePerOutput;
         _miniMimumChanceToBreak = data.minimunChanceToBreak;
         _isBroken = false;
+
+        StartProduction();
+    }
+
+    // Allow external systems to start production 
+    public void TryStartIfIdle()
+    {
+        if (!_isBroken && productionRoutine == null)
+            StartProduction();
     }
 
     // Try to start one cycle if inputs are ready
@@ -55,7 +69,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     {
         if (data == null) { Debug.LogError("Machine.StartProduction: MachineData not set."); return; }
         if (productionRoutine != null) return;
-        if (_isBroken) return; // do not produce while broken
+        if (_isBroken) return;
 
         if (data.HasRecipes)
         {
@@ -72,8 +86,18 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         }
         else
         {
-            if (_inputQueue.Count == 0) return;
-            productionRoutine = StartCoroutine(ProcessOneLegacy());
+            // Legacy behavior with input queue
+            if (_inputQueue.Count > 0)
+            {
+                productionRoutine = StartCoroutine(ProcessOneLegacy());
+                return;
+            }
+
+            // Legacy generator: no inputs, only output; run only if at least one output belt is connected
+            if (IsLegacyGenerator && HasConnectedOutputBelt())
+            {
+                productionRoutine = StartCoroutine(ProcessLegacyGenerator());
+            }
         }
     }
 
@@ -107,7 +131,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             }
         }
         _inventoryDumpedThisCycle = false;
-        OnQueueChanged?.Invoke(this);
     }
 
     private IEnumerator ProcessOneRecipe(float duration)
@@ -123,7 +146,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
                 var outStack = _currentRecipe.outputs[i];
                 int count = Mathf.Max(1, outStack.amount);
                 for (int c = 0; c < count; c++)
-                    ProduceOneOutput(outStack.material); // if we break, subsequent calls early-exit
+                    ProduceOneOutput(outStack.material);
             }
         }
 
@@ -138,12 +161,50 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     {
         // Consume one and process
         var consumed = _inputQueue.Dequeue();
-        OnQueueChanged?.Invoke(this);
 
         yield return new WaitForSeconds(data.processingTime);
 
         // Produce legacy single output (data.outputMaterial)
         ProduceOneOutput(data.outputMaterial);
+
+        productionRoutine = null;
+        StartProduction();
+    }
+
+    // Legacy generator cycle (no inputs): produce to ALL connected outputs at once
+    private IEnumerator ProcessLegacyGenerator()
+    {
+        yield return new WaitForSeconds(data.processingTime);
+        var belts = GetConnectedOutputBelts();
+        if (belts.Count == 0)
+        {
+            productionRoutine = null;
+            yield break;
+        }
+
+        // Produce once per belt
+        foreach (var belt in belts)
+        {
+            if (_isBroken) break;
+            OnMaterialProduced?.Invoke(data.outputMaterial.materialType, transform.position);
+            _chanceToBreak += _chanceToBreakIncrement;
+            if (BreakCheck())
+            {
+                Break();
+                break;
+            }
+
+            // Place item on that belt
+            GameObject visualPrefab = MaterialVisualRegistry.Instance != null ? MaterialVisualRegistry.Instance.GetPrefab(data.outputMaterial.materialType) : null;
+            GameObject visual = null;
+            if (visualPrefab != null) visual = Instantiate(visualPrefab);
+
+            var item = new ConveyorItem(data.outputMaterial, visual);
+            if (!belt.TrySetItem(item))
+            {
+                if (visual != null) Destroy(visual);
+            }
+        }
 
         productionRoutine = null;
         StartProduction();
@@ -163,7 +224,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         {
             Debug.Log("M: machine broke!");
             Break();
-            return; // do not push output to belt if we broke at this output (optional rule)
+            return; 
         }
 
         TryPushOutputToBelt(mat);
@@ -181,7 +242,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             productionRoutine = null;
         }
 
-        OnQueueChanged?.Invoke(this); // allow UI to reflect stopped state
         OnMachineBroken?.Invoke(this, transform.position);
     }
 
@@ -192,7 +252,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _chanceToBreak = 0f;
 
         OnMachineRepaired?.Invoke(this);
-        StartProduction(); // resume if inputs available
+        StartProduction();
     }
 
     private void TryPushOutputToBelt(MaterialData mat)
@@ -221,7 +281,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             outputs.Add((cell, worldSide));
         }
 
-        // Resolve item visual
+        // Try get item visual prefab from the registry
         GameObject visualPrefab = MaterialVisualRegistry.Instance != null ? MaterialVisualRegistry.Instance.GetPrefab(mat.materialType) : null;
 
         bool foundBeltAtOutput = false;
@@ -240,6 +300,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
             var belt = occGO.GetComponent<ConveyorBelt>();
             if (belt == null) continue;
+
+            // Require belt to face outward to receive
+            if (belt.Orientation != worldSide) continue;
 
             foundBeltAtOutput = true;
 
@@ -261,6 +324,55 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             AddOutputToInventory(mat, 1);
             Debug.Log("M: added to inventory (dead-end)");
         }
+    }
+
+    //List all connected, correctly oriented, empty output belts
+    private List<ConveyorBelt> GetConnectedOutputBelts()
+    {
+        var belts = new List<ConveyorBelt>();
+        var grid = FindFirstObjectByType<GridService>();
+        if (grid == null || !grid.HasGrid) return belts;
+
+        var orientedSize = BaseSize.OrientedSize(Orientation);
+        var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
+
+        if (data != null && data.ports != null && data.ports.Count > 0)
+        {
+            foreach (var p in data.ports)
+            {
+                if (p.kind != MachinePortType.Output) continue;
+                var worldSide = RotateSide(p.side, Orientation);
+                var cell = ComputePortCell(p.side, orientedSize, p.offset);
+                outputs.Add((cell, worldSide));
+            }
+        }
+        else
+        {
+            var worldSide = Orientation;
+            var cell = ComputePortCell(Orientation, orientedSize, -1);
+            outputs.Add((cell, worldSide));
+        }
+
+        foreach (var (cell, worldSide) in outputs)
+        {
+            if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
+
+            GameObject occGO = cd.occupant as GameObject;
+            if (occGO == null)
+            {
+                var comp = cd.occupant as Component;
+                occGO = comp != null ? comp.gameObject : null;
+            }
+            if (occGO == null) continue;
+
+            var belt = occGO.GetComponent<ConveyorBelt>();
+            if (belt == null) continue;
+
+            if (belt.Orientation == worldSide && !belt.HasItem)
+                belts.Add(belt);
+        }
+
+        return belts;
     }
 
     // Add a single material to inventory
@@ -320,7 +432,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         Debug.Log($"Machine {data.machineName} tapped.");
         if (_isBroken)
         {
-            // Optional: forward to BrokenMachineManager to open UI if tapping the machine itself
+            // Forward to BrokenMachineManager to open UI if tapping the machine itself
             var mgr = FindFirstObjectByType<BrokenMachineManager>();
             if (mgr != null) mgr.OpenRepairUI(this);
         }
@@ -375,7 +487,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             // Accept only materials that appear in at least one recipe
             if (!AppearsInAnyRecipe(material.materialType)) return;
             AddToBuffer(material.materialType, 1);
-            OnQueueChanged?.Invoke(this);
             StartProduction();
             return;
         }
@@ -383,7 +494,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         // Legacy single input
         if (Data.inputMaterial.materialType != MaterialType.None && Data.inputMaterial.materialType != material.materialType) return;
         _inputQueue.Enqueue(material.materialType);
-        OnQueueChanged?.Invoke(this);
         StartProduction();
     }
 
@@ -408,7 +518,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         {
             if (!AppearsInAnyRecipe(material)) return 0;
             AddToBuffer(material, amount);
-            OnQueueChanged?.Invoke(this);
             StartProduction();
             return amount;
         }
@@ -416,7 +525,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         // Legacy single input
         if (Data.inputMaterial.materialType != MaterialType.None && Data.inputMaterial.materialType != material) return 0;
         for (int i = 0; i < amount; i++) _inputQueue.Enqueue(material);
-        OnQueueChanged?.Invoke(this);
         StartProduction();
         return amount;
     }
@@ -439,7 +547,58 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _buffer[mat] = have + Mathf.Max(1, amount);
     }
 
-    // --- Port helpers (unchanged) ---
+    // --- Helpers ---
+
+    // True if at least one correctly oriented belt is connected to any output
+    private bool HasConnectedOutputBelt()
+    {
+        var grid = FindFirstObjectByType<GridService>();
+        if (grid == null || !grid.HasGrid) return false;
+
+        var orientedSize = BaseSize.OrientedSize(Orientation);
+        var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
+
+        if (data != null && data.ports != null && data.ports.Count > 0)
+        {
+            foreach (var p in data.ports)
+            {
+                if (p.kind != MachinePortType.Output) continue;
+                var worldSide = RotateSide(p.side, Orientation);
+                var cell = ComputePortCell(p.side, orientedSize, p.offset);
+                outputs.Add((cell, worldSide));
+            }
+        }
+        else
+        {
+            var worldSide = Orientation;
+            var cell = ComputePortCell(Orientation, orientedSize, -1);
+            outputs.Add((cell, worldSide));
+        }
+
+        foreach (var (cell, worldSide) in outputs)
+        {
+            if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
+
+            GameObject occGO = cd.occupant as GameObject;
+            if (occGO == null)
+            {
+                var comp = cd.occupant as Component;
+                occGO = comp != null ? comp.gameObject : null;
+            }
+            if (occGO == null) continue;
+
+            var belt = occGO.GetComponent<ConveyorBelt>();
+            if (belt == null) continue;
+
+            // Must face outward (same orientation as worldSide) to receive
+            if (belt.Orientation == worldSide)
+                return true;
+        }
+
+        return false;
+    }
+
+    //Port helpers 
     public bool TryGetBeltConnection(ConveyorBelt belt, out MachinePortType portType, bool requireFacing = true)
     {
         portType = MachinePortType.None;
@@ -450,6 +609,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             if (IsBeltOnSide(belt, Orientation, MachinePortType.Output, offset: -1, requireFacing))
             {
                 portType = MachinePortType.Output;
+                // If a belt just connected on our output, try starting a generator
+                if (IsLegacyGenerator && productionRoutine == null && !_isBroken) StartProduction();
                 return true;
             }
             return false;
@@ -460,6 +621,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             if (IsBeltOnSide(belt, port.side, port.kind, port.offset, requireFacing))
             {
                 portType = port.kind;
+                if (portType == MachinePortType.Output && IsLegacyGenerator && productionRoutine == null && !_isBroken)
+                    StartProduction();
                 return true;
             }
         }
@@ -495,8 +658,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             default: return Anchor;
         }
     }
-
-  
     private static GridOrientation RotateSide(GridOrientation local, GridOrientation by)
         => (GridOrientation)(((int)local + (int)by) & 3);
 
