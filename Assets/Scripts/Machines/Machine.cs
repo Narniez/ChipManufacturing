@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.VFX;
+using Unity.VisualScripting;
 
 public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 {
@@ -283,6 +285,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         // Try get item visual prefab from the registry
         GameObject visualPrefab = MaterialVisualRegistry.Instance != null ? MaterialVisualRegistry.Instance.GetPrefab(mat.materialType) : null;
+
+        if(visualPrefab == null) Debug.Log("M: visual prefab is null for material " + mat.materialType);
 
         bool foundBeltAtOutput = false;
 
