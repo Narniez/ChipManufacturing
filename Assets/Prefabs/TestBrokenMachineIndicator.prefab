@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5041651940725006458}
   - component: {fileID: 2241516401709631297}
   - component: {fileID: 7768327702363953296}
+  - component: {fileID: -1235173717763709108}
   m_Layer: 0
   m_Name: TestBrokenMachineIndicator
   m_TagString: Untagged
@@ -111,3 +112,16 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-1235173717763709108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7888490462930570013}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4dba5a41352e1b498fbebd26be805ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BrokenMachineIndicator
+  _faceCamera: 1
