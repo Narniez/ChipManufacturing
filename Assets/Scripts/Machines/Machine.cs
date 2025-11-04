@@ -30,7 +30,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public static event Action<Machine, Vector3> OnMachineBroken;
     public static event Action<Machine> OnMachineRepaired;
 
-    public event Action<MaterialType, Vector3> OnMaterialProduced;
+    public static event Action<MaterialType, Vector3> OnMaterialProduced;
 
     public static event Action<MaterialType, Vector3> OnMaterialProduced;
 

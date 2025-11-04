@@ -21,23 +21,23 @@ MonoBehaviour:
   outputMaterial: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
   processingTime: 4
   recipes: []
-  size: {x: 1, y: 1}
+  size: {x: 3, y: 3}
   upgrades: []
   ports:
   - kind: 2
     side: 0
-    offset: 0
+    offset: -1
   - kind: 2
     side: 1
-    offset: 0
+    offset: -1
   - kind: 2
     side: 2
-    offset: 0
+    offset: -1
   - kind: 2
     side: 3
-    offset: 0
+    offset: -1
   inputPortIndicatorPrefab: {fileID: 0}
   outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
-  chanceIncreasePerOutput: 20
-  minimunChanceToBreak: 20
+  chanceIncreasePerOutput: 0
+  minimunChanceToBreak: 100
   brokenMachineParticleEffect: {fileID: 6957141498569091356, guid: b7191a096fb3fc74fb80033db4ccaa7d, type: 3}
