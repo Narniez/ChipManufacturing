@@ -9,8 +9,8 @@ using UnityEngine.UI;
 [RequireComponent(typeof(UnityEngine.UI.Image))]
 public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
-    [Header("Debug")]
-    [SerializeField] private bool debug = true;
+    /*[Header("Debug")]
+    [SerializeField] private bool debug = true;*/
 
     [Header("UI")]
     [Tooltip("Icon image to display the item's sprite")]
@@ -20,8 +20,14 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
 
     [SerializeField] private SellPopup sellPopup;
 
+
     [Header("Drag")]
     [SerializeField] private CanvasGroup canvasGroup;
+    [SerializeField] private Canvas dragCanvas;
+
+    [SerializeField] private InventoryItem inventoryItemPrefab; // your existing InventoryItem prefab
+    private GameObject _activeProxy;
+    private CameraController mainCamera;
 
 
     // Backing data for this slot
@@ -40,7 +46,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     private RectTransform _dragGhostRt;
     private Image _dragGhostIcon;
     private TextMeshProUGUI _dragGhostAmount;
-    private Color _originalIconColor;
+    //private Color _originalIconColor;
     private Color _slotColor;
 
     //private Transform _originalParent;
@@ -53,12 +59,16 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
         if (canvasGroup == null) canvasGroup = gameObject.GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
         canvasGroup.blocksRaycasts = true;
 
+        dragCanvas = GameObject.FindGameObjectWithTag("PopupCanvas")?.GetComponent<Canvas>();
+
         // Cache original icon sprite/color so we can restore them when the slot is empty
         if (icon != null)
         {
             _slotSprite = icon.sprite;
             _slotColor = icon.color;
         }
+
+        mainCamera = GameObject.FindGameObjectWithTag("MainCamera")?.GetComponent<CameraController>();
 
         //UpdateUi();
     }
@@ -111,7 +121,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
             else
             {
                 // Restore original icon sprite & color when slot is empty
-                icon.enabled = true;
+                //icon.enabled = true;
                 icon.sprite = _slotSprite;
                 icon.color = _slotColor;
             }
@@ -131,7 +141,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
         if (sellPopup && sellPopup.gameObject.activeSelf)
             sellPopup.Close();
 
-        _dropHandledThisDrag = false;
+        /*_dropHandledThisDrag = false;
         _dragging = true;
 
         if (_canvas == null) _canvas = GetComponentInParent<Canvas>();
@@ -145,81 +155,56 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
 
         if (icon != null)
         {
-            _originalIconColor = icon.color;
             var color = icon.color; color.a = 0.35f;
             icon.color = color;
         }
 
-        SetGhostPosition(eventData);
+        SetGhostPosition(eventData);*/
+
+        mainCamera.SetInputLocked(true);
+
+        var parent = canvasGroup ? canvasGroup.transform : (GetComponentInParent<Canvas>()?.transform ?? transform.root);
+        //var parent = dragCanvas ? dragCanvas.transform : (GetComponentInParent<Canvas>()?.transform ?? transform.root);
+        var proxy = Instantiate(inventoryItemPrefab, parent, false);
+        proxy.Setup(Item, Amount);
+        proxy.SetCurrentSlot(this);
+        proxy.transform.position = eventData.position;
+
+        _activeProxy = proxy.gameObject;
+
+        // hand off the drag to the proxy
+        eventData.pointerDrag = _activeProxy;
+        ExecuteEvents.Execute<IBeginDragHandler>(_activeProxy, eventData, ExecuteEvents.beginDragHandler);
     }
-      
 
-    public void OnDrag(PointerEventData eventData)
+
+    public void OnDrag(PointerEventData e)
     {
-       if(!_dragging || _dragGhostRt == null) return;
-       SetGhostPosition(eventData);
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        if (!_dragging) return;
-        _dragging = false;
-
-        if (icon != null) icon.color = _originalIconColor;
-
-        // IMPORTANT: resolve hovered target BEFORE re-enabling raycasts on the source slot
-        GameObject hoveredGO = eventData.pointerCurrentRaycast.gameObject != null
-            ? eventData.pointerCurrentRaycast.gameObject
-            : eventData.pointerEnter;
-
-        var targetSlot = hoveredGO ? hoveredGO.GetComponentInParent<InventorySlot>() : null;
-
-        // Now restore raycasts on the source
-        canvasGroup.blocksRaycasts = true;
-
-        if (targetSlot != null && targetSlot != this)
+        if (_activeProxy != null)
         {
-            // Stack if same item id; else swap (move if target is empty)
-            if (!targetSlot.IsEmpty && targetSlot.Item != null && Item != null && targetSlot.Item.id == Item.id)
-            {
-                targetSlot.AddAmount(Amount);
-                Clear();                 // calls UpdateUI()
-                if (debug) Debug.Log($"[InventorySlot] Stacked {Amount} onto {targetSlot.name}");
-            }
-            else
-            {
-                var tmpItem = targetSlot.Item;
-                var tmpAmt  = targetSlot.Amount;
+           // mainCamera.SetInputLocked(true);
+            ExecuteEvents.Execute<IDragHandler>(_activeProxy, e, ExecuteEvents.dragHandler);
+            return;
+        }
+    }
 
-                targetSlot.SetItem(Item, Amount); // updates target visuals
-                SetItem(tmpItem, tmpAmt);         // updates source visuals
+    private void OnDisable() { if (icon) icon.color = _slotColor; _activeProxy = null; }
+    private void OnDestroy() { if (icon) icon.color = _slotColor; _activeProxy = null; }
 
-                if (debug) Debug.Log($"[InventorySlot] Swapped {name} <-> {targetSlot.name}");
-            }
+    public void OnEndDrag(PointerEventData e)
+    {
+        if (_activeProxy != null)
+        {
+            mainCamera.SetInputLocked(false);
+            ExecuteEvents.Execute<IEndDragHandler>(_activeProxy, e, ExecuteEvents.endDragHandler);
+            _activeProxy = null;
         }
 
-        DestroyDragGhost();
-        _dropHandledThisDrag = true;
+        if (icon) icon.color = _slotColor; // restore
     }
 
     public void OnDrop(PointerEventData eventData)
     {
-        /* // Accept drops of InventoryItem: copy its data into this slot and destroy it
-         var dragged = eventData.pointerDrag ? eventData.pointerDrag.GetComponent<InventoryItem>() : null;
-         if (dragged == null) return;
-
-         // If same item, stack; else overwrite (or add your swap logic)
-         if (!IsEmpty && Item == dragged.SlotItem)
-         {
-             AddAmount(dragged.SlotQuantity);
-             if (InventoryService.Instance != null)
-                 InventoryService.Instance.TryApply(new Dictionary<int, int> { { dragged.SlotItem.id, dragged.SlotQuantity } });
-             Destroy(dragged.gameObject);
-             return;
-         }
-
-         PlaceItem(dragged);*/
-
         var dragged = eventData.pointerDrag ? eventData.pointerDrag.GetComponent<InventoryItem>() : null;
         if (dragged == null) return;
 
@@ -247,64 +232,4 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
         }
     }
           
-    private void CreateDragGhost()
-    {
-        DestroyDragGhost();
-
-        _dragGhost = new GameObject("SlotDragGhost", typeof(RectTransform));
-        _dragGhost.transform.SetParent(_canvas.transform, false);
-        _dragGhost.transform.SetAsLastSibling();
-
-        _dragGhostRt = _dragGhost.GetComponent<RectTransform>();
-        //_dragGhostRt.sizeDelta = (icon != null && icon.sprite != null) ? new Vector2(icon.sprite.rect.width, icon.sprite.rect.height) : new Vector2(64, 64);
-
-        _dragGhostIcon = _dragGhost.AddComponent<Image>();
-        _dragGhostIcon.raycastTarget = false;
-        _dragGhostIcon.sprite = icon != null ? icon.sprite : null;
-        _dragGhostIcon.color = Color.white;
-
-        // Amount label
-        var amountGO = new GameObject("Amount", typeof(RectTransform));
-        amountGO.transform.SetParent(_dragGhost.transform, false);
-        var amountRT = amountGO.GetComponent<RectTransform>();
-        amountRT.anchorMin = new Vector2(1, 0);
-        amountRT.anchorMax = new Vector2(1, 0);
-        amountRT.pivot = new Vector2(1, 0);
-        amountRT.anchoredPosition = new Vector2(-8, 8);
-
-        _dragGhostAmount = amountGO.AddComponent<TextMeshProUGUI>();
-        _dragGhostAmount.raycastTarget = false;
-        _dragGhostAmount.fontSize = 24;
-        _dragGhostAmount.alignment = TextAlignmentOptions.BottomRight;
-        _dragGhostAmount.text = Amount > 1 ? Amount.ToString() : "1";
-        _dragGhostAmount.color = Color.white;
-        _dragGhostAmount.enableAutoSizing = true;
-   
-    }
-
-    private void DestroyDragGhost()
-    {
-        if (_dragGhost != null) Destroy(_dragGhost);
-        _dragGhost = null;
-        _dragGhostRt = null;
-        _dragGhostIcon = null;
-        _dragGhostAmount = null;
-    }
-
-    private void SetGhostPosition(PointerEventData eventData)
-    {
-        if (_dragGhostRt == null) return;
-        Vector3 globalMousePos;
-        RectTransform plane = _canvas.transform as RectTransform;
-        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(plane, eventData.position, eventData.pressEventCamera, out globalMousePos))
-        {
-            _dragGhostRt.position = globalMousePos;
-            _dragGhostRt.rotation = plane.rotation;
-        }
-        else
-        {   
-            _dragGhostRt.position = eventData.position;
-        }
-    }
-
 }

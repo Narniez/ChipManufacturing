@@ -144,6 +144,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
                         // Update UI item or destroy if empty
                         slotQuantity -= used;
+                        //CurrentSlot?.AddAmount(-used);
                         if (slotQuantity <= 0)
                             Destroy(gameObject);
                         else
@@ -156,7 +157,11 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         }
     }
-    public void NotifyDroppedHandled() => _dropHandledThisDrag = true;
+    public void NotifyDroppedHandled()
+    {
+        _dropHandledThisDrag = true;
+        CurrentSlot?.Clear();
+    }
 
     public void OnPointerClick(PointerEventData eventData)
     {

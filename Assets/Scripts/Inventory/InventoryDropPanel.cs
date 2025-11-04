@@ -8,8 +8,6 @@ public class InventoryDropPanel : MonoBehaviour, IPointerEnterHandler, IPointerE
     [SerializeField] private GameObject inventoryPanel; // to enable/disable when dragging over drop panel
     [SerializeField] private Button inventoryButton;
 
-    private Button _button;
-
     public bool IsPointerOver { get; private set; }
 
     public void OnPointerEnter(PointerEventData eventData)
