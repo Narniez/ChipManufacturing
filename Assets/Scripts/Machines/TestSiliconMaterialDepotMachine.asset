@@ -38,6 +38,6 @@ MonoBehaviour:
     offset: 0
   inputPortIndicatorPrefab: {fileID: 0}
   outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
-  chanceIncreasePerOutput: 1
-  minimunChanceToBreak: 60
+  chanceIncreasePerOutput: 20
+  minimunChanceToBreak: 20
   brokenMachineParticleEffect: {fileID: 6957141498569091356, guid: b7191a096fb3fc74fb80033db4ccaa7d, type: 3}
