@@ -302,4 +302,27 @@ public class PlacementManager : MonoBehaviour
             Debug.Log("Failed to place item on belt.");
         }
     }
+
+    public void DestroyCurrentSelection()
+    {
+        var occ = CurrentSelection;
+        if (occ == null) return;
+
+        // Clear grid occupancy
+        if (gridService != null && gridService.HasGrid)
+        {
+            var size = occ.BaseSize.OrientedSize(occ.Orientation);
+            gridService.SetAreaOccupant(occ.Anchor, size, null);
+        }
+
+        // Destroy the GO and clear selection/UI/state
+        var go = (occ as Component)?.gameObject;
+
+        SetCurrentSelection(null);
+        selectionUI?.Hide();
+
+        if (go != null) Destroy(go);
+
+        SetState(new IdleState(this));
+    }
 }

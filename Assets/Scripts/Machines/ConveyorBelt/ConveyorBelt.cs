@@ -86,7 +86,14 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     // IDraggable
     public bool CanDrag => true;
     public Transform DragTransform => transform;
-    public void OnDragStart() { }
+    public void OnDragStart() { 
+        if(_item != null && _item.Visual != null)
+        {
+            Destroy(_item.Visual);
+            _item = null;
+        }
+
+    }
     public void OnDrag(Vector3 worldPosition) { transform.position = worldPosition; }
     public void OnDragEnd() { }
 
