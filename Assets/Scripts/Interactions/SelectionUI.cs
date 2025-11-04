@@ -9,7 +9,7 @@ public class SelectionUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI selectionName;
     [SerializeField] private Button rotateLeftButton;
     [SerializeField] private Button rotateRightButton;
-    [SerializeField] private Button testSpawnButton;
+    [SerializeField] private Button testDestroyButton;
 
     private Action _onRotateLeft;
     private Action _onRotateRight;
@@ -29,7 +29,11 @@ public class SelectionUI : MonoBehaviour
     {
         _onRotateLeft = onRotateLeft;
         _onRotateRight = onRotateRight;
-        testSpawnButton.gameObject.SetActive(isBelt);
+        if (testDestroyButton != null)
+        {
+            testDestroyButton.gameObject.SetActive(true); 
+            testDestroyButton.onClick.AddListener(() => PlacementManager.Instance?.DestroyCurrentSelection());
+        }
         if (selectionName != null) selectionName.text = string.IsNullOrEmpty(title) ? "Selected" : title;
         if (panel != null) panel.SetActive(true);
     }
