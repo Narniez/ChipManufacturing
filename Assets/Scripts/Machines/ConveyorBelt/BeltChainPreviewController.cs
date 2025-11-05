@@ -88,7 +88,7 @@ public class BeltChainPreviewController
     {
         if (!_grid.IsInside(cell) || !_grid.IsAreaFree(cell, Vector2Int.one)) return;
 
-        var prefab = isTurn ? _turnPrefab : _straightPrefab;
+        var prefab =  _straightPrefab;
         if (prefab == null) return;
 
         Vector3 pos = _pm.AnchorToWorldCenter(cell, Vector2Int.one, 0f);

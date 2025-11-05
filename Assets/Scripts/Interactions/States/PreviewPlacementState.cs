@@ -20,7 +20,7 @@ public class PreviewPlacementState : BasePlacementState
     private float _heightOffset;
 
     private bool _committed;
-    private bool _isConveyor;             
+    private bool _isConveyor;
 
     public PreviewPlacementState(
         PlacementManager pm,
@@ -45,7 +45,7 @@ public class PreviewPlacementState : BasePlacementState
             return;
         }
 
-        // Spawn at screen center -> desired bottom-left anchor
+        // Spawn at screen center
         Vector2 screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         Vector3 world = ScreenToGround(screenCenter);
         Vector2Int desiredCell = _grid.WorldToCell(world);
@@ -68,14 +68,13 @@ public class PreviewPlacementState : BasePlacementState
         _orientation = _initialOrientation ?? _occ.Orientation;
         var size = GetOrientedSize();
 
-        // Anchor from desired, clamped
-        _anchor = AdjustAnchorInsideGrid(desiredCell, size);
+        // Compute anchor; if the footprint has a true center cell (odd x and y), treat the tapped cell as the center
+        _anchor = ShouldCenterOnCell(size)
+            ? AdjustAnchorInsideGrid(AnchorFromCenterCell(desiredCell, size), size)
+            : AdjustAnchorInsideGrid(desiredCell, size);
 
         // Ensure preview does not overlap existing occupants
-        if (_isConveyor)
-            _anchor = FindFreeToRight(_anchor, size);
-        else
-            _anchor = FindNearestFreeArea(_anchor, size);
+        _anchor = FindNearestFreeArea(_anchor, size);
 
         _heightOffset = PlaceMan.ComputePivotBottomOffset(_instance.transform);
         Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
@@ -97,6 +96,30 @@ public class PreviewPlacementState : BasePlacementState
             OnRotateRequested();
     }
 
+    // Tap anywhere to move the preview
+    public override void OnTap(IInteractable target, Vector2 screen, Vector3 world)
+    {
+        if (_instance == null || _occ == null || _grid == null || !_grid.HasGrid) return;
+
+        var size = GetOrientedSize();
+        Vector2Int cell = _grid.WorldToCell(world);
+        if (!_grid.IsInside(cell)) return;
+
+        Vector2Int newAnchor = ShouldCenterOnCell(size)
+            ? AdjustAnchorInsideGrid(AnchorFromCenterCell(cell, size), size)
+            : AdjustAnchorInsideGrid(cell, size);
+
+        // Ensure preview does not overlap existing occupants
+        newAnchor = FindNearestFreeArea(newAnchor, size);
+
+        if (newAnchor == _anchor) return;
+
+        _anchor = newAnchor;
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
+        _occ.SetPlacement(_anchor, _orientation);
+        _instance.transform.position = snapped;
+    }
+
     public override void OnHoldMove(IInteractable target, Vector2 screen, Vector3 world)
     {
         if (_instance == null || _occ == null) return;
@@ -107,13 +130,12 @@ public class PreviewPlacementState : BasePlacementState
         Vector2Int cell = _grid.WorldToCell(world);
         if (!_grid.IsInside(cell)) return;
 
-        Vector2Int newAnchor = AdjustAnchorInsideGrid(cell, size);
+        Vector2Int newAnchor = ShouldCenterOnCell(size)
+            ? AdjustAnchorInsideGrid(AnchorFromCenterCell(cell, size), size)
+            : AdjustAnchorInsideGrid(cell, size);
 
         // Ensure preview does not overlap existing occupants
-        if (_isConveyor)
-            newAnchor = FindFreeToRight(newAnchor, size);
-        else
-            newAnchor = FindNearestFreeArea(newAnchor, size);
+        newAnchor = _isConveyor ? FindFreeToRight(newAnchor, size) : FindNearestFreeArea(newAnchor, size);
 
         if (newAnchor == _anchor) return;
 
@@ -132,20 +154,28 @@ public class PreviewPlacementState : BasePlacementState
     {
         if (_instance == null || _occ == null) return;
 
+        // Preserve center cell if the footprint has a true center
+        var oldSize = GetOrientedSize();
+        Vector2Int preservedCenter = ShouldCenterOnCell(oldSize)
+            ? CenterCellFromAnchor(_anchor, oldSize)
+            : _anchor;
+
         _orientation = clockwise ? _orientation.RotatedCW() : _orientation.RotatedCCW();
 
-        var size = GetOrientedSize();
-        var newAnchor = AdjustAnchorInsideGrid(_anchor, size);
+        var newSize = GetOrientedSize();
+
+        var newAnchor = ShouldCenterOnCell(newSize)
+            ? AnchorFromCenterCell(preservedCenter, newSize)
+            : _anchor;
+
+        newAnchor = AdjustAnchorInsideGrid(newAnchor, newSize);
 
         // Ensure preview does not overlap existing occupants
-        if (_isConveyor)
-            newAnchor = FindFreeToRight(newAnchor, size);
-        else
-            newAnchor = FindNearestFreeArea(newAnchor, size);
+        newAnchor = _isConveyor ? FindFreeToRight(newAnchor, newSize) : FindNearestFreeArea(newAnchor, newSize);
 
         _anchor = newAnchor;
 
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, newSize, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
     }
@@ -173,7 +203,15 @@ public class PreviewPlacementState : BasePlacementState
 
         _grid.SetAreaOccupant(_anchor, size, _instance);
         _committed = true;
-        PlaceMan.SetState(new IdleState(PlaceMan));
+
+        if (_isConveyor)
+        {
+            PlaceMan.SetState(new SelectingState(PlaceMan, _occ));
+        }
+        else
+        {
+            PlaceMan.SetState(new IdleState(PlaceMan));
+        }
     }
 
     // External cancel (called by PlacementManager.CancelPreview)
@@ -190,7 +228,8 @@ public class PreviewPlacementState : BasePlacementState
         return baseSize.OrientedSize(_orientation);
     }
 
-    private Vector2Int AdjustAnchorInsideGrid(Vector2Int desiredAnchor, Vector2Int size)
+    private Vector2Int AdjustAnchorInsideGrid(Vector2Int desiredAnchor, Vector2Int size
+    )
     {
         if (_grid == null || !_grid.HasGrid) return desiredAnchor;
         int maxX = _grid.Cols - size.x;
@@ -200,6 +239,15 @@ public class PreviewPlacementState : BasePlacementState
             Mathf.Clamp(desiredAnchor.y, 0, Mathf.Max(0, maxY))
         );
     }
+
+    // Footprints with a true center cell (odd x and odd y) can use the tapped cell as center.
+    private static bool ShouldCenterOnCell(Vector2Int size) => (size.x & 1) == 1 && (size.y & 1) == 1;
+
+    private static Vector2Int AnchorFromCenterCell(Vector2Int centerCell, Vector2Int size)
+        => new Vector2Int(centerCell.x - size.x / 2, centerCell.y - size.y / 2);
+
+    private static Vector2Int CenterCellFromAnchor(Vector2Int anchor, Vector2Int size)
+        => new Vector2Int(anchor.x + size.x / 2, anchor.y + size.y / 2);
 
     // For conveyors, if current area is occupied, scan to the right until free or edge reached
     private Vector2Int FindFreeToRight(Vector2Int startAnchor, Vector2Int size)
