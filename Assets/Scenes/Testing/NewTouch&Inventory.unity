@@ -1860,6 +1860,7 @@ GameObject:
   - component: {fileID: 483418284}
   - component: {fileID: 483418283}
   - component: {fileID: 483418282}
+  - component: {fileID: 483418286}
   m_Layer: 5
   m_Name: DropPanel
   m_TagString: Untagged
@@ -1901,6 +1902,7 @@ MonoBehaviour:
   mainCamera: {fileID: 4365471052268879466}
   inventoryPanel: {fileID: 435445624}
   inventoryButton: {fileID: 203496001}
+  dropPanelCanvasGroup: {fileID: 483418286}
 --- !u!114 &483418283
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1983,6 +1985,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 483418280}
   m_CullTransparentMesh: 1
+--- !u!225 &483418286
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 483418280}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1001 &534841238
 PrefabInstance:
   m_ObjectHideFlags: 0

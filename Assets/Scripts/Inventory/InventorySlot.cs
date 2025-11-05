@@ -64,7 +64,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
         // Cache original icon sprite/color so we can restore them when the slot is empty
         if (icon != null)
         {
-            _slotSprite = icon.sprite;
+            _slotSprite = img.sprite;
             _slotColor = icon.color;
         }
 
@@ -103,6 +103,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
 
     public void Clear()
     {
+        icon.sprite = _slotSprite;
         Item = null;
         Amount = 0;
         UpdateUI();
@@ -140,26 +141,6 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
 
         if (sellPopup && sellPopup.gameObject.activeSelf)
             sellPopup.Close();
-
-        /*_dropHandledThisDrag = false;
-        _dragging = true;
-
-        if (_canvas == null) _canvas = GetComponentInParent<Canvas>();
-        if (_canvas == null) return;
-
-        // Let events pass through this slot while dragging
-        canvasGroup.blocksRaycasts = false;
-
-        // Create drag ghost
-        CreateDragGhost();
-
-        if (icon != null)
-        {
-            var color = icon.color; color.a = 0.35f;
-            icon.color = color;
-        }
-
-        SetGhostPosition(eventData);*/
 
         mainCamera.SetInputLocked(true);
 
@@ -206,15 +187,33 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     public void OnDrop(PointerEventData eventData)
     {
         var dragged = eventData.pointerDrag ? eventData.pointerDrag.GetComponent<InventoryItem>() : null;
-        if (dragged == null) return;
+        if (dragged == null || dragged.CurrentSlot == this) return;
 
         if (!IsEmpty && Item != null && dragged.SlotItem != null && Item.id == dragged.SlotItem.id)
         {
             AddAmount(dragged.SlotQuantity);
+            dragged.NotifyDroppedHandled();
             Destroy(dragged.gameObject);
             return;
         }
 
+        if (!IsEmpty && Item != null && dragged.SlotItem != null && Item.id != dragged.SlotItem.id)
+        {
+            var origin = dragged.CurrentSlot;     // origin slot (latched earlier)
+            var prevItem = Item;                  // A
+            var prevAmount = Amount;
+
+            // Target becomes dragged B
+            SetItem(dragged.SlotItem, dragged.SlotQuantity);
+
+            // Origin becomes previous A
+            if (origin != null)
+                origin.SetItem(prevItem, prevAmount);
+
+            Destroy(dragged.gameObject);          // no NotifyDroppedHandled here
+            return;
+        }
+        dragged.NotifyDroppedHandled();
         PlaceItem(dragged);
     }
 

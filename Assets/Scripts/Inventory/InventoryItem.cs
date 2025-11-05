@@ -23,6 +23,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private bool _dropHandledThisDrag;
 
     public InventorySlot CurrentSlot { get; private set; }
+    private InventorySlot _originSlot;
     public MaterialData SlotItem => slotItem;
     public int SlotQuantity => slotQuantity;
 
@@ -30,19 +31,25 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     {
         _rt = (RectTransform)transform;
         if (canvasGroup == null) canvasGroup = gameObject.GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
+        if (CurrentSlot == null)
+            CurrentSlot = GetComponentInParent<InventorySlot>();
+        _originalParent = transform.parent;
+        SetStats();
+
+        _canvas = GetComponentInParent<Canvas>();
+
     }
 
     private void Start()
     {
-        // Find parent slot & canvas
-        CurrentSlot = GetComponentInParent<InventorySlot>();
-        _originalParent = transform.parent;
-
-        _canvas = GetComponentInParent<Canvas>();
-        SetStats();
     }
 
-    public void SetCurrentSlot(InventorySlot slot) => CurrentSlot = slot;
+    public void SetCurrentSlot(InventorySlot slot)
+    {
+        CurrentSlot = slot;
+        if (_originSlot == null) _originSlot = slot; // latch origin
+        
+    }
 
     public void Setup(MaterialData data, int quantity)
     {
@@ -102,16 +109,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         canvasGroup.blocksRaycasts = true;
         canvasGroup.alpha = 1f;
 
-        if (!_dropHandledThisDrag)
-        {
-            transform.SetParent(_originalParent, false);
-            var rt = (RectTransform)transform;
-            rt.anchoredPosition = Vector2.zero;
-            rt.localScale = Vector3.one;
-
-            var slot = _originalParent ? _originalParent.GetComponentInParent<InventorySlot>() : null;
-            if (slot != null) CurrentSlot = slot;
-        }
+        bool worldConsumed = false;
 
         // --- Unlock input if dropped on game view (not UI) ---
         if (EventSystem.current != null && !EventSystem.current.IsPointerOverGameObject())
@@ -123,44 +121,51 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             {
                 var machine = hit.collider.GetComponentInChildren<Machine>();
 
-                // Unlock camera on end drag
-                var cam = Camera.main;
-                if (cam != null)
-                {
-                    var camController = cam.GetComponent<CameraController>();
-                    if (camController != null)
-                        camController.SetInputLocked(false);
-                }
-
+              
                 if (machine != null)
                 {
                     Debug.Log($"Dropped item on machine: {machine.name}");
                     int used = machine.TryQueueInventoryItem(slotItem, slotQuantity);
                     if (used > 0)
                     {
-                        // Remove from inventory
+
+                        worldConsumed = true;
+                        // Update global inventory
                         if (InventoryService.Instance != null)
                             InventoryService.Instance.TryRemove(slotItem.id, used);
 
-                        // Update UI item or destroy if empty
-                        slotQuantity -= used;
-                        //CurrentSlot?.AddAmount(-used);
-                        if (slotQuantity <= 0)
-                            Destroy(gameObject);
-                        else
-                            SetStats();
+                        // Reflect consumption in the ORIGIN slot UI (so remainder goes back)
+                        if (_originSlot != null)
+                            _originSlot.AddAmount(-used);
 
-                        return;
+                        // Proxy is only a drag visual — remove it whether partial or full
+                        Destroy(gameObject);
+                                           
                     }
                 }
             }
 
         }
+
+        if (!_dropHandledThisDrag && !worldConsumed)
+        {
+            Destroy(gameObject);
+            
+        }
+
+        // Always unlock the camera at the end, no matter what path we took
+        var cam = Camera.main;
+        if (cam != null)
+        {
+            var camController = cam.GetComponent<CameraController>();
+            if (camController != null) camController.SetInputLocked(false);
+        }
     }
+
     public void NotifyDroppedHandled()
     {
         _dropHandledThisDrag = true;
-        CurrentSlot?.Clear();
+        (_originSlot ?? CurrentSlot)?.Clear();
     }
 
     public void OnPointerClick(PointerEventData eventData)
