@@ -53,7 +53,6 @@ public class CameraController : MonoBehaviour
     [SerializeField] private bool debug = false;
     [Tooltip("If true, rotation and zoom can happen simultaneously. If false, only one (the dominant) is allowed at a time.")]
     [SerializeField] private bool allowRotationWhenZooming = true;
-    //[SerializeField] private bool allowPanningWhenZooming = true;
 
     [Header("Test Mode")]
     [SerializeField] private CameraTestMode testMode = CameraTestMode.A_SimultaneousZoomRotate;

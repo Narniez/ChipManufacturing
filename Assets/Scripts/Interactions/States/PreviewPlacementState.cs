@@ -20,7 +20,7 @@ public class PreviewPlacementState : BasePlacementState
     private float _heightOffset;
 
     private bool _committed;
-    private bool _isConveyor;             
+    private bool _isConveyor;
 
     public PreviewPlacementState(
         PlacementManager pm,
