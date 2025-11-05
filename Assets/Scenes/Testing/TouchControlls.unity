@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 9ca22510633fbfd4399f1704cd9d5c72, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -1323,7 +1323,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 95.6922, y: -69}
+  m_AnchoredPosition: {x: 131, y: -92}
   m_SizeDelta: {x: 227, y: 164}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &287164300
@@ -2522,13 +2522,13 @@ MonoBehaviour:
   snapToGrid: 1
   gridService: {fileID: 1785461583}
   snapYOffset: 0
-  edgeZonePixels: 200
+  edgeZonePixels: 400
   edgeScrollSpeed: 20
   rotateKey: 114
   enableSecondFingerRotate: 1
   selectionUI: {fileID: 955067076}
   conveyorStraightPrefab: {fileID: 5897710200705214331, guid: e2d9b7a2f5e60fe4da8e277d0f9ab871, type: 3}
-  conveyorTurnPrefab: {fileID: 5897710200705214331, guid: e2d9b7a2f5e60fe4da8e277d0f9ab871, type: 3}
+  conveyorTurnPrefab: {fileID: 3395784172091410599, guid: 10a4b5c99e52e3941b894d10b6121114, type: 3}
   placementPreviewMaterial: {fileID: 2100000, guid: cf78832a6b8134741991e7d20847d026, type: 2}
   conveyorItemPrefab: {fileID: 8559448409965842562, guid: 645a15e76d0729c4084aa3d7e242accc, type: 3}
   testMaterialData: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
@@ -5351,8 +5351,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22f421bdba97dd746a4042d8f59bff20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  holdSeconds: 1.5
-  moveTolerancePixels: 60
+  holdSeconds: 0.5
+  moveTolerancePixels: 40
   interactableMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -9415,8 +9415,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 45
+  m_fontSizeBase: 45
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -9520,20 +9520,40 @@ PrefabInstance:
       value: Main Camera
       objectReference: {fileID: 0}
     - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
+      propertyPath: panSpeed
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
       propertyPath: testMode
-      value: 4
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
       propertyPath: xLimits.x
-      value: -10.8
+      value: -1.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
+      propertyPath: xLimits.y
+      value: 28
       objectReference: {fileID: 0}
     - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
       propertyPath: zLimits.x
-      value: -20.7
+      value: -18.7
       objectReference: {fileID: 0}
     - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
       propertyPath: zLimits.y
-      value: 18.5
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
+      propertyPath: zoomSpeed
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
+      propertyPath: rotationSpeed
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
+      propertyPath: rotationSmoothTime
+      value: 0.15
       objectReference: {fileID: 0}
     - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
       propertyPath: mouseWheelZoomDelta

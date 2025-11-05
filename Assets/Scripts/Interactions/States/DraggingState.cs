@@ -123,11 +123,22 @@ public class DraggingState : BasePlacementState
     {
         if (_dragging == null) return;
 
-        _currentOrientation = _currentOrientation.RotatedCW();
-        var size = _dragging.BaseSize.OrientedSize(_currentOrientation);
-        _currentAnchor = PlaceMan.GridService.ClampAnchor(_currentAnchor, size);
+        // Preserve center cell for odd-sized footprints so it doesn't jump when rotating
+        var oldSize = _dragging.BaseSize.OrientedSize(_currentOrientation);
+        Vector2Int preservedCenter = ShouldCenterOnCell(oldSize)
+            ? CenterCellFromAnchor(_currentAnchor, oldSize)
+            : _currentAnchor;
 
-        Vector3 world = PlaceMan.AnchorToWorldCenter(_currentAnchor, size, _heightOffset);
+        _currentOrientation = _currentOrientation.RotatedCW();
+        var newSize = _dragging.BaseSize.OrientedSize(_currentOrientation);
+
+        var desiredAnchor = ShouldCenterOnCell(newSize)
+            ? AnchorFromCenterCell(preservedCenter, newSize)
+            : _currentAnchor;
+
+        _currentAnchor = PlaceMan.GridService.ClampAnchor(desiredAnchor, newSize);
+
+        Vector3 world = PlaceMan.AnchorToWorldCenter(_currentAnchor, newSize, _heightOffset);
         _lastValidWorld = world;
 
         _dragging.SetPlacement(_currentAnchor, _currentOrientation);
@@ -147,7 +158,12 @@ public class DraggingState : BasePlacementState
         if (cell.x < 0 || cell.y < 0 || cell.x >= grid.Cols || cell.y >= grid.Rows)
             return _lastValidWorld;
 
-        Vector2Int anchor = grid.ClampAnchor(cell, size);
+        // For odd x and y sizes, treat the finger/world cell as the center; otherwise use bottom-left as before
+        Vector2Int desiredAnchor = ShouldCenterOnCell(size)
+            ? AnchorFromCenterCell(cell, size)
+            : cell;
+
+        Vector2Int anchor = grid.ClampAnchor(desiredAnchor, size);
         _currentAnchor = anchor;
         _dragging.SetPlacement(anchor, _currentOrientation);
 
@@ -155,4 +171,13 @@ public class DraggingState : BasePlacementState
         _lastValidWorld = snappedWorld;
         return snappedWorld;
     }
+
+    // Helpers to support center-cell dragging for odd-sized footprints
+    private static bool ShouldCenterOnCell(Vector2Int size) => (size.x & 1) == 1 && (size.y & 1) == 1;
+
+    private static Vector2Int AnchorFromCenterCell(Vector2Int centerCell, Vector2Int size)
+        => new Vector2Int(centerCell.x - size.x / 2, centerCell.y - size.y / 2);
+
+    private static Vector2Int CenterCellFromAnchor(Vector2Int anchor, Vector2Int size)
+        => new Vector2Int(anchor.x + size.x / 2, anchor.y + size.y / 2);
 }

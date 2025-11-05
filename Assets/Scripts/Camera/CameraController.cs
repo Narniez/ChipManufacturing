@@ -17,7 +17,7 @@ public class CameraController : MonoBehaviour
     [SerializeField] private float panSpeed = 0.01f;
     [SerializeField] private float panSmoothTime = 0.15f;
     [Tooltip("Pan speed multiplier when at minimum zoom (closer in). 1 = no change, lower slows panning as you zoom in.")]
-    [SerializeField] [Range(0.05f, 1f)] private float panSpeedScaleAtMinZoom = 0.3f;
+    [SerializeField][Range(0.05f, 1f)] private float panSpeedScaleAtMinZoom = 0.3f;
 
     [Header("Zoom Settings")]
     [SerializeField] private float zoomSpeed = 0.02f;
@@ -53,7 +53,6 @@ public class CameraController : MonoBehaviour
     [SerializeField] private bool debug = false;
     [Tooltip("If true, rotation and zoom can happen simultaneously. If false, only one (the dominant) is allowed at a time.")]
     [SerializeField] private bool allowRotationWhenZooming = true;
-    //[SerializeField] private bool allowPanningWhenZooming = true;
 
     [Header("Test Mode")]
     [SerializeField] private CameraTestMode testMode = CameraTestMode.A_SimultaneousZoomRotate;
@@ -93,6 +92,9 @@ public class CameraController : MonoBehaviour
     // External input lock (e.g., while dragging a machine)
     public bool InputLocked { get; private set; }
 
+    // Ignore any gestures until all touches are lifted (prevents drift on unlock)
+    private bool blockUntilNoTouchUp = false;
+
     void Awake()
     {
         _mainCamera = Camera.main;
@@ -116,15 +118,51 @@ public class CameraController : MonoBehaviour
         InputLocked = locked;
         if (locked)
         {
+            // Kill smoothing and clear any in-progress gesture state
             positionVelocity = Vector3.zero;
+            primaryState = PrimaryGesture.None;
+            isTwoFingerGestureActive = false;
+            hasPivot = false;
+            // Also block until touches are released; we'll clear on unlock explicitly if needed
+            blockUntilNoTouchUp = false;
         }
+    }
+
+    // Hard stop any camera smoothing and prevent post-drag drift.
+    // If snapToTarget is false, freeze where the camera currently is.
+    // If true, snap transform to the pending target immediately.
+    public void StopMotion(bool snapToTarget = false)
+    {
+        positionVelocity = Vector3.zero;
+        if (_mainCamera == null) return;
+
+        if (snapToTarget)
+        {
+            _mainCamera.transform.position = targetPosition;
+            _mainCamera.transform.rotation = targetRotation;
+        }
+        else
+        {
+            targetPosition = _mainCamera.transform.position;
+            targetRotation = _mainCamera.transform.rotation;
+        }
+    }
+
+    // After an external interaction ends, call this to ignore residual touches
+    // until all fingers are lifted, preventing unintended camera motion.
+    public void BlockInputUntilNoTouchRelease()
+    {
+        positionVelocity = Vector3.zero;
+        primaryState = PrimaryGesture.None;
+        isTwoFingerGestureActive = false;
+        hasPivot = false;
+        blockUntilNoTouchUp = true;
     }
 
     //expose mode setter for UI
     public void SetTestMode(CameraTestMode mode)
     {
         testMode = mode;
-        // Keep existing flags meaningful for A/B; C uses simultaneous; D ignores pinch/rotate two-finger.
         if (mode == CameraTestMode.A_SimultaneousZoomRotate || mode == CameraTestMode.C_TwoFingerSameDirectionRotate)
         {
             allowRotationWhenZooming = true;
@@ -146,6 +184,7 @@ public class CameraController : MonoBehaviour
         positionVelocity = Vector3.zero;
         lastPos0 = lastPos1 = lastMid = Vector2.zero;
         lastDistance = 0f;
+        blockUntilNoTouchUp = false;
 
         // reset targets
         targetPosition = startPosition;
@@ -168,7 +207,18 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
-        if (!InputLocked)
+        // If we must wait for all touches to be lifted, do so before processing any input
+        if (blockUntilNoTouchUp)
+        {
+            if (Input.touchCount == 0)
+            {
+                blockUntilNoTouchUp = false;
+                // ensure no residual smoothing
+                positionVelocity = Vector3.zero;
+            }
+        }
+
+        if (!InputLocked && !blockUntilNoTouchUp)
         {
             // Desktop mode: only process mouse, skip touch logic entirely
             if (testMode == CameraTestMode.E_DesktopMouseControls)
@@ -209,7 +259,7 @@ public class CameraController : MonoBehaviour
                     }
                     else
                     {
-                        // No touch: idle (keep targets), just stop smoothing velocity
+                        //stop smoothing velocity
                         if (primaryState != PrimaryGesture.None)
                         {
                             if (debug) Debug.Log("Gesture ended -> reset");
@@ -225,7 +275,7 @@ public class CameraController : MonoBehaviour
         _mainCamera.transform.position = Vector3.SmoothDamp(
             _mainCamera.transform.position,
             targetPosition,
-            ref positionVelocity,
+           ref positionVelocity,
             panSmoothTime);
 
         // Smooth rotation
@@ -238,7 +288,7 @@ public class CameraController : MonoBehaviour
     private void ProcessMouseControls()
     {
         // Left mouse button: pan
-        if (Input.GetMouseButtonDown(0) && !Input.GetMouseButton(1)) // don't start pan if RMB pressed
+        if (Input.GetMouseButtonDown(0) && !Input.GetMouseButton(1)) 
         {
             isMousePanning = true;
             lastMousePanPos = Input.mousePosition;
