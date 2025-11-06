@@ -2805,7 +2805,7 @@ MonoBehaviour:
   conveyorTurnPrefab: {fileID: 5897710200705214331, guid: e2d9b7a2f5e60fe4da8e277d0f9ab871, type: 3}
   placementPreviewMaterial: {fileID: 2100000, guid: cf78832a6b8134741991e7d20847d026, type: 2}
   conveyorItemPrefab: {fileID: 8559448409965842562, guid: 645a15e76d0729c4084aa3d7e242accc, type: 3}
-  defaultTestMachine: {fileID: 11400000, guid: d4ac0eeb666d84e42933ecf1459abe98, type: 2}
+  testMaterialData: {fileID: 0}
 --- !u!4 &682233059
 Transform:
   m_ObjectHideFlags: 0
@@ -3226,19 +3226,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 847582635}
   m_CullTransparentMesh: 1
---- !u!114 &847582640
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 847582635}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b004495cdcbcb047bcc1365395ec0ea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InventoryService
-  debug: 1
 --- !u!1 &883412918
 GameObject:
   m_ObjectHideFlags: 0
@@ -3735,9 +3722,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panel: {fileID: 1331238088}
-  titleText: {fileID: 1606985696}
+  selectionName: {fileID: 0}
   rotateLeftButton: {fileID: 1900780384}
   rotateRightButton: {fileID: 198831538}
+  testDestroyButton: {fileID: 0}
 --- !u!114 &955067077
 MonoBehaviour:
   m_ObjectHideFlags: 0
