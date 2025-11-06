@@ -128,7 +128,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                     int used = machine.TryQueueInventoryItem(slotItem, slotQuantity);
                     if (used > 0)
                     {
-
+                        Debug.Log("took item");
                         worldConsumed = true;
                         // Update global inventory
                         if (InventoryService.Instance != null)
@@ -137,9 +137,11 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                         // Reflect consumption in the ORIGIN slot UI (so remainder goes back)
                         if (_originSlot != null)
                             _originSlot.AddAmount(-used);
+                        Debug.Log("item no more in the inventory");
 
                         // Proxy is only a drag visual — remove it whether partial or full
                         Destroy(gameObject);
+                        //CurrentSlot.Clear();
                                            
                     }
                 }

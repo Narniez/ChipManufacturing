@@ -36,16 +36,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     public bool IsEmpty => Item == null || Amount <= 0;
 
     private Sprite _slotSprite;
-    private TextMeshProUGUI _itemAmount;
-
-    private bool _dragging;
-    private bool _dropHandledThisDrag;
-
-    private Canvas _canvas;
-    private GameObject _dragGhost;
-    private RectTransform _dragGhostRt;
-    private Image _dragGhostIcon;
-    private TextMeshProUGUI _dragGhostAmount;
+  
     //private Color _originalIconColor;
     private Color _slotColor;
 

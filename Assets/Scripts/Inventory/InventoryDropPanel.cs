@@ -71,6 +71,8 @@ public class InventoryDropPanel : MonoBehaviour, IPointerEnterHandler, IPointerE
             inventoryPanel.SetActive(false);
             inventoryButton.gameObject.SetActive(true);
         }
+
+        dropPanelCanvasGroup.blocksRaycasts = true;
     }
 
     public void OnPointerExit(PointerEventData eventData)
