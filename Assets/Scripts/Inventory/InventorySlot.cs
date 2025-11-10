@@ -17,6 +17,8 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     [SerializeField] private Image icon;
     [Tooltip("Text to display the stack count")]
     [SerializeField] private TextMeshProUGUI amountText;
+    [Tooltip("Item Name")]
+    [SerializeField] private TextMeshProUGUI nameText;
 
     [SerializeField] private SellPopup sellPopup;
 
@@ -100,6 +102,13 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
         UpdateUI();
     }
 
+    private static string GetDisplayName(MaterialData mat)
+    {
+        if (mat == null) return string.Empty;
+        // Prefer explicit materialName; fallback to asset name
+        return !string.IsNullOrWhiteSpace(mat.materialName) ? mat.materialName : mat.name;
+    }
+
     private void UpdateUI()
     {
         if (icon != null)
@@ -122,6 +131,11 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
         if (amountText != null)
         {
             amountText.text = !IsEmpty ? Amount.ToString() : string.Empty;
+        }
+
+        if (nameText != null)
+        {
+            nameText.text = !IsEmpty ? GetDisplayName(Item) : string.Empty;
         }
     }
 

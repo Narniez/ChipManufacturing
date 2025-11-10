@@ -1042,6 +1042,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   icon: {fileID: 6797247326647591082}
   amountText: {fileID: 8965122832194795440}
+  nameText: {fileID: 3443525513028562558}
   sellPopup: {fileID: 3611129157561540847}
   canvasGroup: {fileID: 3656892440195538964}
   dragCanvas: {fileID: 0}
