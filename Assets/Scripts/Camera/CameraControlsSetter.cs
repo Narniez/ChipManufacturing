@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 public class CameraControlsSetter : MonoBehaviour
 {
-    [SerializeField] private CameraController cameraController;
+    [SerializeField] private NewCameraControls cameraController;
     [SerializeField] private CameraModeTestManager testManager;
 
     [Header("Optional: assign buttons or wire via OnClick in Inspector")]
@@ -31,12 +31,12 @@ public class CameraControlsSetter : MonoBehaviour
         return testManager;
     }
 
-    public void SetModeA() => Select(CameraController.CameraTestMode.A_SimultaneousZoomRotate);
-    public void SetModeB() => Select(CameraController.CameraTestMode.B_ExclusiveZoomOrRotate);
-    public void SetModeC() => Select(CameraController.CameraTestMode.C_TwoFingerSameDirectionRotate);
-    public void SetModeD() => Select(CameraController.CameraTestMode.D_OneFingerRotate_TwoFingerPan);
+    public void SetModeA() => Select(NewCameraControls.CameraTestMode.A_SimultaneousZoomRotate);
+    public void SetModeB() => Select(NewCameraControls.CameraTestMode.B_ExclusiveZoomOrRotate);
+    public void SetModeC() => Select(NewCameraControls.CameraTestMode.C_TwoFingerSameDirectionRotate);
+    public void SetModeD() => Select(NewCameraControls.CameraTestMode.D_OneFingerRotate_TwoFingerPan);
 
-    private void Select(CameraController.CameraTestMode mode)
+    private void Select(NewCameraControls.CameraTestMode mode)
     {
         var mgr = EnsureManager();
         if (mgr != null)
@@ -45,7 +45,7 @@ public class CameraControlsSetter : MonoBehaviour
         }
         else
         {
-            (cameraController ??= FindFirstObjectByType<CameraController>())?.SetTestMode(mode);
+            (cameraController ??= FindFirstObjectByType<NewCameraControls>())?.SetTestMode(mode);
         }
         if (debugLogs) Debug.Log($"[CameraControlsSetter] Requested mode: {mode}");
     }
