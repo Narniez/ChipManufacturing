@@ -32,8 +32,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     public static event Action<MaterialType, Vector3> OnMaterialProduced;
 
-    public static event Action<MaterialType, Vector3> OnMaterialProduced;
-
     // Expose minimal state
     public MachineData Data => data;
     public bool IsProducing => productionRoutine != null;
@@ -59,13 +57,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _isBroken = false;
 
         StartProduction();
-    }
-
-    // Allow external systems to start production 
-    public void TryStartIfIdle()
-    {
-        if (!_isBroken && productionRoutine == null)
-            StartProduction();
     }
 
     // Allow external systems to start production 
