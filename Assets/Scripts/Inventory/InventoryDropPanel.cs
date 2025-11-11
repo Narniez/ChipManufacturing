@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class InventoryDropPanel : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    [SerializeField] private CameraController mainCamera;
+    [SerializeField] private NewCameraControls mainCamera;
     [SerializeField] private GameObject inventoryPanel; // to enable/disable when dragging over drop panel
     [SerializeField] private Button inventoryButton;
 
