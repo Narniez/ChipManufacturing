@@ -4,7 +4,7 @@ using UnityEngine;
 public class CameraModeTestManager : MonoBehaviour
 {
     [Header("Refs")]
-    [SerializeField] private CameraController cameraController;
+    [SerializeField] private NewCameraControls cameraController;
     [SerializeField] private TestValidator validator;
 
     [Header("UI")]
@@ -19,7 +19,7 @@ public class CameraModeTestManager : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool debugLogs = false;
 
-    private CameraController.CameraTestMode currentMode = CameraController.CameraTestMode.A_SimultaneousZoomRotate;
+    private NewCameraControls.CameraTestMode currentMode = NewCameraControls.CameraTestMode.A_SimultaneousZoomRotate;
     private float pendingTime = -1f;
 
     private void Awake()
@@ -40,7 +40,7 @@ public class CameraModeTestManager : MonoBehaviour
             validator.OnTestCompleted -= HandleTestCompleted;
     }
 
-    public void SelectMode(CameraController.CameraTestMode mode)
+    public void SelectMode(NewCameraControls.CameraTestMode mode)
     {
         // Clear any stale completion state
         pendingTime = -1f;
@@ -50,7 +50,7 @@ public class CameraModeTestManager : MonoBehaviour
         cameraController?.SetTestMode(mode);
 
         // Reset camera to scene start pose
-        cameraController?.ResetToStart(immediate: true);
+        //cameraController?.ResetToStart(immediate: true);
 
         if (debugLogs) Debug.Log($"[CameraModeTestManager] SelectMode -> {mode}");
 
@@ -96,7 +96,7 @@ public class CameraModeTestManager : MonoBehaviour
 #endif
     }
 
-    private void TrySetBest(CameraController.CameraTestMode mode, float time)
+    private void TrySetBest(NewCameraControls.CameraTestMode mode, float time)
     {
         // Ignore non-sensical times
         if (time <= 0f)
@@ -127,14 +127,14 @@ public class CameraModeTestManager : MonoBehaviour
 
     private void SanitizeStoredBests()
     {
-        Sanitize(CameraController.CameraTestMode.A_SimultaneousZoomRotate);
-        Sanitize(CameraController.CameraTestMode.B_ExclusiveZoomOrRotate);
-        Sanitize(CameraController.CameraTestMode.C_TwoFingerSameDirectionRotate);
-        Sanitize(CameraController.CameraTestMode.D_OneFingerRotate_TwoFingerPan);
+        Sanitize(NewCameraControls.CameraTestMode.A_SimultaneousZoomRotate);
+        Sanitize(NewCameraControls.CameraTestMode.B_ExclusiveZoomOrRotate);
+        Sanitize(NewCameraControls.CameraTestMode.C_TwoFingerSameDirectionRotate);
+        Sanitize(NewCameraControls.CameraTestMode.D_OneFingerRotate_TwoFingerPan);
         PlayerPrefs.Save();
     }
 
-    private void Sanitize(CameraController.CameraTestMode mode)
+    private void Sanitize(NewCameraControls.CameraTestMode mode)
     {
         string key = KeyForMode(mode);
         if (PlayerPrefs.HasKey(key))
@@ -150,13 +150,13 @@ public class CameraModeTestManager : MonoBehaviour
 
     private void RefreshAllBestLabels()
     {
-        UpdateBestLabel(CameraController.CameraTestMode.A_SimultaneousZoomRotate);
-        UpdateBestLabel(CameraController.CameraTestMode.B_ExclusiveZoomOrRotate);
-        UpdateBestLabel(CameraController.CameraTestMode.C_TwoFingerSameDirectionRotate);
-        UpdateBestLabel(CameraController.CameraTestMode.D_OneFingerRotate_TwoFingerPan);
+        UpdateBestLabel(NewCameraControls.CameraTestMode.A_SimultaneousZoomRotate);
+        UpdateBestLabel(NewCameraControls.CameraTestMode.B_ExclusiveZoomOrRotate);
+        UpdateBestLabel(NewCameraControls.CameraTestMode.C_TwoFingerSameDirectionRotate);
+        UpdateBestLabel(NewCameraControls.CameraTestMode.D_OneFingerRotate_TwoFingerPan);
     }
 
-    private void UpdateBestLabel(CameraController.CameraTestMode mode)
+    private void UpdateBestLabel(NewCameraControls.CameraTestMode mode)
     {
         string key = KeyForMode(mode);
         if (PlayerPrefs.HasKey(key))
@@ -172,33 +172,33 @@ public class CameraModeTestManager : MonoBehaviour
         }
     }
 
-    private void SetLabelForMode(CameraController.CameraTestMode mode, string text)
+    private void SetLabelForMode(NewCameraControls.CameraTestMode mode, string text)
     {
         switch (mode)
         {
-            case CameraController.CameraTestMode.A_SimultaneousZoomRotate:
+            case NewCameraControls.CameraTestMode.A_SimultaneousZoomRotate:
                 if (bestA != null) bestA.text = text; else if (debugLogs) Debug.LogWarning("[CameraModeTestManager] bestA is not assigned.");
                 break;
-            case CameraController.CameraTestMode.B_ExclusiveZoomOrRotate:
+            case NewCameraControls.CameraTestMode.B_ExclusiveZoomOrRotate:
                 if (bestB != null) bestB.text = text; else if (debugLogs) Debug.LogWarning("[CameraModeTestManager] bestB is not assigned.");
                 break;
-            case CameraController.CameraTestMode.C_TwoFingerSameDirectionRotate:
+            case NewCameraControls.CameraTestMode.C_TwoFingerSameDirectionRotate:
                 if (bestC != null) bestC.text = text; else if (debugLogs) Debug.LogWarning("[CameraModeTestManager] bestC is not assigned.");
                 break;
-            case CameraController.CameraTestMode.D_OneFingerRotate_TwoFingerPan:
+            case NewCameraControls.CameraTestMode.D_OneFingerRotate_TwoFingerPan:
                 if (bestD != null) bestD.text = text; else if (debugLogs) Debug.LogWarning("[CameraModeTestManager] bestD is not assigned.");
                 break;
         }
     }
 
-    private static string KeyForMode(CameraController.CameraTestMode mode)
+    private static string KeyForMode(NewCameraControls.CameraTestMode mode)
     {
         switch (mode)
         {
-            case CameraController.CameraTestMode.A_SimultaneousZoomRotate: return "BestTime_Mode_A";
-            case CameraController.CameraTestMode.B_ExclusiveZoomOrRotate: return "BestTime_Mode_B";
-            case CameraController.CameraTestMode.C_TwoFingerSameDirectionRotate: return "BestTime_Mode_C";
-            case CameraController.CameraTestMode.D_OneFingerRotate_TwoFingerPan: return "BestTime_Mode_D";
+            case NewCameraControls.CameraTestMode.A_SimultaneousZoomRotate: return "BestTime_Mode_A";
+            case NewCameraControls.CameraTestMode.B_ExclusiveZoomOrRotate: return "BestTime_Mode_B";
+            case NewCameraControls.CameraTestMode.C_TwoFingerSameDirectionRotate: return "BestTime_Mode_C";
+            case NewCameraControls.CameraTestMode.D_OneFingerRotate_TwoFingerPan: return "BestTime_Mode_D";
         }
         return "BestTime_Unknown";
     }
