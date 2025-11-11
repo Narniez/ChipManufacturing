@@ -11,7 +11,7 @@ public class PlacementManager : MonoBehaviour
     [Header("Grid Snapping")]
     [SerializeField] private bool snapToGrid = true;
     [SerializeField] private GridService gridService;
-    [SerializeField] private float snapYOffset = 0f; 
+    [SerializeField] private float snapYOffset = 0f;
 
     [Header("Edge Scroll While Dragging")]
     [SerializeField] private float edgeZonePixels = 48f;
@@ -83,10 +83,10 @@ public class PlacementManager : MonoBehaviour
         if (InteractionManager.Instance != null)
         {
             InteractionManager.Instance.OnHoldStart += OnHoldStart;
-            InteractionManager.Instance.OnHoldMove  += OnHoldMove;
-            InteractionManager.Instance.OnHoldEnd   += OnHoldEnd;
-            InteractionManager.Instance.OnTap       += OnTap;
-            InteractionManager.Instance.OnTapEmpty  += OnTapEmpty;
+            InteractionManager.Instance.OnHoldMove += OnHoldMove;
+            InteractionManager.Instance.OnHoldEnd += OnHoldEnd;
+            InteractionManager.Instance.OnTap += OnTap;
+            InteractionManager.Instance.OnTapEmpty += OnTapEmpty;
         }
     }
 
@@ -95,10 +95,10 @@ public class PlacementManager : MonoBehaviour
         if (InteractionManager.Instance != null)
         {
             InteractionManager.Instance.OnHoldStart -= OnHoldStart;
-            InteractionManager.Instance.OnHoldMove  -= OnHoldMove;
-            InteractionManager.Instance.OnHoldEnd   -= OnHoldEnd;
-            InteractionManager.Instance.OnTap       -= OnTap;
-            InteractionManager.Instance.OnTapEmpty  -= OnTapEmpty;
+            InteractionManager.Instance.OnHoldMove -= OnHoldMove;
+            InteractionManager.Instance.OnHoldEnd -= OnHoldEnd;
+            InteractionManager.Instance.OnTap -= OnTap;
+            InteractionManager.Instance.OnTapEmpty -= OnTapEmpty;
         }
     }
 
@@ -301,7 +301,19 @@ public class PlacementManager : MonoBehaviour
         SetCurrentSelection(null);
         selectionUI?.Hide();
 
-        if (go != null) Destroy(go);
+        if (go != null)
+        {
+            if(go.GetComponent<ConveyorBelt>() != null)
+            {
+                ConveyorItem item = go.GetComponent<ConveyorBelt>().TakeItem();
+                if (item != null)
+                {
+                    Destroy(item.Visual);
+                }
+            }
+
+            Destroy(go);
+        }
 
         SetState(new IdleState(this));
     }
