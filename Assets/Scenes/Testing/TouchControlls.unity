@@ -1844,7 +1844,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ede365a96b2c9bf488e08ff27c88af2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraControlsSetter
-  cameraController: {fileID: 4365471052268879466}
+  cameraController: {fileID: 4365471052268879468}
   testManager: {fileID: 0}
   buttonA: {fileID: 1082003833}
   buttonB: {fileID: 509138417}
@@ -2522,7 +2522,7 @@ MonoBehaviour:
   snapToGrid: 1
   gridService: {fileID: 1785461583}
   snapYOffset: 0
-  edgeZonePixels: 400
+  edgeZonePixels: 1000
   edgeScrollSpeed: 20
   rotateKey: 114
   enableSecondFingerRotate: 1
@@ -9528,6 +9528,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
       propertyPath: xLimits.x
       value: -1.15
       objectReference: {fileID: 0}
@@ -9563,22 +9567,53 @@ PrefabInstance:
       propertyPath: panSpeedScaleAtMinZoom
       value: 0.1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2275662373185204537, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4365471052268879468}
   m_SourcePrefab: {fileID: 100100000, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
---- !u!114 &4365471052268879466 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6343527960944316344, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
+--- !u!1 &4365471052268879467 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2275662373185204537, guid: 88f7ebad2ee959f4cbdf4f32f1f8658c, type: 3}
   m_PrefabInstance: {fileID: 4365471052268879465}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+--- !u!114 &4365471052268879468
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4365471052268879467}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: db5b4a887dc6d0c4b97067c2598b2cc5, type: 3}
+  m_Script: {fileID: 11500000, guid: 3d00e59d0c621b047a21e83cba3d8ef2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::NewCameraControls
+  inputActionsAsset: {fileID: -944628639613478452, guid: 59efd3102572aff4a9e19284fd717c35, type: 3}
+  panSpeed: 0.05
+  zoomSpeed: 2
+  rotateSpeed: 0.3
+  minHeight: 5
+  maxHeight: 20
+  rotateInPlace: 1
+  deadzone: 1.5
+  pinchThreshold: 15
+  rotateThreshold: 5
+  allowRotationWhenZooming: 1
+  testMode: 1
+  boundsCollider: {fileID: 0}
+  xLimits: {x: 4.07, y: 23}
+  zLimits: {x: -23.5, y: 8}
+  edgeZonePixels: 300
+  edgeScrollSpeed: 12
+  panSmoothTime: 0.1
+  rotateSmoothTime: 0.06
+  heightSmoothTime: 0.08
+  debugLog: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
