@@ -3,7 +3,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using static UnityEditor.Progress;
 
 public class SellPopup : MonoBehaviour
 {
@@ -24,8 +23,10 @@ public class SellPopup : MonoBehaviour
     private InventorySlot _slot;
 
     private int _have;
-
     private Transform _originalParent;
+
+    // Track open mode so we can avoid service/events in slot mode
+    private bool _openedFromSlot;
 
     void Awake()
     {
@@ -56,13 +57,16 @@ public class SellPopup : MonoBehaviour
 
     public void OpenFor(InventoryItem item)
     {
+        _openedFromSlot = false;
+
         _item = item;
+        _slot = _item != null ? _item.CurrentSlot : null; // ensure repositioning works
         RefreshStockFromService();
 
-        if (_item.SlotItem != null && nameText)
+        if (_item?.SlotItem != null && nameText)
             nameText.text = _item.SlotItem.materialName;
 
-        amountSlider.minValue = 1;
+        amountSlider.minValue = 0;
         amountSlider.maxValue = Mathf.Max(1, _have);
         amountSlider.value = Mathf.Clamp(_have, (int)amountSlider.minValue, (int)amountSlider.maxValue);
         amountInput.text = ((int)amountSlider.value).ToString();
@@ -74,9 +78,6 @@ public class SellPopup : MonoBehaviour
 
         if (_popupCanvas == null)
             _popupCanvas = GameObject.FindGameObjectWithTag("PopupCanvas")?.GetComponent<Canvas>();
-
-        var popupRT = transform as RectTransform;
-        Vector3 worldPos = popupRT.position;
 
         if (_popupCanvas != null)
         {
@@ -95,17 +96,27 @@ public class SellPopup : MonoBehaviour
             InventoryService.Instance.OnChanged += OnInventoryChanged;
     }
 
-    // New: open popup for a slot
+    // Open popup for a slot (no InventoryItem child required)
     public void OpenForSlot(InventorySlot slot)
     {
+        _openedFromSlot = true;
+
         _slot = slot;
         _item = null;
-        gameObject.SetActive(true);
-        RefreshStockFromService();
-      
-        //nameText.text = _item.SlotItem.materialName;
 
-        amountSlider.minValue = 1;
+        // Validate slot data
+        if (_slot == null || _slot.IsEmpty || _slot.Item == null)
+        {
+            Close();
+            return;
+        }
+
+        // In slot mode, treat the slot UI as the source of truth
+        _have = Mathf.Max(0, _slot.Amount);
+
+        if (nameText) nameText.text = _slot.Item.materialName;
+
+        amountSlider.minValue = 0;
         amountSlider.maxValue = Mathf.Max(1, _have);
         amountSlider.value = Mathf.Clamp(_have, (int)amountSlider.minValue, (int)amountSlider.maxValue);
         amountInput.text = ((int)amountSlider.value).ToString();
@@ -117,9 +128,6 @@ public class SellPopup : MonoBehaviour
 
         if (_popupCanvas == null)
             _popupCanvas = GameObject.FindGameObjectWithTag("PopupCanvas")?.GetComponent<Canvas>();
-
-        var popupRT = transform as RectTransform;
-        Vector3 worldPos = popupRT.position;
 
         if (_popupCanvas != null)
         {
@@ -134,15 +142,21 @@ public class SellPopup : MonoBehaviour
             gameObject.SetActive(true);
         }
 
-        if (InventoryService.Instance != null)
-            InventoryService.Instance.OnChanged += OnInventoryChanged;
+        // Important: do NOT subscribe to InventoryService events in slot mode,
+        // as slot mode does not use the service as the authority.
     }
 
     public void Close()
     {
+        if (InventoryService.Instance != null)
+            InventoryService.Instance.OnChanged -= OnInventoryChanged;
+
         gameObject.SetActive(false);
         _item = null;
         _slot = null;
+
+        if (_originalParent != null)
+            transform.SetParent(_originalParent, worldPositionStays: false);
     }
 
     public void RepositionToItem()
@@ -159,7 +173,6 @@ public class SellPopup : MonoBehaviour
         var popupCanvasRT = _popupCanvas.transform as RectTransform;
         if (popupCanvasRT == null) return;
 
-        // Convert the item's position to canvas local point
         RectTransformUtility.ScreenPointToLocalPointInRectangle(popupCanvasRT, screenPoint, canvasCam, out Vector2 localPoint);
 
         Vector2 offset = new Vector2(LROfsset, UDOffset);
@@ -168,70 +181,103 @@ public class SellPopup : MonoBehaviour
 
     private void OnInventoryChanged(IDictionary<int, int> _, IReadOnlyDictionary<int, int> all)
     {
-        if (_item == null || _item.SlotItem == null) { Close(); return; }
+        // Ignore service changes when opened from slot
+        if (_openedFromSlot) return;
 
-        // Only react to the material shown in this popup
-        int id = _item.SlotItem.id;
-        int newHave = all != null && all.TryGetValue(id, out var c) ? c : 0;
-
-        if (newHave == _have) return; // nothing changed
-
-        _have = newHave;
-
-        // If stock dropped to 0 while open, disable confirm and auto-close
-        if (_have <= 0)
+        if (_item != null && _item.SlotItem != null)
         {
-            confirmBtn.interactable = false;
-            Close();
-            return;
+            int id = _item.SlotItem.id;
+            int newHave = all != null && all.TryGetValue(id, out var c) ? c : 0;
+
+            if (newHave == _have) return;
+            _have = newHave;
+
+            if (_have <= 0)
+            {
+                confirmBtn.interactable = false;
+                Close();
+                return;
+            }
+
+            amountSlider.maxValue = Mathf.Max(1, _have);
+            if (amountSlider.value > _have) amountSlider.value = _have;
+            amountInput.text = ((int)amountSlider.value).ToString();
+
+            UpdateFooter((int)amountSlider.value);
+
+            _item.RefreshFromService();
         }
-
-        // Clamp slider/input to new range
-        amountSlider.maxValue = Mathf.Max(1, _have);
-        if (amountSlider.value > _have) amountSlider.value = _have;
-        amountInput.text = ((int)amountSlider.value).ToString();
-
-        UpdateFooter((int)amountSlider.value);
-
-        _item.RefreshFromService();
+        else
+        {
+            Close();
+        }
     }
 
     private void RefreshStockFromService()
     {
-        if (_item?.SlotItem == null) { _have = 0; return; }
-
-        if (InventoryService.Instance != null)
+        if (_openedFromSlot)
         {
-            int serviceCount = InventoryService.Instance.GetCount(_item.SlotItem.id);
-            if (serviceCount > 0) _have = serviceCount;
-            _have = _item.SlotQuantity;
+            _have = (_slot != null && !_slot.IsEmpty) ? _slot.Amount : 0;
+            _have = Mathf.Max(0, _have);
+            return;
         }
-        else _have = _item.SlotQuantity;
 
-        _have = Mathf.Max(0, _have);
+        // Item mode: prefer authoritative counts from the service
+        if (_item != null && _item.SlotItem != null)
+        {
+            if (InventoryService.Instance != null)
+            {
+                int serviceCount = InventoryService.Instance.GetCount(_item.SlotItem.id);
+                _have = Mathf.Max(0, serviceCount);
+            }
+            else
+            {
+                _have = Mathf.Max(0, _item.SlotQuantity);
+            }
+        }
+        else
+        {
+            _have = 0;
+        }
     }
 
     /// ---------------- ACTIONS ----------------
     private void OnConfirm()
     {
-        if (_item == null || _item.SlotItem == null) { Close(); return; }
         int amount = Mathf.RoundToInt(amountSlider.value);
-        //int amount = Mathf.RoundToInt(int.Parse(amountInput.text));
 
-        // Sell through the service 
-        if (InventoryService.Instance != null)
-            InventoryService.Instance.TryRemove(_item.SlotItem.id, amount);
+        // Cache references to avoid race with callbacks that may Close() and null fields
+        var slotRef = _slot;
+        var itemRef = _item;
+        var svc = InventoryService.Instance;
 
-        // Refresh item UI from service after selling
-        _item.RefreshFromService();
+        // Slot path: use the slot as source-of-truth; do not call the service
+        if (slotRef != null && !slotRef.IsEmpty && slotRef.Item != null)
+        {
+            // Clamp to available
+            amount = Mathf.Clamp(amount, 1, slotRef.Amount);
+            slotRef.AddAmount(-amount);
+            Close();
+            return;
+        }
 
+        // Item path (service-authoritative)
+        if (itemRef == null || itemRef.SlotItem == null) { Close(); return; }
+
+        // Unsubscribe to avoid re-entrancy closing us mid-call
+        if (svc != null) svc.OnChanged -= OnInventoryChanged;
+
+        if (svc != null)
+            svc.TryRemove(itemRef.SlotItem.id, amount);
+
+        itemRef.RefreshFromService();
         Close();
     }
 
     private void UpdateFooter(int amount)
     {
-
-        confirmBtn.interactable = _item != null && amount >= 1 && amount <= _have;
+        bool hasContext = (_item != null && _item.SlotItem != null) || (_slot != null && !_slot.IsEmpty && _slot.Item != null);
+        confirmBtn.interactable = hasContext && amount >= 1 && amount <= _have;
     }
 
     void Update()

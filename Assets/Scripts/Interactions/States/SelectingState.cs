@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class SelectingState : BasePlacementState
@@ -15,26 +16,36 @@ public class SelectingState : BasePlacementState
     {
         PlaceMan.SetCurrentSelection(_selected);
 
-        var ui = PlaceMan.SelectionUI;
-        if (ui == null || _selected == null) return;
+        // Only bail if nothing is selected
+        if (_selected == null) return;
 
         var comp = (_selected as Component);
-        string name = comp.GetComponent<Machine>()?.Data?.machineName ?? comp.name;
 
-        ui.Show(
-            name,
-            onRotateLeft:  () => RotateAndRefresh(clockwise: false),
-            onRotateRight: () => RotateAndRefresh(clockwise: true)
-        );
+        string name = ResolveDisplayName(comp);
+        bool isBelt = comp?.GetComponent<ConveyorBelt>() != null;
 
-        var belt = comp.GetComponent<ConveyorBelt>();
+        // Show UI only if available
+        var ui = PlaceMan.SelectionUI;
+        if (ui != null)
+        {
+            ui.Show(
+                name,
+                onRotateLeft:  () => RotateAndRefresh(clockwise: false),
+                onRotateRight: () => RotateAndRefresh(clockwise: true),
+                isBelt
+            );
+        }
+
+        // Always show belt preview options for belts, regardless of SelectionUI presence
+        var belt = comp?.GetComponent<ConveyorBelt>();
         if (belt != null)
         {
             _beltPreviews = new BeltChainPreviewController(PlaceMan);
             _beltPreviews.ShowOptionsFrom(belt);
         }
 
-        var machine = comp.GetComponent<Machine>();
+        // Same for machine port indicators
+        var machine = comp?.GetComponent<Machine>();
         if (machine != null)
         {
             _portIndicators = new MachinePortIndicatorController(PlaceMan);
@@ -58,14 +69,22 @@ public class SelectingState : BasePlacementState
         var prev = (target as Component)?.GetComponent<ConveyorPreview>();
         if (prev != null && _beltPreviews != null)
         {
+            // Place the belt at the tapped preview cell
             var placed = _beltPreviews.PlaceFromPreview(prev);
-            _beltPreviews.Cleanup();
 
             if (placed != null)
             {
                 PlaceMan.SetState(new SelectingState(PlaceMan, placed));
                 return;
             }
+
+            // If placement failed, refresh the current previews from the existing selected belt
+            _beltPreviews.Cleanup();
+            var currentBelt = (_selected as Component)?.GetComponent<ConveyorBelt>();
+            if (currentBelt != null)
+                _beltPreviews.ShowOptionsFrom(currentBelt);
+
+            return;
         }
 
         if (!(target is IGridOccupant occ))
@@ -119,5 +138,28 @@ public class SelectingState : BasePlacementState
     {
         PlaceMan.ExecuteRotateCommand(_selected, clockwise);
         OnRotateRequested();
+    }
+
+    private static string ResolveDisplayName(Component comp)
+    {
+        if (comp == null) return string.Empty;
+
+        var machine = comp.GetComponent<Machine>();
+        if (machine?.Data != null && !string.IsNullOrEmpty(machine.Data.machineName))
+            return machine.Data.machineName;
+
+        if (comp.GetComponent<ConveyorBelt>() != null)
+            return "Conveyor Belt";
+
+        return StripClone(comp.name);
+    }
+
+    private static string StripClone(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return name;
+        const string suffix = "(Clone)";
+        if (name.EndsWith(suffix, StringComparison.Ordinal))
+            return name.Substring(0, name.Length - suffix.Length).TrimEnd();
+        return name;
     }
 }

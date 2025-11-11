@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class InventoryService : MonoBehaviour, IInventory
@@ -9,13 +10,15 @@ public class InventoryService : MonoBehaviour, IInventory
     [Header("Debug")]
     [SerializeField] private bool debug = true;
 
+    [Header("Inventory Settings")]
+    [SerializeField] private GameObject slotRootGO;
+
     private readonly Dictionary<int, int> _counts = new();
     public event Action<IDictionary<int, int>, IReadOnlyDictionary<int, int>> OnChanged;
     public IReadOnlyDictionary<int, int> GetInventoryItems() => _counts;
 
     private InventoryItem _inventoryItem;
     private List<InventorySlot> _inventorySlots = new List<InventorySlot>();
-    //private List<InventoryItem> _inventoryItems = new List<InventoryItem>();
 
     private void Awake()
     {
@@ -24,14 +27,17 @@ public class InventoryService : MonoBehaviour, IInventory
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
 
-        for (int i = 0; i < transform.childCount; i++)
+        float slotCount = slotRootGO.transform.childCount;
+
+        for (int i = 0; i < slotCount; i++)
         {
-            if (transform.GetChild(i).TryGetComponent<InventorySlot>(out var slot))
-                _inventorySlots.Add(slot);
+            var inventorySlot = slotRootGO.transform.GetChild(i).GetComponent<InventorySlot>();
+            _inventorySlots.Add(inventorySlot);
         }
-            Debug.Log("[InventoryService] Found slots: " + _inventorySlots.Count);
+        Debug.Log("[InventoryService] Found slots: " + _inventorySlots.Count);
     }
 
     public int GetCount(int itemId) =>
@@ -53,7 +59,6 @@ public class InventoryService : MonoBehaviour, IInventory
     {
         if (change == null || change.Count == 0) return true;
 
-        //check if we have enough items
         foreach (var kv in change)
         {
             var have = GetCount(kv.Key);
@@ -107,26 +112,4 @@ public class InventoryService : MonoBehaviour, IInventory
 
         if (debug) Debug.LogWarning("[InventoryService] No free inventory slots available.");
     }
-
-    /* public void AddToInventoryPanel(InventoryItem item, int amount)
-     {
-         _inventoryItem = item;
-         _inventoryItem.Setup(_inventoryItem.SlotItem, amount);
-
-         Debug.Log("Inv: add request");
-
-
-         foreach (InventorySlot slot in _inventorySlots)
-         {
-             if (slot.CurrentItem == null)
-             {
-                 slot.PlaceItem(_inventoryItem);
-                 Debug.Log("Inv: placed in free slot");
-                 _inventoryItems.Add(_inventoryItem);
-                 Add(_inventoryItem.SlotItem.id, amount);
-                 return;
-             }
-         }
-     }*/
-
 }

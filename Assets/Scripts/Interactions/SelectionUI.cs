@@ -6,9 +6,10 @@ public class SelectionUI : MonoBehaviour
 {
     [Header("Refs")]
     [SerializeField] private GameObject panel;
-    [SerializeField] private TextMeshProUGUI titleText;
+    [SerializeField] private TextMeshProUGUI selectionName;
     [SerializeField] private Button rotateLeftButton;
     [SerializeField] private Button rotateRightButton;
+    [SerializeField] private Button testDestroyButton;
 
     private Action _onRotateLeft;
     private Action _onRotateRight;
@@ -24,12 +25,16 @@ public class SelectionUI : MonoBehaviour
             rotateRightButton.onClick.AddListener(() => _onRotateRight?.Invoke());
     }
 
-    public void Show(string title, Action onRotateLeft, Action onRotateRight)
+    public void Show(string title, Action onRotateLeft, Action onRotateRight, bool isBelt)
     {
         _onRotateLeft = onRotateLeft;
         _onRotateRight = onRotateRight;
-
-        if (titleText != null) titleText.text = string.IsNullOrEmpty(title) ? "Selected" : title;
+        if (testDestroyButton != null)
+        {
+            testDestroyButton.gameObject.SetActive(true); 
+            testDestroyButton.onClick.AddListener(() => PlacementManager.Instance?.DestroyCurrentSelection());
+        }
+        if (selectionName != null) selectionName.text = string.IsNullOrEmpty(title) ? "Selected" : title;
         if (panel != null) panel.SetActive(true);
     }
 
