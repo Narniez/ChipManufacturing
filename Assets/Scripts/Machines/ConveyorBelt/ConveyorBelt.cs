@@ -110,6 +110,10 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         {
             if (_turnKind == BeltTurnKind.Right)
                 transform.rotation *= Quaternion.Euler(0f, 90f, 0f);
+            else if (_turnKind == BeltTurnKind.Left)
+            {
+                // optional tweak for left corner
+            }
         }
     }
 
@@ -121,14 +125,6 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     {
         _isDragging = true;
         UnlockCorner();
-
-        // Remove occupancy so upstream belts see a gap and stop pushing items.
-        if (_grid != null && _grid.HasGrid)
-            _grid.SetAreaOccupant(Anchor, Vector2Int.one, null);
-
-        UnlinkFromChain();
-
-        // Clear item (previous behavior)
         if (_item != null && _item.Visual != null)
         {
             Destroy(_item.Visual);
@@ -141,54 +137,40 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     public void OnDragEnd()
     {
         _isDragging = false;
-        // Re-acquire grid cell based on new world position BEFORE notifying machines,
-        // so they see valid occupancy and can restart production.
-        if (_grid != null && _grid.HasGrid)
-        {
-            var newAnchor = _grid.WorldToCell(transform.position);
-            // Clamp in case user dragged slightly outside
-            newAnchor = _grid.ClampAnchor(newAnchor, Vector2Int.one);
-
-            // Occupy cell first
-            _grid.SetAreaOccupant(newAnchor, Vector2Int.one, gameObject);
-
-            // Re-apply placement (orientation unchanged)
-            SetPlacement(newAnchor, orientation);
-        }
-        else
-        {
-            // Fallback: just refresh links
-            RefreshChainLinks();
-            NotifyAdjacentMachinesOfConnection();
-        }
-
-        // Explicit upstream machine restart (in case placement sequence missed it)
-        TryRestartUpstreamMachineOutput();
+        RefreshChainLinks();
     }
 
     // Interaction
     public void OnTap() { }
     public void OnHold() { }
 
+    // Movement tick – fallback scan added if explicit chain link missing (fix for corner stalls)
     public void TickMoveAttempt()
     {
         if (_item == null) return;
         if (IsItemAnimating()) return;
 
+        // First try chain semantics
         EnsureForwardLinkStrict();
 
         if (NextInChain != null && TryMoveOntoChainChild(NextInChain))
             return;
 
-            // Removed fallback to avoid mid-air moves when chain is broken
+        // Fallback: if no chain child or child occupied, try discovering a forward belt directly
+        if (TryMoveOntoForwardBeltFallback())
+            return;
+
+        // Delivery attempt if no belt ahead
         TryDeliverToMachine(Anchor + ToDelta(orientation));
     }
 
+    // Strict chain link maintenance (does not override existing parent on forward belt unless invalid)
     private void EnsureForwardLinkStrict()
     {
         if (_grid == null || !_grid.HasGrid) return;
         if (NextInChain != null)
         {
+            // Validate adjacency; if orientation changed (corner promotion) but link invalid => clear
             if (Anchor + ToDelta(orientation) != NextInChain.Anchor)
             {
                 if (NextInChain.PreviousInChain == this)
@@ -203,8 +185,9 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         {
             var go = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
             var forwardBelt = go != null ? go.GetComponent<ConveyorBelt>() : null;
-            if (forwardBelt != null && !forwardBelt._isDragging)
+            if (forwardBelt != null)
             {
+                // If forward belt's claimed parent is invalid (not actually behind it) allow relink
                 bool parentInvalid =
                     forwardBelt.PreviousInChain == null ||
                     forwardBelt.PreviousInChain.Anchor + ToDelta(forwardBelt.PreviousInChain.orientation) != forwardBelt.Anchor;
@@ -221,9 +204,34 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         }
     }
 
+    // Fallback direct forward scan (ignores chain fields). Used when corner promotion broke links temporarily.
+    private bool TryMoveOntoForwardBeltFallback()
+    {
+        if (_grid == null || !_grid.HasGrid) return false;
+
+        var forwardCell = Anchor + ToDelta(orientation);
+        if (!_grid.TryGetCell(forwardCell, out var data) || data.occupant == null) return false;
+
+        GameObject occGO = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
+        if (occGO == null) return false;
+
+        var forwardBelt = occGO.GetComponent<ConveyorBelt>();
+        if (forwardBelt == null) return false;
+        if (forwardBelt.HasItem) return false; // occupied
+
+        // Establish chain for future ticks
+        if (forwardBelt.PreviousInChain == null)
+        {
+            forwardBelt.PreviousInChain = this;
+            NextInChain = forwardBelt;
+        }
+
+        return TryMoveOntoChainChild(forwardBelt);
+    }
+
     private bool TryMoveOntoChainChild(ConveyorBelt child)
     {
-        if (child == null || child.HasItem || child._isDragging) return false;
+        if (child == null || child.HasItem) return false;
 
         var moving = TakeItem();
         if (moving == null) return false;
@@ -267,7 +275,6 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
 
     public Vector3 GetWorldCenter()
     {
-        if (_isDragging) return transform.position + Vector3.up * itemHeight;
         float yBase = _grid != null ? _grid.Origin.y : 0f;
         return (_grid != null ? _grid.CellToWorldCenter(Anchor, yBase) : transform.position) + Vector3.up * itemHeight;
     }
@@ -276,6 +283,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     {
         if (_grid == null || !_grid.HasGrid) return;
 
+        // Validate existing previous link
         if (PreviousInChain != null &&
             PreviousInChain.Anchor + ToDelta(PreviousInChain.orientation) != Anchor)
         {
@@ -284,6 +292,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
             PreviousInChain = null;
         }
 
+        // Validate existing next link
         if (NextInChain != null &&
             Anchor + ToDelta(orientation) != NextInChain.Anchor)
         {
@@ -292,6 +301,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
             NextInChain = null;
         }
 
+        // Rebuild backward link if missing
         var backCell = Anchor + ToDelta(Opposite(orientation));
         if (PreviousInChain == null &&
             _grid.TryGetCell(backCell, out var backData) && backData.occupant != null)
@@ -300,6 +310,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
             var backBelt = backGO != null ? backGO.GetComponent<ConveyorBelt>() : null;
             if (backBelt != null)
             {
+                // Ensure physical adjacency matches forward of backBelt
                 if (backBelt.Anchor + ToDelta(backBelt.orientation) == Anchor)
                 {
                     PreviousInChain = backBelt;
@@ -308,6 +319,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
             }
         }
 
+        // Rebuild forward link
         EnsureForwardLinkStrict();
     }
 
@@ -350,24 +362,21 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         }
     }
 
-    // Explicit restart for upstream machine after belt returns
-    private void TryRestartUpstreamMachineOutput()
+    // NEW: Can this belt receive an item from a given side (relative to this belt's cell)?
+    // incomingSide is the direction FROM the neighbor INTO this belt.
+    public bool CanReceiveFrom(GridOrientation incomingSide)
     {
-        if (_grid == null || !_grid.HasGrid) return;
-        var backCell = Anchor + ToDelta(Opposite(orientation));
-        if (!_grid.TryGetCell(backCell, out var data) || data.occupant == null) return;
-        GameObject occGO = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
-        if (occGO == null) return;
-        var machine = occGO.GetComponent<Machine>();
-        if (machine == null || machine.IsBroken) return;
+        // Straight belts: must come from behind (opposite of forward orientation)
+        if (!isTurnPrefab || _turnKind == BeltTurnKind.None)
+            return incomingSide == Opposite(orientation);
 
-        if (machine.TryGetBeltConnection(this, out var portType, requireFacing: true) &&
-            portType == MachinePortType.Output)
-        {
-            machine.TryStartIfIdle();
-        }
+        // Corner: incoming is one of the orthogonal sides depending on turn kind
+        if (_turnKind == BeltTurnKind.Right) return incomingSide == orientation.RotatedCCW();
+        if (_turnKind == BeltTurnKind.Left)  return incomingSide == orientation.RotatedCW();
+        return false;
     }
 
+    // Shape logic (unchanged)
     public void ResolveShapeAndMaybeDowngrade()
     {
         if (_grid == null || !_grid.HasGrid) return;
