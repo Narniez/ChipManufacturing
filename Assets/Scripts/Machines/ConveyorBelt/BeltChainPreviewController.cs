@@ -10,14 +10,15 @@ public class BeltChainPreviewController
     private readonly Material _previewMaterial;
 
     private readonly List<GameObject> _ghosts = new List<GameObject>();
+    private ConveyorBelt _currentTail;
 
     public BeltChainPreviewController(PlacementManager pm)
     {
         _pm = pm;
         _grid = pm.GridService;
-        _straightPrefab = GetStraightPrefab(pm);
-        _turnPrefab = GetTurnPrefab(pm);
-        _previewMaterial = GetPreviewMaterial(pm);
+        _straightPrefab = pm.GetConveyorPrefab(false);
+        _turnPrefab = pm.GetConveyorPrefab(true);
+        _previewMaterial = pm.GetPreviewMaterial();
     }
 
     public void Cleanup()
@@ -25,44 +26,35 @@ public class BeltChainPreviewController
         for (int i = 0; i < _ghosts.Count; i++)
             if (_ghosts[i] != null) Object.Destroy(_ghosts[i]);
         _ghosts.Clear();
+        _currentTail = null;
     }
 
     public void ShowOptionsFrom(ConveyorBelt tail)
     {
         Cleanup();
         if (tail == null || _grid == null || !_grid.HasGrid) return;
+        _currentTail = tail;
 
-        var tailAnchor = tail.Anchor;
         var forward = tail.Orientation;
+        // Forward always allowed
+        TrySpawnGhost(tail.Anchor + ToDelta(forward), forward, isTurn: false);
 
-        // Compute orientations
-        var forwardOri = forward;
-        var leftOri = forward.RotatedCCW();
-        var rightOri = forward.RotatedCW();
-
-        // Cells
-        var fCell = tailAnchor + ToDelta(forwardOri);
-        var lCell = tailAnchor + ToDelta(leftOri);
-        var rCell = tailAnchor + ToDelta(rightOri);
-
-        // Spawn forward (straight)
-        TrySpawnGhost(fCell, forwardOri, isTurn: false);
-        // Spawn left (turn)
-        TrySpawnGhost(lCell, leftOri, isTurn: true);
-        // Spawn right (turn)
-        TrySpawnGhost(rCell, rightOri, isTurn: true);
+        // Lateral options only if tail is straight (not a corner)
+        if (!tail.IsTurnPrefab)
+        {
+            TrySpawnGhost(tail.Anchor + ToDelta(forward.RotatedCCW()), forward.RotatedCCW(), isTurn: true);
+            TrySpawnGhost(tail.Anchor + ToDelta(forward.RotatedCW()), forward.RotatedCW(), isTurn: true);
+        }
     }
 
-    // Places the belt for the tapped preview, returns the placed belt (or null)
     public ConveyorBelt PlaceFromPreview(ConveyorPreview p)
     {
         if (p == null || _grid == null || !_grid.HasGrid) return null;
+        if (_currentTail == null) return null;
+        if (!_grid.IsInside(p.Cell) || !_grid.IsAreaFree(p.Cell, Vector2Int.one)) return null;
 
-        // Validate cell still free
-        if (!_grid.IsInside(p.Cell) || !_grid.IsAreaFree(p.Cell, Vector2Int.one))
-            return null;
-
-        GameObject prefab = p.IsTurn ? _turnPrefab : _straightPrefab;
+        // Always straight child
+        GameObject prefab = _straightPrefab;
         if (prefab == null) return null;
 
         Vector3 pos = _pm.AnchorToWorldCenter(p.Cell, Vector2Int.one, 0f);
@@ -78,23 +70,93 @@ public class BeltChainPreviewController
         occ.SetPlacement(p.Cell, p.Orientation);
         _grid.SetAreaOccupant(p.Cell, Vector2Int.one, go);
 
-        var belt = go.GetComponent<ConveyorBelt>();
-            //ShowOptionsFrom(belt);
+        var child = go.GetComponent<ConveyorBelt>();
+        if (child == null) return null;
 
-        return belt;
+        // Link to tail
+        child.PreviousInChain = _currentTail;
+        _currentTail.NextInChain = child;
+
+        PromoteTailIfBend(_currentTail, child);
+
+        // ALSO: assign child as parent of belt in front if that belt has no parent
+        LinkForwardIfParentMissing(child);
+
+        ShowOptionsFrom(child);
+        return child;
+    }
+
+    private void PromoteTailIfBend(ConveyorBelt parent, ConveyorBelt child)
+    {
+        if (parent == null || child == null) return;
+        if (parent.IsTurnPrefab) return;
+
+        Vector2Int delta = child.Anchor - parent.Anchor;
+        var outgoing = DeltaToOrientation(delta);
+        if (!outgoing.HasValue) return;
+
+        if (outgoing.Value == parent.Orientation) return; // straight
+
+        PromoteCorner(parent, parent.Orientation, outgoing.Value);
+    }
+
+    private void PromoteCorner(ConveyorBelt belt, GridOrientation incoming, GridOrientation outgoing)
+    {
+        if (belt == null) return;
+        var turnKind = outgoing == incoming.RotatedCW()
+            ? ConveyorBelt.BeltTurnKind.Right
+            : (outgoing == incoming.RotatedCCW() ? ConveyorBelt.BeltTurnKind.Left : ConveyorBelt.BeltTurnKind.None);
+
+        if (turnKind == ConveyorBelt.BeltTurnKind.None) return;
+
+        if (belt.IsTurnPrefab && belt.Orientation == outgoing)
+        {
+            belt.SetTurnKind(turnKind);
+            belt.LockCorner();
+            return;
+        }
+
+        var replaced = _pm.ReplaceConveyorPrefab(belt, useTurnPrefab: true, overrideOrientation: outgoing, turnKind: turnKind);
+        replaced?.LockCorner();
+        if (replaced != null)
+            _currentTail = replaced;
+    }
+
+    private void LinkForwardIfParentMissing(ConveyorBelt newParent)
+    {
+        if (newParent == null || _grid == null || !_grid.HasGrid) return;
+        var frontCell = newParent.Anchor + ToDelta(newParent.Orientation);
+        if (_grid.TryGetCell(frontCell, out var data) && data.occupant != null)
+        {
+            var go = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
+            var beltForward = go != null ? go.GetComponent<ConveyorBelt>() : null;
+            if (beltForward != null && beltForward.PreviousInChain == null && beltForward != newParent)
+            {
+                // Link only if not already part of another chain
+                beltForward.PreviousInChain = newParent;
+                newParent.NextInChain = beltForward;
+            }
+        }
+    }
+
+    private GridOrientation? DeltaToOrientation(Vector2Int d)
+    {
+        if (d == Vector2Int.up) return GridOrientation.North;
+        if (d == Vector2Int.right) return GridOrientation.East;
+        if (d == Vector2Int.down) return GridOrientation.South;
+        if (d == Vector2Int.left) return GridOrientation.West;
+        return null;
     }
 
     private void TrySpawnGhost(Vector2Int cell, GridOrientation ori, bool isTurn)
     {
         if (!_grid.IsInside(cell) || !_grid.IsAreaFree(cell, Vector2Int.one)) return;
-
-        var prefab =  _straightPrefab;
+        var prefab = _straightPrefab;
         if (prefab == null) return;
 
         Vector3 pos = _pm.AnchorToWorldCenter(cell, Vector2Int.one, 0f);
         var go = Object.Instantiate(prefab, pos, ori.ToRotation());
 
-        // If the prefab has a ConveyorBelt, unregister and remove it so this is a pure ghost
         var beltComp = go.GetComponent<ConveyorBelt>();
         if (beltComp != null)
         {
@@ -102,10 +164,8 @@ public class BeltChainPreviewController
             Object.Destroy(beltComp);
         }
 
-        // Apply preview material (no color changes)
         ApplyPreviewMaterial(go);
 
-        // Ensure collider for tap detection
         if (go.GetComponent<Collider>() == null)
         {
             var col = go.AddComponent<BoxCollider>();
@@ -117,14 +177,12 @@ public class BeltChainPreviewController
         prev.Cell = cell;
         prev.Orientation = ori;
         prev.IsTurn = isTurn;
-
         _ghosts.Add(go);
     }
 
     private void ApplyPreviewMaterial(GameObject go)
     {
         if (_previewMaterial == null) return;
-
         var cache = go.GetComponent<PreviewMaterialCache>();
         if (cache == null) cache = go.AddComponent<PreviewMaterialCache>();
         cache.ApplyPreview(_previewMaterial);
@@ -141,8 +199,4 @@ public class BeltChainPreviewController
             default: return Vector2Int.up;
         }
     }
-
-    private GameObject GetStraightPrefab(PlacementManager pm) => pm.GetConveyorPrefab(false);
-    private GameObject GetTurnPrefab(PlacementManager pm) => pm.GetConveyorPrefab(true);
-    private Material GetPreviewMaterial(PlacementManager pm) => pm.GetPreviewMaterial();
 }

@@ -5,13 +5,9 @@ public class BeltSystemRuntime : MonoBehaviour
 {
     public static BeltSystemRuntime Instance { get; private set; }
 
-    [SerializeField] private float tickInterval = 0.25f; // logical hop cadence
-    [SerializeField, Tooltip("Seconds for a visual to slide between belts")]
-    private float itemMoveDuration = 0.2f;
-
+    [SerializeField] private float itemMoveDuration = 0.2f;
     public float ItemMoveDuration => itemMoveDuration;
 
-    private float _accum;
     private readonly List<ConveyorBelt> _belts = new List<ConveyorBelt>();
 
     private void Awake()
@@ -29,20 +25,16 @@ public class BeltSystemRuntime : MonoBehaviour
 
     private void Update()
     {
-        _accum += Time.deltaTime;
-        if (_accum >= tickInterval)
-        {
-            _accum -= tickInterval;
-            Tick();
-        }
-
+        // Animate every frame
         AnimateItemVisuals(Time.deltaTime);
-    }
-
-    private void Tick()
-    {
+        // Continuous movement: attempt moves immediately when item not animating
         for (int i = _belts.Count - 1; i >= 0; i--)
-            _belts[i].TickMoveAttempt();
+        {
+            var b = _belts[i];
+            if (b == null) continue;
+            if (b.HasItem && !b.IsItemAnimating())
+                b.TickMoveAttempt();
+        }
     }
 
     private void AnimateItemVisuals(float dt)
