@@ -64,6 +64,9 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
 
     public bool TrySetItem(ConveyorItem item, bool snapVisual = true)
     {
+        // Do not accept items while this belt is being dragged
+        if (_isDragging) return false;
+
         if (_item != null || item == null) return false;
         _item = item;
         if (snapVisual && _item.Visual != null && _grid != null)
@@ -107,10 +110,6 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         {
             if (_turnKind == BeltTurnKind.Right)
                 transform.rotation *= Quaternion.Euler(0f, 90f, 0f);
-            else if (_turnKind == BeltTurnKind.Left)
-            {
-                // optional tweak for left corner
-            }
         }
     }
 
@@ -122,6 +121,14 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     {
         _isDragging = true;
         UnlockCorner();
+
+        // Remove occupancy so upstream belts see a gap and stop pushing items.
+        if (_grid != null && _grid.HasGrid)
+            _grid.SetAreaOccupant(Anchor, Vector2Int.one, null);
+
+        UnlinkFromChain();
+
+        // Clear item (previous behavior)
         if (_item != null && _item.Visual != null)
         {
             Destroy(_item.Visual);
@@ -134,16 +141,35 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     public void OnDragEnd()
     {
         _isDragging = false;
-        RefreshChainLinks();
-        // Immediate machine notification after drag
-        NotifyAdjacentMachinesOfConnection();
+        // Re-acquire grid cell based on new world position BEFORE notifying machines,
+        // so they see valid occupancy and can restart production.
+        if (_grid != null && _grid.HasGrid)
+        {
+            var newAnchor = _grid.WorldToCell(transform.position);
+            // Clamp in case user dragged slightly outside
+            newAnchor = _grid.ClampAnchor(newAnchor, Vector2Int.one);
+
+            // Occupy cell first
+            _grid.SetAreaOccupant(newAnchor, Vector2Int.one, gameObject);
+
+            // Re-apply placement (orientation unchanged)
+            SetPlacement(newAnchor, orientation);
+        }
+        else
+        {
+            // Fallback: just refresh links
+            RefreshChainLinks();
+            NotifyAdjacentMachinesOfConnection();
+        }
+
+        // Explicit upstream machine restart (in case placement sequence missed it)
+        TryRestartUpstreamMachineOutput();
     }
 
     // Interaction
     public void OnTap() { }
     public void OnHold() { }
 
-    // Movement tick – fallback scan added if explicit chain link missing (fix for corner stalls)
     public void TickMoveAttempt()
     {
         if (_item == null) return;
@@ -154,9 +180,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         if (NextInChain != null && TryMoveOntoChainChild(NextInChain))
             return;
 
-        if (TryMoveOntoForwardBeltFallback())
-            return;
-
+            // Removed fallback to avoid mid-air moves when chain is broken
         TryDeliverToMachine(Anchor + ToDelta(orientation));
     }
 
@@ -179,7 +203,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         {
             var go = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
             var forwardBelt = go != null ? go.GetComponent<ConveyorBelt>() : null;
-            if (forwardBelt != null)
+            if (forwardBelt != null && !forwardBelt._isDragging)
             {
                 bool parentInvalid =
                     forwardBelt.PreviousInChain == null ||
@@ -197,32 +221,9 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         }
     }
 
-    private bool TryMoveOntoForwardBeltFallback()
-    {
-        if (_grid == null || !_grid.HasGrid) return false;
-
-        var forwardCell = Anchor + ToDelta(orientation);
-        if (!_grid.TryGetCell(forwardCell, out var data) || data.occupant == null) return false;
-
-        GameObject occGO = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
-        if (occGO == null) return false;
-
-        var forwardBelt = occGO.GetComponent<ConveyorBelt>();
-        if (forwardBelt == null) return false;
-        if (forwardBelt.HasItem) return false;
-
-        if (forwardBelt.PreviousInChain == null)
-        {
-            forwardBelt.PreviousInChain = this;
-            NextInChain = forwardBelt;
-        }
-
-        return TryMoveOntoChainChild(forwardBelt);
-    }
-
     private bool TryMoveOntoChainChild(ConveyorBelt child)
     {
-        if (child == null || child.HasItem) return false;
+        if (child == null || child.HasItem || child._isDragging) return false;
 
         var moving = TakeItem();
         if (moving == null) return false;
@@ -266,6 +267,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
 
     public Vector3 GetWorldCenter()
     {
+        if (_isDragging) return transform.position + Vector3.up * itemHeight;
         float yBase = _grid != null ? _grid.Origin.y : 0f;
         return (_grid != null ? _grid.CellToWorldCenter(Anchor, yBase) : transform.position) + Vector3.up * itemHeight;
     }
@@ -331,7 +333,6 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         }
     }
 
-    // Made public so placement confirmation can trigger machine start immediately.
     public void NotifyAdjacentMachinesOfConnection()
     {
         if (_grid == null || !_grid.HasGrid) return;
@@ -349,7 +350,24 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         }
     }
 
-    // Shape logic (unchanged)
+    // Explicit restart for upstream machine after belt returns
+    private void TryRestartUpstreamMachineOutput()
+    {
+        if (_grid == null || !_grid.HasGrid) return;
+        var backCell = Anchor + ToDelta(Opposite(orientation));
+        if (!_grid.TryGetCell(backCell, out var data) || data.occupant == null) return;
+        GameObject occGO = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
+        if (occGO == null) return;
+        var machine = occGO.GetComponent<Machine>();
+        if (machine == null || machine.IsBroken) return;
+
+        if (machine.TryGetBeltConnection(this, out var portType, requireFacing: true) &&
+            portType == MachinePortType.Output)
+        {
+            machine.TryStartIfIdle();
+        }
+    }
+
     public void ResolveShapeAndMaybeDowngrade()
     {
         if (_grid == null || !_grid.HasGrid) return;
