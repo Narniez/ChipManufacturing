@@ -1,9 +1,5 @@
 using UnityEngine;
 
-// Shows a prefab with preview material, lets you move (hold-drag) and rotate,
-// and waits for external confirm/cancel via PlacementManager.ConfirmPreview/CancelPreview.
-// Uses bottom-left anchor with centered pivot. If MachineData is provided,
-// its size/name are used during preview.
 public class PreviewPlacementState : BasePlacementState
 {
     private readonly GameObject _prefab;
@@ -15,7 +11,7 @@ public class PreviewPlacementState : BasePlacementState
     private GameObject _instance;
     private IGridOccupant _occ;
 
-    private Vector2Int _anchor;              // bottom-left cell of footprint
+    private Vector2Int _anchor;              
     private GridOrientation _orientation;
     private float _heightOffset;
 
@@ -45,7 +41,6 @@ public class PreviewPlacementState : BasePlacementState
             return;
         }
 
-        // Spawn at screen center
         Vector2 screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         Vector3 world = ScreenToGround(screenCenter);
         Vector2Int desiredCell = _grid.WorldToCell(world);
@@ -60,21 +55,32 @@ public class PreviewPlacementState : BasePlacementState
             return;
         }
 
-        // Detect conveyor belt previews
         _isConveyor = _instance.GetComponent<ConveyorBelt>() != null;
-
         ApplyPreviewMaterial(_instance);
 
         _orientation = _initialOrientation ?? _occ.Orientation;
         var size = GetOrientedSize();
 
-        // Compute anchor; if the footprint has a true center cell (odd x and y), treat the tapped cell as the center
         _anchor = ShouldCenterOnCell(size)
             ? AdjustAnchorInsideGrid(AnchorFromCenterCell(desiredCell, size), size)
             : AdjustAnchorInsideGrid(desiredCell, size);
 
-        // Ensure preview does not overlap existing occupants
-        _anchor = FindNearestFreeArea(_anchor, size);
+        // Machines use nearest free area search; conveyors have separate logic later when dragging.
+        if (!_isConveyor)
+        {
+            if (!TryFindNearestFreeArea(_anchor, size, out var freeAnchor))
+            {
+                return;
+            }
+            _anchor = freeAnchor;
+        }
+        //else
+        //{
+        //    if (!_grid.IsAreaFree(_anchor, size))
+        //    {
+        //        _anchor = FindFreeToRight(_anchor, size);
+        //    }
+        //}
 
         _heightOffset = PlaceMan.ComputePivotBottomOffset(_instance.transform);
         Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
@@ -85,7 +91,6 @@ public class PreviewPlacementState : BasePlacementState
     public override void Exit()
     {
         PlaceMan.SelectionUI?.Hide();
-
         if (!_committed && _instance != null)
             Object.Destroy(_instance);
     }
@@ -96,7 +101,6 @@ public class PreviewPlacementState : BasePlacementState
             OnRotateRequested();
     }
 
-    // Tap anywhere to move the preview
     public override void OnTap(IInteractable target, Vector2 screen, Vector3 world)
     {
         if (_instance == null || _occ == null || _grid == null || !_grid.HasGrid) return;
@@ -109,8 +113,18 @@ public class PreviewPlacementState : BasePlacementState
             ? AdjustAnchorInsideGrid(AnchorFromCenterCell(cell, size), size)
             : AdjustAnchorInsideGrid(cell, size);
 
-        // Ensure preview does not overlap existing occupants
-        newAnchor = FindNearestFreeArea(newAnchor, size);
+        if (_isConveyor)
+        {
+            newAnchor = FindFreeToRight(newAnchor, size);
+        }
+        else
+        {
+            if (!TryFindNearestFreeArea(newAnchor, size, out var freeAnchor))
+            {
+                return;
+            }
+            newAnchor = freeAnchor;
+        }
 
         if (newAnchor == _anchor) return;
 
@@ -134,8 +148,12 @@ public class PreviewPlacementState : BasePlacementState
             ? AdjustAnchorInsideGrid(AnchorFromCenterCell(cell, size), size)
             : AdjustAnchorInsideGrid(cell, size);
 
-        // Ensure preview does not overlap existing occupants
-        newAnchor = _isConveyor ? FindFreeToRight(newAnchor, size) : FindNearestFreeArea(newAnchor, size);
+        newAnchor = _isConveyor
+            ? FindFreeToRight(newAnchor, size)
+            : (TryFindNearestFreeArea(newAnchor, size, out var freeAnchor) ? freeAnchor : newAnchor);
+
+        // If machine search failed (preview canceled), abort further movement.
+        if (_instance == null) return;
 
         if (newAnchor == _anchor) return;
 
@@ -154,7 +172,6 @@ public class PreviewPlacementState : BasePlacementState
     {
         if (_instance == null || _occ == null) return;
 
-        // Preserve center cell if the footprint has a true center
         var oldSize = GetOrientedSize();
         Vector2Int preservedCenter = ShouldCenterOnCell(oldSize)
             ? CenterCellFromAnchor(_anchor, oldSize)
@@ -170,17 +187,28 @@ public class PreviewPlacementState : BasePlacementState
 
         newAnchor = AdjustAnchorInsideGrid(newAnchor, newSize);
 
-        // Ensure preview does not overlap existing occupants
-        newAnchor = _isConveyor ? FindFreeToRight(newAnchor, newSize) : FindNearestFreeArea(newAnchor, newSize);
+        if (_isConveyor)
+        {
+            newAnchor = FindFreeToRight(newAnchor, newSize);
+        }
+        else
+        {
+            if (!TryFindNearestFreeArea(newAnchor, newSize, out var freeAnchor))
+            {
+                // Canceled (no space). Stop rotation (Exit will clean up).
+                return;
+            }
+            newAnchor = freeAnchor;
+        }
+
+        if (_instance == null) return;
 
         _anchor = newAnchor;
-
         Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, newSize, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
     }
 
-    // External confirm (called by PlacementManager.ConfirmPreview)
     public void ConfirmPlacement()
     {
         if (_committed || _instance == null || _occ == null) return;
@@ -203,15 +231,10 @@ public class PreviewPlacementState : BasePlacementState
         _grid.SetAreaOccupant(_anchor, size, _instance);
         _committed = true;
 
-        // NEW: If this is a conveyor belt, immediately notify adjacent machines so any
-        // generator/output-capable machine starts producing without waiting a frame.
         if (_isConveyor)
         {
             var belt = _instance.GetComponent<ConveyorBelt>();
-            if (belt != null)
-            {
-                belt.NotifyAdjacentMachinesOfConnection();
-            }
+            belt?.NotifyAdjacentMachinesOfConnection();
             PlaceMan.SetState(new SelectingState(PlaceMan, _occ));
         }
         else
@@ -220,8 +243,7 @@ public class PreviewPlacementState : BasePlacementState
         }
     }
 
-    // External cancel (called by PlacementManager.CancelPreview)
-    public void CancelPlacement()
+    public void CancelPlacement()   
     {
         if (_committed) return;
         PlaceMan.SetState(new IdleState(PlaceMan));
@@ -229,13 +251,11 @@ public class PreviewPlacementState : BasePlacementState
 
     private Vector2Int GetOrientedSize()
     {
-        // Use MachineData.size during preview if available (Machine.BaseSize would be 1x1 until initialized)
         Vector2Int baseSize = _machineData != null ? _machineData.size : _occ.BaseSize;
         return baseSize.OrientedSize(_orientation);
     }
 
-    private Vector2Int AdjustAnchorInsideGrid(Vector2Int desiredAnchor, Vector2Int size
-    )
+    private Vector2Int AdjustAnchorInsideGrid(Vector2Int desiredAnchor, Vector2Int size)
     {
         if (_grid == null || !_grid.HasGrid) return desiredAnchor;
         int maxX = _grid.Cols - size.x;
@@ -246,16 +266,12 @@ public class PreviewPlacementState : BasePlacementState
         );
     }
 
-    // Footprints with a true center cell (odd x and odd y) can use the tapped cell as center.
     private static bool ShouldCenterOnCell(Vector2Int size) => (size.x & 1) == 1 && (size.y & 1) == 1;
-
     private static Vector2Int AnchorFromCenterCell(Vector2Int centerCell, Vector2Int size)
         => new Vector2Int(centerCell.x - size.x / 2, centerCell.y - size.y / 2);
-
     private static Vector2Int CenterCellFromAnchor(Vector2Int anchor, Vector2Int size)
         => new Vector2Int(anchor.x + size.x / 2, anchor.y + size.y / 2);
 
-    // For conveyors, if current area is occupied, scan to the right until free or edge reached
     private Vector2Int FindFreeToRight(Vector2Int startAnchor, Vector2Int size)
     {
         if (_grid == null || !_grid.HasGrid) return startAnchor;
@@ -272,45 +288,63 @@ public class PreviewPlacementState : BasePlacementState
             if (_grid.IsAreaFree(a, size))
                 return a;
         }
-
         return startAnchor;
     }
 
-    // For machines (any footprint), find the nearest anchor whose area fits and is free
-    private Vector2Int FindNearestFreeArea(Vector2Int startAnchor, Vector2Int size)
+    // NEW: Attempt to find a free area; if none exists, cancel preview (destroy instance) and return false.
+    private bool TryFindNearestFreeArea(Vector2Int startAnchor, Vector2Int size, out Vector2Int freeAnchor)
     {
-        if (_grid == null || !_grid.HasGrid) return startAnchor;
+        freeAnchor = startAnchor;
+        if (_grid == null || !_grid.HasGrid)
+            return false;
 
-        // Already free?
         if (_grid.IsAreaFree(startAnchor, size))
-            return startAnchor;
+        {
+            freeAnchor = startAnchor;
+            return true;
+        }
 
         int maxR = Mathf.Max(_grid.Cols, _grid.Rows);
-        // Expand in a square "ring" around the start anchor
         for (int r = 1; r <= maxR; r++)
         {
-            // Top and bottom rows of the ring
             for (int x = startAnchor.x - r; x <= startAnchor.x + r; x++)
             {
                 var top = new Vector2Int(x, startAnchor.y - r);
                 var bot = new Vector2Int(x, startAnchor.y + r);
 
-                if (_grid.IsAreaInside(top, size) && _grid.IsAreaFree(top, size)) return top;
-                if (_grid.IsAreaInside(bot, size) && _grid.IsAreaFree(bot, size)) return bot;
+                if (_grid.IsAreaInside(top, size) && _grid.IsAreaFree(top, size))
+                {
+                    freeAnchor = top;
+                    return true;
+                }
+                if (_grid.IsAreaInside(bot, size) && _grid.IsAreaFree(bot, size))
+                {
+                    freeAnchor = bot;
+                    return true;
+                }
             }
-            // Left and right columns of the ring (excluding corners already checked)
             for (int y = startAnchor.y - r + 1; y <= startAnchor.y + r - 1; y++)
             {
                 var left = new Vector2Int(startAnchor.x - r, y);
                 var right = new Vector2Int(startAnchor.x + r, y);
 
-                if (_grid.IsAreaInside(left, size) && _grid.IsAreaFree(left, size)) return left;
-                if (_grid.IsAreaInside(right, size) && _grid.IsAreaFree(right, size)) return right;
+                if (_grid.IsAreaInside(left, size) && _grid.IsAreaFree(left, size))
+                {
+                    freeAnchor = left;
+                    return true;
+                }
+                if (_grid.IsAreaInside(right, size) && _grid.IsAreaFree(right, size))
+                {
+                    freeAnchor = right;
+                    return true;
+                }
             }
         }
 
-        // Fallback (should rarely happen)
-        return startAnchor;
+        // No free area anywhere -> cancel preview
+        CancelPlacement();
+        // Instance will be destroyed in Exit(); callers must check if _instance is null after call.
+        return false;
     }
 
     private void ApplyPreviewMaterial(GameObject go)

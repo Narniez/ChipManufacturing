@@ -190,7 +190,7 @@ public class NewCameraControls : MonoBehaviour
             else
             {
                 ProcessTouchLogic();
-                HandleMouseInput(); // Allow mouse fallback even in touch modes (editor)
+                //HandleMouseInput(); // Allow mouse fallback even in touch modes (editor)
             }
         }
 
