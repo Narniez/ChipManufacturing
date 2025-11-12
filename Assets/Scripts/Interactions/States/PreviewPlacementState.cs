@@ -192,7 +192,6 @@ public class PreviewPlacementState : BasePlacementState
             return;
         }
 
-        // Initialize machine data only when confirmed
         var machine = _instance.GetComponent<Machine>();
         if (_machineData != null && machine != null)
         {
@@ -204,8 +203,15 @@ public class PreviewPlacementState : BasePlacementState
         _grid.SetAreaOccupant(_anchor, size, _instance);
         _committed = true;
 
+        // NEW: If this is a conveyor belt, immediately notify adjacent machines so any
+        // generator/output-capable machine starts producing without waiting a frame.
         if (_isConveyor)
         {
+            var belt = _instance.GetComponent<ConveyorBelt>();
+            if (belt != null)
+            {
+                belt.NotifyAdjacentMachinesOfConnection();
+            }
             PlaceMan.SetState(new SelectingState(PlaceMan, _occ));
         }
         else

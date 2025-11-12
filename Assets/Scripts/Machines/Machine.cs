@@ -448,7 +448,11 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public Transform DragTransform => transform;
     public void OnDragStart() { }
     public void OnDrag(Vector3 worldPosition) { DragTransform.position = worldPosition; }
-    public void OnDragEnd() { }
+    public void OnDragEnd() 
+    {
+        // When drag finishes, re-scan for output belts at new position/orientation.
+        ScanOutputsAndStartIfPossible();
+    }
 
     // --- Grid Footprint & Placement (IGridOccupant) ---
     public Vector2Int BaseSize => data != null ? data.size : Vector2Int.one;
@@ -460,6 +464,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         Anchor = anchor;
         Orientation = orientation;
         transform.rotation = orientation.ToRotation();
+
+        ScanOutputsAndStartIfPossible();
     }
 
     public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation orientation)
@@ -482,6 +488,16 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // --- Conveyor I/O & Inventory bridge ---
 
     // Called by belts when a conveyor item arrives on an INPUT port
+
+    private void ScanOutputsAndStartIfPossible()
+    {
+        if (_isBroken) return;
+
+        // Generators need at least one outward-facing belt; other machines may start only if inputs are satisfied.
+        // TryStartIfIdle will internally gate based on recipe/input availability.
+        if (HasConnectedOutputBelt())
+            TryStartIfIdle();
+    }
     public void OnConveyorItemArrived(MaterialData material)
     {
         if (Data == null) return;
