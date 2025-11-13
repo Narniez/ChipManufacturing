@@ -4,41 +4,55 @@ using UnityEngine.Events;
 
 public class LensesController : MonoBehaviour
 {
-
     [Header("Lens Settings")]
     [Tooltip("Auto-find all Lens components in the scene at Start.")]
     [SerializeField] private bool autoFindLenses = true;
     [SerializeField] private Transform emitter;
     [SerializeField] private LineRenderer line;
-    [SerializeField] private float emissionSpeed;
-    [SerializeField] private int maxBounces = 8;
-    [SerializeField] private int maxDistance = 5000;
 
-    [SerializeField] private List<GameObject> lenses = new();
+    [Header("Bounce Settings")]
+    [Tooltip("Total path length the beam can travel across all bounces.")]
+    [SerializeField] private float maxDistance = 5000f;
+    [Tooltip("Max number of reflections before stopping.")]
+    [SerializeField] private int maxBounces = 8;
+    [Tooltip("Layers the beam can hit.")]
+    [SerializeField] private LayerMask rayMask = ~0;
+    [Tooltip("Reflect off any collider. If false, only reflect off Lens components with isReflective=true.")]
+    [SerializeField] private bool reflectOnAnyCollider = true;
+    [Tooltip("Start direction. If false, uses the emitter's forward.")]
+    [SerializeField] private bool startDownward = false;
 
     [Header("Completion")]
     public UnityEvent onPuzzleComplete;
 
+    [SerializeField] private List<GameObject> lenses = new();
+
     private bool isMinigameActive = false;
-    private bool isLenshit = false;
+    private bool completed;
+
+    private Lens currentSelected;
 
     const float SURFACE_OFFSET = 0.001f;
-    bool completed;
-
-    LayerMask gameMask;
+    const float MIN_SEGMENT = 0.0005f; // prevent micro-bounce loops
 
     private void Awake()
     {
         foreach (var lens in lenses)
-        {
             lens.SetActive(true);
-        }
+
+        if (line != null)
+            line.useWorldSpace = true;
+    }
+
+    private void Update()
+    {
+        CastAndRenderBeam();
     }
 
     public void RegisterLens(GameObject lens)
     {
         lenses.Add(lens);
-        Debug.Log("Registered lens: " + lens.name); 
+        Debug.Log("Registered lens: " + lens.name);
     }
 
     public void ActivateMinigame()
@@ -46,95 +60,116 @@ public class LensesController : MonoBehaviour
         isMinigameActive = true;
     }
 
-    void Update()
+    public void SelectLens(Lens lens)
     {
-       // if (emitter == null || line == null) return;
+        if (lens == currentSelected)
+        {
+            if (currentSelected != null)
+            {
+                currentSelected.ToggleSelected();
+                currentSelected = null;
+            }
+            return;
+        }
 
-        //HandleLensInputs();
-        //CastAndRenderBeam();
+        if (currentSelected != null)
+            currentSelected.ToggleSelected();
+
+        currentSelected = lens;
+        if (currentSelected != null)
+            currentSelected.ToggleSelected();
     }
 
-    void HandleLensInputs()
+    public void DeselectAll()
     {
-        float dt = Time.deltaTime;
-        foreach (var lens in lenses)
+        if (currentSelected != null)
         {
-            if (lens == null) continue;
-
-            float input = 0f;
-            if (Input.GetKey(lens.GetComponent<Lens>().rotateRight)) input -= 1f;
-            if (Input.GetKey(lens.GetComponent<Lens>().rotateLeft)) input += 1f;
-
-           // if (Mathf.Abs(input) > 0f)
-                lens.GetComponent<Lens>().DriveRotation(input, dt, Space.Self);
+            currentSelected.Reset();
+            currentSelected = null;
         }
     }
 
-    void CastAndRenderBeam()
+    // Robust bouncing laser
+    private void CastAndRenderBeam()
     {
+        if (emitter == null || line == null)
+            return;
+
         Vector3 origin = emitter.position;
-        Vector3 dir = emitter.forward;
+        Vector3 dir = (startDownward ? Vector3.down : emitter.forward).normalized;
 
-        // pre-allocate enough points: bounces + 2 endpoints worst-case
-        Vector3[] points = new Vector3[maxBounces + 2];
-        int count = 0;
-        points[count++] = origin;
+        List<Vector3> points = new List<Vector3>(maxBounces);
+        points.Add(origin);
 
+        float remaining = Mathf.Max(0f, maxDistance);
+        int bounces = 0;
 
-        for (int i = 0; i <= maxBounces; i++)
+        while (bounces <= maxBounces && remaining > 0f)
         {
-            if (Physics.Raycast(origin, dir, out RaycastHit hit, gameMask, maxDistance, QueryTriggerInteraction.Ignore))
-            {
-                points[count++] = hit.point;
-                /*
-                                if (IsInMask(hit.collider.gameObject.layer, goalMask))
-                                {
-                                    if (!completed)
-                                    {
-                                        completed = true;
-                                        onPuzzleComplete?.Invoke();
-                                    }
-                                    break;
-                                }*/
+            Ray ray = new Ray(origin, dir);
 
-                // 2) Lens (reflect)?
-                Lens lens = hit.collider.GetComponent<Lens>();
-                if (lens != null && lens.isReflective)
+            if (Physics.Raycast(ray, out RaycastHit hit, remaining, rayMask, QueryTriggerInteraction.Ignore))
+            {
+                // guard tiny distances (avoid jitter when starting inside geometry)
+                float traveled = Mathf.Max(hit.distance, 0f);
+                if (traveled < MIN_SEGMENT)
                 {
-                    // reflect and continue
-                    dir = Vector3.Reflect(dir, hit.normal).normalized;
-                    origin = hit.point + dir * SURFACE_OFFSET;
+                    // Nudge forward a hair and keep going to escape surface
+                    origin += dir * SURFACE_OFFSET;
+                    remaining -= SURFACE_OFFSET;
+                    bounces++;
                     continue;
                 }
 
+                points.Add(hit.point);
+                remaining -= traveled;
 
-                // If it's something in additionalHitMask but not goal/lens/blocker, stop.
+                // If we hit the target, complete and stop
+                if (hit.collider.CompareTag("Target"))
+                {
+                    CompletePuzzle();
+                    break;
+                }
+
+                Lens lens = hit.collider.GetComponentInParent<Lens>();
+                bool doReflect = lens != null && lens.isReflective;
+
+                if (doReflect && remaining > 0f)
+                {
+                    dir = Vector3.Reflect(dir, hit.normal).normalized;
+                    origin = hit.point + dir * SURFACE_OFFSET; // offset to avoid self-hit
+                    bounces++;
+                    continue;
+                }
+
+                // Not reflecting on this surface -> stop here
                 break;
             }
             else
             {
-                // Nothing hit—draw to max distance and stop
-                points[count++] = origin + dir * maxDistance;
+                // Nothing hit within remaining distance, extend and stop
+                points.Add(origin + dir * remaining);
                 break;
             }
         }
 
-        line.positionCount = count;
-        for (int p = 0; p < count; p++)
-            line.SetPosition(p, points[p]);
+        //Draw
+        line.positionCount = points.Count;
+        for (int i = 0; i < points.Count; i++)
+            line.SetPosition(i, points[i]);
     }
 
-    static bool IsInMask(int layer, LayerMask mask)
+    private void CompletePuzzle()
     {
-        return (mask.value & (1 << layer)) != 0;
+        if (completed) return;
+        completed = true;
+        onPuzzleComplete?.Invoke();
+        line.gameObject.SetActive(false);
     }
 
-    /// <summary>Call this to restart the puzzle.</summary>
+    //Call this to restart the puzzle
     public void ResetPuzzle()
     {
-        completed = false;
-        // (Optionally) re-center lenses, clear UI, etc.
+        // reset puzzle state here if needed
     }
-
-
 }
