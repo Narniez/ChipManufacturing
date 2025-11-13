@@ -1,14 +1,15 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(Collider))]
-public class Lens : MonoBehaviour, IPointerDownHandler
+public class Lens : MonoBehaviour
 {
     [Header("Rotation")]
     [SerializeField] public KeyCode rotateLeft = KeyCode.Q;
     [SerializeField] public KeyCode rotateRight = KeyCode.E;
     [SerializeField] float rotateSpeed = 60f;            // degrees per second
-    [SerializeField] Vector3 rotationAxis = Vector3.up;  // rotate around global Y by default
+    [SerializeField] Vector3 rotationAxis = Vector3.forward;  // rotate around global Z by default
     [SerializeField] bool allowRotation = true;
 
     [Header("Lens Data")]
@@ -19,17 +20,25 @@ public class Lens : MonoBehaviour, IPointerDownHandler
     private Renderer cachedRenderer;
     private Color originalColor;
 
+    private LensesController minigameController;
+
     private void Awake()
     {
-        // Register with controller if present
-        var minigameController = FindAnyObjectByType<LensesController>();
+        minigameController = FindAnyObjectByType<LensesController>();
         if (gameObject.activeSelf && minigameController != null)
             minigameController.RegisterLens(gameObject);
 
-        // Cache renderer + original color for highlight toggle
         cachedRenderer = GetComponent<Renderer>();
         if (cachedRenderer != null)
             originalColor = cachedRenderer.material.color;
+    }
+
+    private void Update()
+    {
+        if (isSelected)
+        {
+            HandleLensInput();
+        }
     }
 
     public void DriveRotation(float input, float dt, Space space = Space.World)
@@ -38,30 +47,36 @@ public class Lens : MonoBehaviour, IPointerDownHandler
         transform.Rotate(rotationAxis, input * rotateSpeed * dt, space);
     }
 
-    private void Reset()
+    public void Reset()
     {
         var col = GetComponent<Collider>();
-        if (col != null) col.isTrigger = false; // ensure physics raycasts hit
+        if (col != null) col.isTrigger = false; 
+        transform.rotation = Quaternion.identity;
     }
 
-    // Select on mouse/pointer DOWN (works with the EventSystem + PhysicsRaycaster)
-    public void OnPointerDown(PointerEventData eventData)
+    private void OnMouseDown()
     {
-        SetSelected(true);
-        Debug.Log($"[Lens] OnPointerDown {gameObject.name} (button:{eventData.button}) Selected:{isSelected}");
+        if(minigameController != null)
+            minigameController.SelectLens(this);
     }
 
-    // Helper to toggle highlight
-    private void SetSelected(bool value)
+
+    public void ToggleSelected()
     {
-        isSelected = value;
-        if (cachedRenderer == null) return;
+        isSelected = !isSelected;
+          if (cachedRenderer == null) return;
         cachedRenderer.material.color = isSelected ? Color.yellow : originalColor;
     }
 
-    // Call this from your controller when another lens is chosen, or when you want to clear selection
-    public void Deselect()
+    private void HandleLensInput()
     {
-        SetSelected(false);
+        float dt = Time.deltaTime;
+        float input = 0f;
+
+        if (Input.GetKey(rotateRight)) input -= 0.25f;
+        if (Input.GetKey(rotateLeft)) input += 0.25f;
+
+        DriveRotation(input, dt, Space.Self);
     }
+
 }
