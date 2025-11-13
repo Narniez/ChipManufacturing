@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using System.Collections.Generic;
+using UnityEngine;
 
 // Shows a prefab with preview material, lets you move (hold-drag) and rotate,
 // and waits for external confirm/cancel via PlacementManager.ConfirmPreview/CancelPreview.
@@ -15,12 +16,16 @@ public class PreviewPlacementState : BasePlacementState
     private GameObject _instance;
     private IGridOccupant _occ;
 
-    private Vector2Int _anchor;              // bottom-left cell of footprint
+    // bottom-left cell of footprint
+    private Vector2Int _anchor;              
     private GridOrientation _orientation;
     private float _heightOffset;
 
     private bool _committed;
     private bool _isConveyor;
+
+    // Port indicator preview
+    private Transform _portIndicatorsRoot;
 
     public PreviewPlacementState(
         PlacementManager pm,
@@ -63,6 +68,18 @@ public class PreviewPlacementState : BasePlacementState
         // Detect conveyor belt previews
         _isConveyor = _instance.GetComponent<ConveyorBelt>() != null;
 
+        // Before showing any preview, ensure there is at least one free area in the grid
+        // for this footprint in any rotation. If none, cancel preview and UI.
+        Vector2Int baseSize = _machineData != null ? _machineData.size : _occ.BaseSize;
+        if (!HasAnyFreeAreaForAnyRotation(baseSize))
+        {
+            Debug.LogWarning("PreviewPlacementState: No free area in grid to place this object. Cancelling preview.");
+            PlaceMan.SelectionUI?.Hide();
+            Object.Destroy(_instance);
+            PlaceMan.SetState(new IdleState(PlaceMan));
+            return;
+        }
+
         ApplyPreviewMaterial(_instance);
 
         _orientation = _initialOrientation ?? _occ.Orientation;
@@ -80,11 +97,19 @@ public class PreviewPlacementState : BasePlacementState
         Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
         _instance.transform.position = snapped;
         _occ.SetPlacement(_anchor, _orientation);
+
+        // Build port indicators for machines during preview
+        RebuildPortIndicators();
+
+        // Show rotation UI (left/right) for preview
+        ShowRotationUI();
     }
 
     public override void Exit()
     {
         PlaceMan.SelectionUI?.Hide();
+
+        DestroyPortIndicators();
 
         if (!_committed && _instance != null)
             Object.Destroy(_instance);
@@ -118,6 +143,8 @@ public class PreviewPlacementState : BasePlacementState
         Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
+
+        RebuildPortIndicators();
     }
 
     public override void OnHoldMove(IInteractable target, Vector2 screen, Vector3 world)
@@ -143,6 +170,8 @@ public class PreviewPlacementState : BasePlacementState
         Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
+
+        RebuildPortIndicators();
     }
 
     public override void OnRotateRequested()
@@ -178,6 +207,8 @@ public class PreviewPlacementState : BasePlacementState
         Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, newSize, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
+
+        RebuildPortIndicators();
     }
 
     // External confirm (called by PlacementManager.ConfirmPreview)
@@ -192,7 +223,6 @@ public class PreviewPlacementState : BasePlacementState
             return;
         }
 
-        // Initialize machine data only when confirmed
         var machine = _instance.GetComponent<Machine>();
         if (_machineData != null && machine != null)
         {
@@ -204,14 +234,23 @@ public class PreviewPlacementState : BasePlacementState
         _grid.SetAreaOccupant(_anchor, size, _instance);
         _committed = true;
 
+        // Belt: notify adjacent machines (so generators can start immediately)
         if (_isConveyor)
         {
+            var belt = _instance.GetComponent<ConveyorBelt>();
+            if (belt != null)
+            {
+                belt.NotifyAdjacentMachinesOfConnection();
+            }
             PlaceMan.SetState(new SelectingState(PlaceMan, _occ));
         }
         else
         {
             PlaceMan.SetState(new IdleState(PlaceMan));
         }
+
+        // Cleanup preview port indicators after placement
+        DestroyPortIndicators();
     }
 
     // External cancel (called by PlacementManager.CancelPreview)
@@ -330,5 +369,169 @@ public class PreviewPlacementState : BasePlacementState
         Ray ray = cam.ScreenPointToRay(screenPos);
         Plane plane = new Plane(Vector3.up, Vector3.zero);
         return plane.Raycast(ray, out float enter) ? ray.GetPoint(enter) : Vector3.zero;
+    }
+
+    // ---------------------------
+    // Port indicator preview API
+    // ---------------------------
+
+    private void RebuildPortIndicators()
+    {
+        // Show only for machine previews (not belts) and when we have MachineData
+        if (_isConveyor || _instance == null || _machineData == null || _grid == null || !_grid.HasGrid)
+        {
+            DestroyPortIndicators();
+            return;
+        }
+
+        if (_portIndicatorsRoot == null)
+        {
+            var root = new GameObject("PortIndicators");
+            root.transform.SetParent(_instance.transform, worldPositionStays: false);
+            _portIndicatorsRoot = root.transform;
+        }
+        else
+        {
+            // Clear previous children
+            for (int i = _portIndicatorsRoot.childCount - 1; i >= 0; i--)
+                Object.Destroy(_portIndicatorsRoot.GetChild(i).gameObject);
+        }
+
+        var size = GetOrientedSize();
+        float y = _grid.Origin.y + 0.02f;
+
+        var ports = _machineData.ports != null && _machineData.ports.Count > 0
+            ? _machineData.ports
+            : null;
+
+        if (ports == null)
+        {
+            // Default: single output on front
+            var prefab = _machineData.outputPortIndicatorPrefab;
+            if (prefab != null)
+            {
+                var worldSide = _orientation;
+                var cell = ComputePortCell(_orientation, size, -1);
+                if (_grid.IsInside(cell))
+                {
+                    var pos = _grid.CellToWorldCenter(cell, y);
+                    var rot = worldSide.ToRotation();
+                    Object.Instantiate(prefab, pos, rot, _portIndicatorsRoot);
+                }
+            }
+            return;
+        }
+
+        // Use per-port indicators
+        for (int i = 0; i < ports.Count; i++)
+        {
+            var p = ports[i];
+            GameObject prefab = p.kind == MachinePortType.Input
+                ? _machineData.inputPortIndicatorPrefab
+                : _machineData.outputPortIndicatorPrefab;
+
+            if (prefab == null) continue;
+
+            var worldSide = RotateSide(p.side, _orientation);
+            var cell = ComputePortCell(p.side, size, p.offset);
+            if (!_grid.IsInside(cell)) continue;
+
+            var pos = _grid.CellToWorldCenter(cell, y);
+
+            // Outputs point away from the machine, inputs point toward the machine
+            Quaternion rot = p.kind == MachinePortType.Input
+                ? Opposite(worldSide).ToRotation()
+                : worldSide.ToRotation();
+
+            Object.Instantiate(prefab, pos, rot, _portIndicatorsRoot);
+        }
+    }
+
+    private void DestroyPortIndicators()
+    {
+        if (_portIndicatorsRoot == null) return;
+        for (int i = _portIndicatorsRoot.childCount - 1; i >= 0; i--)
+            Object.Destroy(_portIndicatorsRoot.GetChild(i).gameObject);
+    }
+
+    // Local copies of helpers to compute port cells during preview (no Machine instance/data yet)
+    private static GridOrientation RotateSide(GridOrientation local, GridOrientation by)
+        => (GridOrientation)(((int)local + (int)by) & 3);
+
+    private static GridOrientation Opposite(GridOrientation o)
+        => (GridOrientation)(((int)o + 2) & 3);
+
+    private Vector2Int ComputePortCell(GridOrientation localSide, Vector2Int orientedSize, int offset)
+    {
+        GridOrientation side = RotateSide(localSide, _orientation);
+        int sideLen = (side == GridOrientation.North || side == GridOrientation.South) ? orientedSize.x : orientedSize.y;
+        int idx = offset < 0 ? Mathf.Max(0, (sideLen - 1) / 2) : Mathf.Clamp(offset, 0, Mathf.Max(0, sideLen - 1));
+
+        switch (side)
+        {
+            case GridOrientation.North: return new Vector2Int(_anchor.x + idx, _anchor.y + orientedSize.y);
+            case GridOrientation.South: return new Vector2Int(_anchor.x + idx, _anchor.y - 1);
+            case GridOrientation.East:  return new Vector2Int(_anchor.x + orientedSize.x, _anchor.y + idx);
+            case GridOrientation.West:  return new Vector2Int(_anchor.x - 1, _anchor.y + idx);
+            default: return _anchor;
+        }
+    }
+
+    // ---------------------------
+    // Free-area scanning helpers
+    // ---------------------------
+
+    // Checks if there is any free area for the given base footprint in ANY rotation (size or size swapped)
+    private bool HasAnyFreeAreaForAnyRotation(Vector2Int baseSize)
+    {
+        // Same footprint or 90-degree rotated footprint
+        var candidates = new List<Vector2Int> { baseSize };
+        if (baseSize.x != baseSize.y) candidates.Add(new Vector2Int(baseSize.y, baseSize.x));
+
+        foreach (var s in candidates)
+        {
+            if (HasAnyFreeArea(s)) return true;
+        }
+        return false;
+    }
+
+    // Scans the grid for at least one anchor where area of 'size' is fully free
+    private bool HasAnyFreeArea(Vector2Int size)
+    {
+        if (_grid == null || !_grid.HasGrid) return false;
+        int maxX = _grid.Cols - size.x;
+        int maxY = _grid.Rows - size.y;
+        if (maxX < 0 || maxY < 0) return false;
+
+        for (int y = 0; y <= maxY; y++)
+        {
+            for (int x = 0; x <= maxX; x++)
+            {
+                var a = new Vector2Int(x, y);
+                if (_grid.IsAreaFree(a, size)) return true;
+            }
+        }
+        return false;
+    }
+
+    // ---------------------------
+    // Rotation UI
+    // ---------------------------
+
+    private void ShowRotationUI()
+    {
+        if (PlaceMan?.SelectionUI == null) return;
+
+        string title = _machineData != null && !string.IsNullOrEmpty(_machineData.machineName)
+            ? _machineData.machineName
+            : (_prefab != null ? _prefab.name : "Preview");
+
+        // Wire rotate-left and rotate-right buttons
+        PlaceMan.SelectionUI.Show(
+            title,
+            onRotateLeft: () => Rotate(clockwise: false),
+            onRotateRight: () => Rotate(clockwise: true),
+            isBelt: _isConveyor
+        );
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlacementManager : MonoBehaviour
@@ -11,7 +11,7 @@ public class PlacementManager : MonoBehaviour
     [Header("Grid Snapping")]
     [SerializeField] private bool snapToGrid = true;
     [SerializeField] private GridService gridService;
-    [SerializeField] private float snapYOffset = 0f; 
+    [SerializeField] private float snapYOffset = 0f;
 
     [Header("Edge Scroll While Dragging")]
     [SerializeField] private float edgeZonePixels = 48f;
@@ -37,23 +37,18 @@ public class PlacementManager : MonoBehaviour
     [SerializeField, Tooltip("Default machine to use when spawning a test item without arguments.")]
     private MaterialData testMaterialData;
 
-    private CameraController _camCtrl;
-
-    // State machine
+    private NewCameraControls _camCtrl;
     private IPlacementState _state;
 
-    // Commands + placement rules
     public CommandHistory History { get; private set; }
     public PlacementRulePipeline PlacementRules { get; private set; }
 
-    // Expose what states need (read-only)
     public GridService GridService => gridService;
-    public CameraController CameraCtrl => _camCtrl;
+    public NewCameraControls CameraCtrl => _camCtrl;
     public bool SnapToGrid => snapToGrid;
     public KeyCode RotateKey => rotateKey;
     public bool EnableSecondFingerRotate => enableSecondFingerRotate;
     public SelectionUI SelectionUI => selectionUI;
-
     public IGridOccupant CurrentSelection { get; private set; }
 
     private readonly HashSet<Vector2Int> _beltSwapInProgress = new HashSet<Vector2Int>();
@@ -62,7 +57,8 @@ public class PlacementManager : MonoBehaviour
     {
         if (Instance != null) Destroy(gameObject);
         Instance = this;
-        _camCtrl = FindFirstObjectByType<CameraController>();
+        _camCtrl = FindFirstObjectByType<NewCameraControls>();
+
         PlacementRules = new PlacementRulePipeline()
             .Add(new InsideGridRule())
             .Add(new AreaFreeRule());
@@ -82,27 +78,27 @@ public class PlacementManager : MonoBehaviour
 
     public void RequestRotate() => _state?.OnRotateRequested();
 
-    private void OnEnable()
+    void OnEnable()
     {
         if (InteractionManager.Instance != null)
         {
             InteractionManager.Instance.OnHoldStart += OnHoldStart;
-            InteractionManager.Instance.OnHoldMove  += OnHoldMove;
-            InteractionManager.Instance.OnHoldEnd   += OnHoldEnd;
-            InteractionManager.Instance.OnTap       += OnTap;
-            InteractionManager.Instance.OnTapEmpty  += OnTapEmpty;
+            InteractionManager.Instance.OnHoldMove += OnHoldMove;
+            InteractionManager.Instance.OnHoldEnd += OnHoldEnd;
+            InteractionManager.Instance.OnTap += OnTap;
+            InteractionManager.Instance.OnTapEmpty += OnTapEmpty;
         }
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         if (InteractionManager.Instance != null)
         {
             InteractionManager.Instance.OnHoldStart -= OnHoldStart;
-            InteractionManager.Instance.OnHoldMove  -= OnHoldMove;
-            InteractionManager.Instance.OnHoldEnd   -= OnHoldEnd;
-            InteractionManager.Instance.OnTap       -= OnTap;
-            InteractionManager.Instance.OnTapEmpty  -= OnTapEmpty;
+            InteractionManager.Instance.OnHoldMove -= OnHoldMove;
+            InteractionManager.Instance.OnHoldEnd -= OnHoldEnd;
+            InteractionManager.Instance.OnTap -= OnTap;
+            InteractionManager.Instance.OnTapEmpty -= OnTapEmpty;
         }
     }
 
@@ -111,20 +107,20 @@ public class PlacementManager : MonoBehaviour
 
     private void OnHoldStart(IInteractable interactable, Vector2 screen, Vector3 world)
     {
-        // Kill any existing camera momentum immediately, then lock input for the drag session
         _camCtrl?.StopMotion(snapToTarget: true);
         _camCtrl?.SetInputLocked(true);
-
         _state?.OnHoldStart(interactable, screen, world);
     }
 
-    private void OnHoldMove(IInteractable interactable, Vector2 screen, Vector3 world) => _state?.OnHoldMove(interactable, screen, world);
+    private void OnHoldMove(IInteractable interactable, Vector2 screen, Vector3 world)
+    {
+        _camCtrl?.EdgeScrollFromScreen(screen);
+        _state?.OnHoldMove(interactable, screen, world);
+    }
 
     private void OnHoldEnd(IInteractable interactable, Vector2 screen, Vector3 world)
     {
         _state?.OnHoldEnd(interactable, screen, world);
-
-        // Stop residual smoothing, unlock, and ignore stale touches until they are released
         _camCtrl?.StopMotion(snapToTarget: true);
         _camCtrl?.SetInputLocked(false);
         _camCtrl?.BlockInputUntilNoTouchRelease();
@@ -216,38 +212,17 @@ public class PlacementManager : MonoBehaviour
         return pivotY - bottomY;
     }
 
+    // Delegate to camera controller
     public void EdgeScrollCamera(Vector2 screenPos)
     {
-        if (_camCtrl == null) return;
-
-        float w = Screen.width;
-        float h = Screen.height;
-
-        float xDir = 0f;
-        if (screenPos.x < edgeZonePixels) xDir = -(1f - Mathf.Clamp01(screenPos.x / edgeZonePixels));
-        else if (screenPos.x > w - edgeZonePixels) xDir = (1f - Mathf.Clamp01((w - screenPos.x) / edgeZonePixels));
-
-        float yDir = 0f;
-        if (screenPos.y < edgeZonePixels) yDir = -(1f - Mathf.Clamp01(screenPos.y / edgeZonePixels));
-        else if (screenPos.y > h - edgeZonePixels) yDir = (1f - Mathf.Clamp01((h - screenPos.y) / edgeZonePixels));
-
-        if (Mathf.Approximately(xDir, 0f) && Mathf.Approximately(yDir, 0f)) return;
-
-        Transform camT = _camCtrl.transform;
-        Vector3 right = camT.right;
-        Vector3 forward = camT.forward; forward.y = 0f; forward.Normalize();
-
-        Vector3 move = (right * xDir + forward * yDir) * edgeScrollSpeed * Time.unscaledDeltaTime;
-        _camCtrl.NudgeWorld(move);
+        _camCtrl?.EdgeScrollFromScreen(screenPos);
     }
 
     public GameObject GetConveyorPrefab(bool isTurn) => isTurn ? conveyorTurnPrefab : conveyorStraightPrefab;
-
     public Material GetPreviewMaterial() => placementPreviewMaterial;
 
     internal void SetCurrentSelection(IGridOccupant occ) => CurrentSelection = occ;
 
-    // Robust swap (prevents overlap). No neighbor auto-resolution here.
     public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefab, GridOrientation overrideOrientation, ConveyorBelt.BeltTurnKind turnKind = ConveyorBelt.BeltTurnKind.None)
     {
         if (gridService == null || !gridService.HasGrid || source == null) return source;
@@ -255,7 +230,6 @@ public class PlacementManager : MonoBehaviour
         var anchor = source.Anchor;
         var size = Vector2Int.one;
 
-        // Re-entrancy guard per cell
         if (!_beltSwapInProgress.Add(anchor))
             return source;
 
@@ -270,46 +244,50 @@ public class PlacementManager : MonoBehaviour
 
             var world = AnchorToWorldCenter(anchor, size, 0f);
 
-            // Transfer item if present
             ConveyorItem item = null;
             if (source.HasItem)
             {
                 item = source.TakeItem();
                 if (item != null && item.Visual != null)
-                {
                     item.Visual.transform.position = world;
-                }
             }
 
-            // Hide and clear the old belt before spawning to avoid visual overlap
+            var parent = source.PreviousInChain;
+            var child = source.NextInChain;
+
             source.gameObject.SetActive(false);
             gridService.SetAreaOccupant(anchor, size, null);
 
-            // Spawn new belt
             var go = Instantiate(prefab, world, overrideOrientation.ToRotation());
             var newBelt = go.GetComponent<ConveyorBelt>();
             if (newBelt == null)
             {
                 Destroy(go);
-                // Restore old
                 source.gameObject.SetActive(true);
                 gridService.SetAreaOccupant(anchor, size, source.gameObject);
                 Debug.LogError("ReplaceConveyorPrefab: new prefab missing ConveyorBelt.");
                 return source;
             }
 
-            // Configure and set occupancy
             newBelt.SetTurnKind(turnKind);
             newBelt.SetPlacement(anchor, overrideOrientation);
             gridService.SetAreaOccupant(anchor, size, go);
 
-            // Restore item
+            // Preserve chain links
+            newBelt.PreviousInChain = parent;
+            newBelt.NextInChain = child;
+            if (parent != null && parent.NextInChain == source)
+                parent.NextInChain = newBelt;
+            if (child != null && child.PreviousInChain == source)
+                child.PreviousInChain = newBelt;
+
             if (item != null)
                 newBelt.TrySetItem(item, snapVisual: true);
 
-            // Remove old
-            Destroy(source.gameObject);
+            // Forward link auto-parent if missing
+            AutoLinkForward(newBelt);
 
+            Destroy(source.gameObject);
             return newBelt;
         }
         finally
@@ -318,10 +296,41 @@ public class PlacementManager : MonoBehaviour
         }
     }
 
+    private void AutoLinkForward(ConveyorBelt belt)
+    {
+        if (belt == null || gridService == null || !gridService.HasGrid) return;
+        var forwardCell = belt.Anchor + GridOrientationExtentions.OrientationToDelta(belt.Orientation);
+        if (gridService.TryGetCell(forwardCell, out var data) && data.occupant != null)
+        {
+            var go = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
+            var forward = go != null ? go.GetComponent<ConveyorBelt>() : null;
+            if (forward != null && forward.PreviousInChain == null && forward != belt)
+            {
+                belt.NextInChain = forward;
+                forward.PreviousInChain = belt;
+            }
+        }
+    }
+
+
+
     public void DestroyCurrentSelection()
     {
         var occ = CurrentSelection;
         if (occ == null) return;
+
+        var beltToDestroy = (occ as Component)?.GetComponent<ConveyorBelt>();
+
+        if (beltToDestroy != null)
+        {
+            // Re-link chain around destroyed belt
+            var parent = beltToDestroy.PreviousInChain;
+            var child = beltToDestroy.NextInChain;
+            if (parent != null && parent.NextInChain == beltToDestroy) parent.NextInChain = child;
+            if (child != null && child.PreviousInChain == beltToDestroy) child.PreviousInChain = parent;
+            beltToDestroy.PreviousInChain = null;
+            beltToDestroy.NextInChain = null;
+        }
 
         if (gridService != null && gridService.HasGrid)
         {
@@ -334,7 +343,16 @@ public class PlacementManager : MonoBehaviour
         SetCurrentSelection(null);
         selectionUI?.Hide();
 
-        if (go != null) Destroy(go);
+        if (go != null)
+        {
+            if (beltToDestroy != null)
+            {
+                var item = beltToDestroy.TakeItem();
+                if (item != null && item.Visual != null)
+                    Destroy(item.Visual);
+            }
+            Destroy(go);
+        }
 
         SetState(new IdleState(this));
     }
