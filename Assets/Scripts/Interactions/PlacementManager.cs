@@ -286,7 +286,7 @@ public class PlacementManager : MonoBehaviour
 
             // Forward link auto-parent if missing
             AutoLinkForward(newBelt);
-
+            newBelt.NotifyAdjacentMachinesOfConnection();
             Destroy(source.gameObject);
             return newBelt;
         }

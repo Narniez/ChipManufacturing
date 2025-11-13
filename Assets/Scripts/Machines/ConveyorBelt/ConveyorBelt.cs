@@ -22,7 +22,6 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
 
     public bool IsTurnPrefab => isTurnPrefab;
     public bool CornerLocked => lockCorner;
-
     public GridOrientation Orientation => orientation;
     public Vector2Int Anchor { get; private set; }
     public Vector2Int BaseSize => Vector2Int.one;
@@ -229,10 +228,10 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         return TryMoveOntoChainChild(forwardBelt);
     }
 
+    // Ensure we ping machines when this belt becomes empty after moving an item forward
     private bool TryMoveOntoChainChild(ConveyorBelt child)
     {
         if (child == null || child.HasItem) return false;
-
         var moving = TakeItem();
         if (moving == null) return false;
 
@@ -245,6 +244,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
                 float dur = BeltSystemRuntime.Instance != null ? BeltSystemRuntime.Instance.ItemMoveDuration : 0.2f;
                 moving.BeginMove(from, to, dur);
             }
+            NotifyAdjacentMachinesOfConnection();
             return true;
         }
 
@@ -344,6 +344,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
             default: return Vector2Int.zero;
         }
     }
+  
 
     public void NotifyAdjacentMachinesOfConnection()
     {
@@ -362,134 +363,140 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         }
     }
 
-    // NEW: Can this belt receive an item from a given side (relative to this belt's cell)?
-    // incomingSide is the direction FROM the neighbor INTO this belt.
-    public bool CanReceiveFrom(GridOrientation incomingSide)
-    {
-        // Straight belts: must come from behind (opposite of forward orientation)
-        if (!isTurnPrefab || _turnKind == BeltTurnKind.None)
-            return incomingSide == Opposite(orientation);
+    ////Can this belt receive an item from a given side (relative to this belt's cell)?
+    //// incomingSide is the direction FROM the neighbor INTO this belt.
+    //public bool CanReceiveFrom(GridOrientation incomingSide)
+    //{
+    //    //// Corner belts
+    //    //if (isTurnPrefab)
+    //    //{
+    //    //    // Known turn kind
+    //    //    if (_turnKind == BeltTurnKind.Right) return incomingSide == orientation.RotatedCCW();
+    //    //    if (_turnKind == BeltTurnKind.Left) return incomingSide == orientation.RotatedCW();
 
-        // Corner: incoming is one of the orthogonal sides depending on turn kind
-        if (_turnKind == BeltTurnKind.Right) return incomingSide == orientation.RotatedCCW();
-        if (_turnKind == BeltTurnKind.Left)  return incomingSide == orientation.RotatedCW();
-        return false;
-    }
+    //    //    // Unknown turn kind (not resolved yet): accept either orthogonal side so machines can start;
+    //    //    // this will be refined once the corner locks its turn kind.
+    //    //    return incomingSide == orientation.RotatedCW() || incomingSide == orientation.RotatedCCW();
+    //    //}
+
+        
+    //    return incomingSide == Opposite(orientation);
+    //}
 
     // Shape logic (unchanged)
-    public void ResolveShapeAndMaybeDowngrade()
-    {
-        if (_grid == null || !_grid.HasGrid) return;
+    //public void ResolveShapeAndMaybeDowngrade()
+    //{
+    //    if (_grid == null || !_grid.HasGrid) return;
 
-        GridOrientation? incoming = GetIncomingOrientation();
-        GridOrientation? outgoing = GetOutgoingOrientation(incoming);
+    //    GridOrientation? incoming = GetIncomingOrientation();
+    //    GridOrientation? outgoing = GetOutgoingOrientation(incoming);
 
-        if (incoming.HasValue && outgoing.HasValue)
-        {
-            if (isTurnPrefab && _turnKind != BeltTurnKind.None && incoming.Value == outgoing.Value)
-            {
-                if (!lockCorner) ConvertToStraight(outgoing.Value);
-                return;
-            }
-            if (!isTurnPrefab && incoming.Value != outgoing.Value)
-            {
-                PromoteToCorner(incoming.Value, outgoing.Value);
-                return;
-            }
-            if (isTurnPrefab && _turnKind != BeltTurnKind.None && orientation == outgoing.Value)
-            {
-                _turnKind = ComputeTurnKind(incoming.Value, outgoing.Value);
-                ApplyTurnVisualRotation();
-            }
-        }
-        else if (isTurnPrefab && !lockCorner)
-        {
-            ConvertToStraight(orientation);
-        }
-    }
+    //    if (incoming.HasValue && outgoing.HasValue)
+    //    {
+    //        if (isTurnPrefab && _turnKind != BeltTurnKind.None && incoming.Value == outgoing.Value)
+    //        {
+    //            if (!lockCorner) ConvertToStraight(outgoing.Value);
+    //            return;
+    //        }
+    //        if (!isTurnPrefab && incoming.Value != outgoing.Value)
+    //        {
+    //            PromoteToCorner(incoming.Value, outgoing.Value);
+    //            return;
+    //        }
+    //        if (isTurnPrefab && _turnKind != BeltTurnKind.None && orientation == outgoing.Value)
+    //        {
+    //            _turnKind = ComputeTurnKind(incoming.Value, outgoing.Value);
+    //            ApplyTurnVisualRotation();
+    //        }
+    //    }
+    //    else if (isTurnPrefab && !lockCorner)
+    //    {
+    //        ConvertToStraight(orientation);
+    //    }
+    //}
 
-    private GridOrientation? GetIncomingOrientation()
-    {
-        var dirs = new[] { GridOrientation.North, GridOrientation.East, GridOrientation.South, GridOrientation.West };
-        for (int i = 0; i < dirs.Length; i++)
-        {
-            var dir = dirs[i];
-            var nCell = Anchor + ToDelta(dir);
-            if (_grid == null || !_grid.TryGetCell(nCell, out var data) || data.occupant == null) continue;
-            GameObject occGO = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
-            if (occGO == null) continue;
-            var belt = occGO.GetComponent<ConveyorBelt>();
-            if (belt == null) continue;
-            if (nCell + ToDelta(belt.Orientation) == Anchor)
-                return Opposite(dir);
-        }
-        return null;
-    }
+    //private GridOrientation? GetIncomingOrientation()
+    //{
+    //    var dirs = new[] { GridOrientation.North, GridOrientation.East, GridOrientation.South, GridOrientation.West };
+    //    for (int i = 0; i < dirs.Length; i++)
+    //    {
+    //        var dir = dirs[i];
+    //        var nCell = Anchor + ToDelta(dir);
+    //        if (_grid == null || !_grid.TryGetCell(nCell, out var data) || data.occupant == null) continue;
+    //        GameObject occGO = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
+    //        if (occGO == null) continue;
+    //        var belt = occGO.GetComponent<ConveyorBelt>();
+    //        if (belt == null) continue;
+    //        if (nCell + ToDelta(belt.Orientation) == Anchor)
+    //            return Opposite(dir);
+    //    }
+    //    return null;
+    //}
 
-    private GridOrientation? GetOutgoingOrientation(GridOrientation? incoming)
-    {
-        if (!incoming.HasValue) return orientation;
+    //private GridOrientation? GetOutgoingOrientation(GridOrientation? incoming)
+    //{
+    //    if (!incoming.HasValue) return orientation;
 
-        var right = incoming.Value.RotatedCW();
-        var fwd = incoming.Value;
-        var left = incoming.Value.RotatedCCW();
+    //    var right = incoming.Value.RotatedCW();
+    //    var fwd = incoming.Value;
+    //    var left = incoming.Value.RotatedCCW();
 
-        if (HasForwardBelt(right)) return right;
-        if (HasForwardBelt(fwd)) return fwd;
-        if (HasForwardBelt(left)) return left;
-        return incoming.Value;
-    }
+    //    if (HasForwardBelt(right)) return right;
+    //    if (HasForwardBelt(fwd)) return fwd;
+    //    if (HasForwardBelt(left)) return left;
+    //    return incoming.Value;
+    //}
 
-    private bool HasForwardBelt(GridOrientation dir)
-    {
-        var nCell = Anchor + ToDelta(dir);
-        if (_grid == null || !_grid.TryGetCell(nCell, out var data) || data.occupant == null) return false;
-        var occGO = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
-        if (occGO == null) return false;
-        return occGO.GetComponent<ConveyorBelt>()?.Orientation == dir;
-    }
+    //private bool HasForwardBelt(GridOrientation dir)
+    //{
+    //    var nCell = Anchor + ToDelta(dir);
+    //    if (_grid == null || !_grid.TryGetCell(nCell, out var data) || data.occupant == null) return false;
+    //    var occGO = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
+    //    if (occGO == null) return false;
+    //    return occGO.GetComponent<ConveyorBelt>()?.Orientation == dir;
+    //}
 
-    private void PromoteToCorner(GridOrientation incoming, GridOrientation outgoing)
-    {
-        var turnKind = ComputeTurnKind(incoming, outgoing);
-        var pm = PlacementManager.Instance;
-        if (pm != null)
-        {
-            var replacement = pm.ReplaceConveyorPrefab(this, useTurnPrefab: true, overrideOrientation: outgoing, turnKind: turnKind);
-            replacement?.LockCorner();
-        }
-        else
-        {
-            SetPlacement(Anchor, outgoing);
-            _turnKind = turnKind;
-            isTurnPrefab = true;
-            ApplyTurnVisualRotation();
-            LockCorner();
-        }
-    }
+    //private void PromoteToCorner(GridOrientation incoming, GridOrientation outgoing)
+    //{
+    //    var turnKind = ComputeTurnKind(incoming, outgoing);
+    //    var pm = PlacementManager.Instance;
+    //    if (pm != null)
+    //    {
+    //        var replacement = pm.ReplaceConveyorPrefab(this, useTurnPrefab: true, overrideOrientation: outgoing, turnKind: turnKind);
+    //        replacement?.LockCorner();
+    //    }
+    //    else
+    //    {
+    //        SetPlacement(Anchor, outgoing);
+    //        _turnKind = turnKind;
+    //        isTurnPrefab = true;
+    //        ApplyTurnVisualRotation();
+    //        LockCorner();
+    //    }
+    ////}
 
-    private void ConvertToStraight(GridOrientation forwardOrientation)
-    {
-        var pm = PlacementManager.Instance;
-        if (pm != null)
-        {
-            pm.ReplaceConveyorPrefab(this, useTurnPrefab: false, overrideOrientation: forwardOrientation, turnKind: BeltTurnKind.None);
-        }
-        else
-        {
-            isTurnPrefab = false;
-            _turnKind = BeltTurnKind.None;
-            SetPlacement(Anchor, forwardOrientation);
-        }
-        lockCorner = false;
-    }
+    //private void ConvertToStraight(GridOrientation forwardOrientation)
+    //{
+    //    var pm = PlacementManager.Instance;
+    //    if (pm != null)
+    //    {
+    //        pm.ReplaceConveyorPrefab(this, useTurnPrefab: false, overrideOrientation: forwardOrientation, turnKind: BeltTurnKind.None);
+    //    }
+    //    else
+    //    {
+    //        isTurnPrefab = false;
+    //        _turnKind = BeltTurnKind.None;
+    //        SetPlacement(Anchor, forwardOrientation);
+    //    }
+    //    lockCorner = false;
+    //}
 
-    private BeltTurnKind ComputeTurnKind(GridOrientation incoming, GridOrientation outgoing)
-    {
-        if (outgoing == incoming.RotatedCW()) return BeltTurnKind.Right;
-        if (outgoing == incoming.RotatedCCW()) return BeltTurnKind.Left;
-        return BeltTurnKind.None;
-    }
+    //private BeltTurnKind ComputeTurnKind(GridOrientation incoming, GridOrientation outgoing)
+    //{
+    //    if (outgoing == incoming.RotatedCW()) return BeltTurnKind.Right;
+    //    if (outgoing == incoming.RotatedCCW()) return BeltTurnKind.Left;
+    //    return BeltTurnKind.None;
+    //}
 
     private static GridOrientation Opposite(GridOrientation o) => (GridOrientation)(((int)o + 2) & 3);
 
