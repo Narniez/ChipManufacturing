@@ -316,7 +316,7 @@ public class NewCameraControls : MonoBehaviour
         if (primaryDown && !prevPrimaryDown)
         {
             primaryDownStartTime = Time.unscaledTime;
-            panNoSmoothingActive = false; // will decide on first move
+            panNoSmoothingActive = false; 
         }
         prevPrimaryDown = primaryDown;
 
@@ -461,7 +461,7 @@ public class NewCameraControls : MonoBehaviour
             if (pinchScore > pinchThreshold)
             {
                 HandleHeightZoom(distanceDelta);
-                // NEW: suppress subsequent single-finger pan after a zoom gesture until both fingers are released
+                //Suppress subsequent single-finger pan after a zoom gesture until both fingers are released
                 if (lockPanUntilReleaseAfterTwoFingerRotate)
                     suppressSingleFingerUntilAllReleased = true;
             }
@@ -487,7 +487,7 @@ public class NewCameraControls : MonoBehaviour
             if (primaryState == PrimaryGesture.Zoom && pinchScore > pinchThreshold)
             {
                 HandleHeightZoom(distanceDelta);
-                // NEW: suppress single-finger pan after zoom until both fingers lifted
+                //Suppress single-finger pan after zoom until both fingers lifted
                 if (lockPanUntilReleaseAfterTwoFingerRotate)
                     suppressSingleFingerUntilAllReleased = true;
             }
