@@ -13,8 +13,19 @@ MonoBehaviour:
   m_Name: TestTutorialSequence
   m_EditorClassIdentifier: 
   steps:
-  - {fileID: 11400000, guid: defe502d93d2cd248861b35515858f63, type: 2}
-  - {fileID: 11400000, guid: 103d0fbb21fd5814ea581eaee0641d2e, type: 2}
-  - {fileID: 11400000, guid: 21ccb462dce42964cbb9cee58cc21f51, type: 2}
-  - {fileID: 11400000, guid: 20bb3a2cded00464fa9db82fbbdd89e4, type: 2}
-  - {fileID: 11400000, guid: 032b536bb1c07b14aa310f44a75cfbfc, type: 2}
+  - {fileID: 11400000, guid: e013fea87639db34db89549231f66c1f, type: 2}
+  - {fileID: 11400000, guid: 855f32eca47b8ed4ca9ee76aa77b2875, type: 2}
+  - {fileID: 11400000, guid: 6ac3746969ca91b4c8375ca0291ca396, type: 2}
+  - {fileID: 11400000, guid: 6db59c5ac8b12ef4f9429de2ee9e31c9, type: 2}
+  - {fileID: 11400000, guid: 95892e841bbf7ef4e9dda37afb20bf32, type: 2}
+  - {fileID: 11400000, guid: 8032184089c173943b6f27c66d3acbac, type: 2}
+  - {fileID: 11400000, guid: f65d9805ef86f4348a864099d6167620, type: 2}
+  - {fileID: 11400000, guid: 711c2da38fdbb52468e64da8e04de470, type: 2}
+  - {fileID: 11400000, guid: b5a20a0415564c04f93af264d2bd4991, type: 2}
+  - {fileID: 11400000, guid: 3e33d2cd1eafd38419cf88cd770be922, type: 2}
+  - {fileID: 11400000, guid: f45a8098b95d4dd46ab780d2222e57fc, type: 2}
+  - {fileID: 11400000, guid: 8fce13266a4642e428b84d439f8bbdb0, type: 2}
+  - {fileID: 11400000, guid: 95f51ea0364690948838d9fd0c7fafed, type: 2}
+  - {fileID: 11400000, guid: c2dd2071455ef5340af62a2f0bc1e3ca, type: 2}
+  - {fileID: 11400000, guid: dd7ee1b2a8fb6c94dadc6ab06f9fd406, type: 2}
+  - {fileID: 11400000, guid: 71433e932e3da364d91f1d43ca62f776, type: 2}
