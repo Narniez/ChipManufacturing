@@ -14,7 +14,6 @@
   <Project Path="Unity.VisualScripting.Core.Editor.csproj" />
   <Project Path="Unity.RenderPipelines.Universal.Editor.csproj" />
   <Project Path="Unity.PerformanceTesting.Editor.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="UnityEngine.TestRunner.csproj" />
   <Project Path="Unity.Notifications.iOS.csproj" />
   <Project Path="Unity.Burst.csproj" />
@@ -28,6 +27,7 @@
   <Project Path="Unity.VisualScripting.Core.csproj" />
   <Project Path="Unity.RenderPipelines.Universal.Runtime.csproj" />
   <Project Path="Unity.VisualScripting.State.Editor.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Unity.Burst.CodeGen.csproj" />
   <Project Path="Unity.VisualScripting.Flow.csproj" />
   <Project Path="Unity.PerformanceTesting.csproj" />
@@ -43,7 +43,10 @@
   <Project Path="UnityEditor.UI.csproj" />
   <Project Path="Unity.Notifications.csproj" />
   <Project Path="Unity.2D.Sprite.Editor.csproj" />
+  <Project Path="FMODUnityResonanceEditor.csproj" />
   <Project Path="Unity.Multiplayer.Center.Common.csproj" />
+  <Project Path="FMODUnityEditor.csproj" />
+  <Project Path="FMODUnity.csproj" />
   <Project Path="Unity.AdaptivePerformance.Samsung.Android.csproj" />
   <Project Path="Unity.Notifications.Unified.csproj" />
   <Project Path="Unity.InputSystem.ForUI.csproj" />
@@ -61,6 +64,7 @@
   <Project Path="Unity.AdaptivePerformance.Samsung.Android.Editor.csproj" />
   <Project Path="Unity.Profiling.Core.csproj" />
   <Project Path="Unity.AdaptivePerformance.Simulator.Editor.csproj" />
+  <Project Path="FMODUnityResonance.csproj" />
   <Project Path="Unity.RenderPipeline.Universal.ShaderLibrary.csproj" />
   <Project Path="Unity.AdaptivePerformance.Profiler.Editor.csproj" />
   <Project Path="Unity.AdaptivePerformance.Simulator.Google.Extension.Editor.csproj" />
