@@ -33,6 +33,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     private GridService _grid;
     private BeltTurnKind _turnKind = BeltTurnKind.None;
     private bool _isDragging;
+    private bool _isConnectedToMachine;
 
     private void Awake() => _grid = FindFirstObjectByType<GridService>();
 
@@ -88,8 +89,8 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     {
         Anchor = anchor;
         orientation = newOrientation;
-        ApplyTurnVisualRotation();
         NotifyAdjacentMachinesOfConnection();
+        ApplyTurnVisualRotation();
         RefreshChainLinks();
     }
 
@@ -140,7 +141,11 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     }
 
     // Interaction
-    public void OnTap() { }
+    public void OnTap() {
+    
+        Debug.Log($"Conveyor Belt tapped at {Anchor} facing {orientation}. Is connected to machine: {_isConnectedToMachine}");
+
+    }
     public void OnHold() { }
 
     // Movement tick – fallback scan added if explicit chain link missing (fix for corner stalls)
@@ -149,13 +154,12 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         if (_item == null) return;
         if (IsItemAnimating()) return;
 
-        // First try chain semantics
+       
         EnsureForwardLinkStrict();
 
         if (NextInChain != null && TryMoveOntoChainChild(NextInChain))
             return;
 
-        // Fallback: if no chain child or child occupied, try discovering a forward belt directly
         if (TryMoveOntoForwardBeltFallback())
             return;
 
@@ -216,7 +220,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
 
         var forwardBelt = occGO.GetComponent<ConveyorBelt>();
         if (forwardBelt == null) return false;
-        if (forwardBelt.HasItem) return false; // occupied
+        if (forwardBelt.HasItem) return false; 
 
         // Establish chain for future ticks
         if (forwardBelt.PreviousInChain == null)
@@ -318,8 +322,6 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
                 }
             }
         }
-
-        // Rebuild forward link
         EnsureForwardLinkStrict();
     }
 
@@ -338,17 +340,20 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         switch (o)
         {
             case GridOrientation.North: return Vector2Int.up;
-            case GridOrientation.East:  return Vector2Int.right;
+            case GridOrientation.East: return Vector2Int.right;
             case GridOrientation.South: return Vector2Int.down;
-            case GridOrientation.West:  return Vector2Int.left;
+            case GridOrientation.West: return Vector2Int.left;
             default: return Vector2Int.zero;
         }
     }
-  
+
 
     public void NotifyAdjacentMachinesOfConnection()
     {
         if (_grid == null || !_grid.HasGrid) return;
+
+        _isConnectedToMachine = false;
+
         foreach (var nb in _grid.GetNeighbors(Anchor))
         {
             if (!_grid.TryGetCell(nb.coord, out var data) || data.occupant == null) continue;
@@ -359,7 +364,11 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
 
             if (machine.TryGetBeltConnection(this, out var portType, requireFacing: true) &&
                 portType == MachinePortType.Output)
+            {
+                _isConnectedToMachine = true;
                 machine.TryStartIfIdle();
+
+            }
         }
     }
 
@@ -379,7 +388,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     //    //    return incomingSide == orientation.RotatedCW() || incomingSide == orientation.RotatedCCW();
     //    //}
 
-        
+
     //    return incomingSide == Opposite(orientation);
     //}
 

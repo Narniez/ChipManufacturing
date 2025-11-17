@@ -48,4 +48,10 @@ public class CutScoreUI : MonoBehaviour
     {
         if (scoreTextTMP) scoreTextTMP.text = s;
     }
+
+    public void ResetDisplay()
+    {
+        SetText("Score: --");
+        if (evaluateButton) evaluateButton.interactable = true;
+    }
 }

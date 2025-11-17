@@ -7,6 +7,7 @@ TagManager:
   - PopupCanvas
   - Cuttable
   - Target
+  - PreviewIgnore
   layers:
   - Default
   - TransparentFX

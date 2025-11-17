@@ -196,4 +196,26 @@ public class SawCutter : MonoBehaviour
         if (_maskRead  && _maskRead  != maskAsset) _maskRead.Release();
         if (plateMaterial != null) plateMaterial.SetTexture(CutMaskId, null);
     }
+
+    public void ResetCutMask()
+    {
+        // Clear both ping-pong RTs back to white (uncut)
+        if (plateMaterial == null) return;
+        if (_maskRead)
+        {
+            var prev = RenderTexture.active;
+            RenderTexture.active = _maskRead;
+            GL.Clear(false, true, Color.white);
+            RenderTexture.active = prev;
+        }
+        if (_maskWrite)
+        {
+            var prev2 = RenderTexture.active;
+            RenderTexture.active = _maskWrite;
+            GL.Clear(false, true, Color.white);
+            RenderTexture.active = prev2;
+        }
+        // Re-assign current read texture to material (ensure consistency)
+        plateMaterial.SetTexture(CutMaskId, _maskRead);
+    }
 }
