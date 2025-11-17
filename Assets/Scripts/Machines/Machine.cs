@@ -267,6 +267,24 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         StartProduction();
     }
 
+    // --- Output belt acceptance logic ---
+    // Straight belt: must face outward (worldSide).
+    // Corner belt: accept if machine outward side equals belt forward OR either orthogonal turn side.
+    private bool BeltAcceptsOutput(ConveyorBelt belt, GridOrientation worldSide)
+    {
+        if (belt == null) return false;
+
+        if (!belt.IsCorner && !belt.IsTurnPrefab) // plain straight
+            return belt.Orientation == worldSide;
+
+        // Corner visual: outward side can be belt forward or its CW/CCW rotation
+        var fwd = belt.Orientation;
+        if (fwd == worldSide) return true;
+        if (fwd.RotatedCW() == worldSide) return true;
+        if (fwd.RotatedCCW() == worldSide) return true;
+        return false;
+    }
+
     private void TryPushOutputToBelt(MaterialData mat)
     {
         var grid = FindFirstObjectByType<GridService>();
@@ -293,26 +311,19 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             outputs.Add((cell, worldSide));
         }
 
-        GameObject visualPrefab = MaterialVisualRegistry.Instance != null ? MaterialVisualRegistry.Instance.GetPrefab(mat.materialType) : null;
-        if (visualPrefab == null) Debug.Log("M: visual prefab is null for material " + mat.materialType);
+        GameObject visualPrefab = MaterialVisualRegistry.Instance != null
+            ? MaterialVisualRegistry.Instance.GetPrefab(mat.materialType)
+            : null;
 
-        bool foundBeltAtOutput = false;
+        bool placed = false;
 
         foreach (var (cell, worldSide) in outputs)
         {
             if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
-
             GameObject occGO = cd.occupant as GameObject ?? (cd.occupant as Component)?.gameObject;
             if (occGO == null) continue;
-
             var belt = occGO.GetComponent<ConveyorBelt>();
-            if (belt == null) continue;
-
-            bool isCornerLike = belt.IsCorner || belt.IsTurnPrefab;
-            // Orientation-only for straights; always accept corners/turns
-            if (!(isCornerLike || belt.Orientation == worldSide)) continue;
-
-            foundBeltAtOutput = true;
+            if (!BeltAcceptsOutput(belt, worldSide)) continue;
 
             GameObject visual = null;
             if (visualPrefab != null) visual = Instantiate(visualPrefab);
@@ -320,21 +331,16 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             var item = new ConveyorItem(mat, visual);
             if (belt.TrySetItem(item))
             {
-                Debug.Log("M: placed on belt");
+                placed = true;
                 break;
             }
-
             if (visual != null) Destroy(visual);
         }
 
-        if (!foundBeltAtOutput)
-        {
+        if (!placed)
             AddOutputToInventory(mat, 1);
-            Debug.Log("M: added to inventory (dead-end)");
-        }
     }
 
-    // Helper: list all connected, correctly oriented, empty output belts
     private List<ConveyorBelt> GetConnectedOutputBelts()
     {
         var belts = new List<ConveyorBelt>();
@@ -364,49 +370,25 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         foreach (var (cell, worldSide) in outputs)
         {
             if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
-
             GameObject occGO = cd.occupant as GameObject ?? (cd.occupant as Component)?.gameObject;
             if (occGO == null) continue;
-
             var belt = occGO.GetComponent<ConveyorBelt>();
             if (belt == null) continue;
 
-            bool isCornerLike = belt.IsCorner || belt.IsTurnPrefab;
-            if ((isCornerLike || belt.Orientation == worldSide) && !belt.HasItem)
+            if (BeltAcceptsOutput(belt, worldSide) && !belt.HasItem)
                 belts.Add(belt);
         }
 
         return belts;
     }
 
-    // Add a single material to inventory
     private void AddOutputToInventory(MaterialData mat, int amount)
     {
         var svc = InventoryService.Instance;
         if (svc == null) return;
-
         svc.AddOrStack(mat, amount);
-        Debug.Log("M: should have been added to inventory");
     }
 
-    /*  public void AddOutputToInventory(MachineRecipe recipe)
-      {
-          if (recipe == null || recipe.outputs == null) return;
-
-          foreach (var outStack in recipe.outputs)
-          {
-              if (outStack.material == null)
-              {
-                  Debug.LogWarning("MaterialStack is missing MaterialData");
-                  continue;
-              }
-              InventoryItem item = Instantiate(inventoryItemPrefab);
-              item.Setup(outStack.material, outStack.amount);
-              InventoryService.Instance.AddToInventoryPanel(item, outStack.amount);
-          }
-      }*/
-
-    //Not used currently
     public void Upgrade()
     {
         if (data == null) { Debug.LogError("Machine.Upgrade: MachineData not set."); return; }
@@ -421,7 +403,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private bool BreakCheck()
     {
         float random = UnityEngine.Random.Range(_miniMimumChanceToBreak, 100f);
-        Debug.Log("M: break check with chance " + _chanceToBreak + " and random: " + random);
         return random < _chanceToBreak;
     }
 
@@ -448,7 +429,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public Transform DragTransform => transform;
     public void OnDragStart() { }
     public void OnDrag(Vector3 worldPosition) { DragTransform.position = worldPosition; }
-    public void OnDragEnd() 
+    public void OnDragEnd()
     {
         // When drag finishes, re-scan for output belts at new position/orientation.
         ScanOutputsAndStartIfPossible();
@@ -486,9 +467,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     }
 
     // --- Conveyor I/O & Inventory bridge ---
-
-    // Called by belts when a conveyor item arrives on an INPUT port
-
     private void ScanOutputsAndStartIfPossible()
     {
         if (_isBroken) return;
@@ -498,6 +476,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         if (HasConnectedOutputBelt())
             TryStartIfIdle();
     }
+
     public void OnConveyorItemArrived(MaterialData material)
     {
         if (Data == null) return;
@@ -567,9 +546,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _buffer[mat] = have + Mathf.Max(1, amount);
     }
 
-    // --- Helpers ---
-
-    // True if at least one correctly oriented belt is connected to any output
+    // True if at least one acceptable belt is connected to any output
     private bool HasConnectedOutputBelt()
     {
         var grid = FindFirstObjectByType<GridService>();
@@ -598,23 +575,15 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         foreach (var (cell, worldSide) in outputs)
         {
             if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
-
             GameObject occGO = cd.occupant as GameObject ?? (cd.occupant as Component)?.gameObject;
             if (occGO == null) continue;
-
             var belt = occGO.GetComponent<ConveyorBelt>();
-            if (belt == null) continue;
-
-            // Accept corners/turn-prefabs regardless of orientation, or straights matching orientation
-            bool isCornerLike = belt.IsCorner || belt.IsTurnPrefab;
-            if (isCornerLike || belt.Orientation == worldSide)
+            if (BeltAcceptsOutput(belt, worldSide))
                 return true;
         }
-
         return false;
     }
 
-    //Port helpers 
     public bool TryGetBeltConnection(ConveyorBelt belt, out MachinePortType portType, bool requireFacing = true)
     {
         portType = MachinePortType.None;
@@ -650,22 +619,18 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         GridOrientation worldSide = RotateSide(localSide, Orientation);
         Vector2Int portCell = ComputePortCell(localSide, orientedSize, offset);
 
-        if (belt.Anchor != portCell) return false;
+        if (belt == null || belt.Anchor != portCell) return false;
         if (!requireFacing) return true;
 
         if (kind == MachinePortType.Output)
-        {
-            // Accept corners/turns regardless of forward; straights must face outward
-            return (belt.IsCorner || belt.IsTurnPrefab) || belt.Orientation == worldSide;
-        }
+            return BeltAcceptsOutput(belt, worldSide);
 
         if (kind == MachinePortType.Input)
-        {
-            // Inputs unchanged: belt forward must face the machine
             return belt.Orientation == Opposite(worldSide);
-        }
+
         return false;
     }
+
     private Vector2Int ComputePortCell(GridOrientation localSide, Vector2Int size, int offset)
     {
         GridOrientation side = RotateSide(localSide, Orientation);
@@ -676,11 +641,12 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         {
             case GridOrientation.North: return new Vector2Int(Anchor.x + idx, Anchor.y + size.y);
             case GridOrientation.South: return new Vector2Int(Anchor.x + idx, Anchor.y - 1);
-            case GridOrientation.East: return new Vector2Int(Anchor.x + size.x, Anchor.y + idx);
-            case GridOrientation.West: return new Vector2Int(Anchor.x - 1, Anchor.y + idx);
+            case GridOrientation.East:  return new Vector2Int(Anchor.x + size.x, Anchor.y + idx);
+            case GridOrientation.West:  return new Vector2Int(Anchor.x - 1, Anchor.y + idx);
             default: return Anchor;
         }
     }
+
     private static GridOrientation RotateSide(GridOrientation local, GridOrientation by)
         => (GridOrientation)(((int)local + (int)by) & 3);
 

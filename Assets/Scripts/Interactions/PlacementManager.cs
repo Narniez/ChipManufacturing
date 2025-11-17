@@ -242,6 +242,34 @@ public class PlacementManager : MonoBehaviour
                 return source;
             }
 
+            // Detect if 'source' sits on a Machine OUTPUT port cell (regardless of facing)
+            GridOrientation? requiredWorldSide = GetRequiredMachineOutputSide(anchor);
+            bool isOnMachineOutputPort = requiredWorldSide.HasValue;
+
+            // If this is the head on an output port and we’re branching sideways:
+            // set the new belt as a turn with forward = outgoing (overrideOrientation)
+            // and turn kind chosen by comparing requiredWorldSide -> outgoing.
+            GridOrientation finalOrientation = overrideOrientation;
+            ConveyorBelt.BeltTurnKind finalTurnKind = turnKind;
+            bool forceTurnPrefab = false;
+
+            if (isOnMachineOutputPort && overrideOrientation != requiredWorldSide.Value)
+            {
+                // Choose Left/Right depending on port outward vs outgoing
+                var outSide = requiredWorldSide.Value;
+                finalTurnKind =
+                    (overrideOrientation == outSide.RotatedCW()) ? ConveyorBelt.BeltTurnKind.Right :
+                    (overrideOrientation == outSide.RotatedCCW()) ? ConveyorBelt.BeltTurnKind.Left :
+                    ConveyorBelt.BeltTurnKind.None;
+
+                // If sideways branch, ensure we do place a turn prefab
+                forceTurnPrefab = true;
+            }
+
+            // If we must force a turn, swap prefab accordingly
+            bool willUseTurnPrefab = forceTurnPrefab || useTurnPrefab;
+            prefab = GetConveyorPrefab(willUseTurnPrefab);
+
             var world = AnchorToWorldCenter(anchor, size, 0f);
 
             ConveyorItem item = null;
@@ -258,7 +286,7 @@ public class PlacementManager : MonoBehaviour
             source.gameObject.SetActive(false);
             gridService.SetAreaOccupant(anchor, size, null);
 
-            var go = Instantiate(prefab, world, overrideOrientation.ToRotation());
+            var go = Instantiate(prefab, world, finalOrientation.ToRotation());
             var newBelt = go.GetComponent<ConveyorBelt>();
             if (newBelt == null)
             {
@@ -269,8 +297,8 @@ public class PlacementManager : MonoBehaviour
                 return source;
             }
 
-            newBelt.SetTurnKind(turnKind);
-            newBelt.SetPlacement(anchor, overrideOrientation);
+            newBelt.SetTurnKind(finalTurnKind);
+            newBelt.SetPlacement(anchor, finalOrientation);
             gridService.SetAreaOccupant(anchor, size, go);
 
             // Preserve chain links
@@ -286,6 +314,7 @@ public class PlacementManager : MonoBehaviour
 
             // Forward link auto-parent if missing
             AutoLinkForward(newBelt);
+
             newBelt.NotifyAdjacentMachinesOfConnection();
             Destroy(source.gameObject);
             return newBelt;
@@ -356,4 +385,63 @@ public class PlacementManager : MonoBehaviour
 
         SetState(new IdleState(this));
     }
+
+    private GridOrientation? GetRequiredMachineOutputSide(Vector2Int beltAnchor)
+    {
+        foreach (var nb in gridService.GetNeighbors(beltAnchor))
+        {
+            if (!gridService.TryGetCell(nb.coord, out var data) || data.occupant == null) continue;
+            var mgo = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
+            if (mgo == null) continue;
+
+            var machine = mgo.GetComponent<Machine>();
+            if (machine == null || machine.Data == null) continue;
+
+            var md = machine.Data;
+            var mOri = machine.Orientation;
+            var orientedSize = md.size.OrientedSize(mOri);
+
+            // With explicit ports
+            if (md.ports != null && md.ports.Count > 0)
+            {
+                for (int i = 0; i < md.ports.Count; i++)
+                {
+                    var p = md.ports[i];
+                    if (p.kind != MachinePortType.Output) continue;
+                    var worldSide = RotateSideLocalToWorld(p.side, mOri);
+                    var portCell = ComputePortCellForMachine(machine.Anchor, mOri, orientedSize, p.side, p.offset);
+                    if (portCell == beltAnchor)
+                        return worldSide;
+                }
+            }
+            else
+            {
+                var worldSide = mOri;
+                var portCell = ComputePortCellForMachine(machine.Anchor, mOri, orientedSize, mOri, -1);
+                if (portCell == beltAnchor)
+                    return worldSide;
+            }
+        }
+        return null;
+    }
+
+    private static Vector2Int ComputePortCellForMachine(Vector2Int machineAnchor, GridOrientation machineOrientation,
+                                                        Vector2Int orientedSize, GridOrientation localSide, int offset)
+    {
+        GridOrientation side = RotateSideLocalToWorld(localSide, machineOrientation);
+        int sideLen = (side == GridOrientation.North || side == GridOrientation.South) ? orientedSize.x : orientedSize.y;
+        int idx = offset < 0 ? Mathf.Max(0, (sideLen - 1) / 2) : Mathf.Clamp(offset, 0, Mathf.Max(0, sideLen - 1));
+
+        switch (side)
+        {
+            case GridOrientation.North: return new Vector2Int(machineAnchor.x + idx, machineAnchor.y + orientedSize.y);
+            case GridOrientation.South: return new Vector2Int(machineAnchor.x + idx, machineAnchor.y - 1);
+            case GridOrientation.East: return new Vector2Int(machineAnchor.x + orientedSize.x, machineAnchor.y + idx);
+            case GridOrientation.West: return new Vector2Int(machineAnchor.x - 1, machineAnchor.y + idx);
+            default: return machineAnchor;
+        }
+    }
+
+    private static GridOrientation RotateSideLocalToWorld(GridOrientation local, GridOrientation by)
+        => (GridOrientation)(((int)local + (int)by) & 3);
 }
