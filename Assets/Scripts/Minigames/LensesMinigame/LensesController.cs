@@ -7,6 +7,7 @@ public class LensesController : MonoBehaviour
     [Header("Lens Settings")]
     [Tooltip("Auto-find all Lens components in the scene at Start.")]
     [SerializeField] private bool autoFindLenses = true;
+    [SerializeField] private List<GameObject> lenses = new();
     [SerializeField] private Transform emitter;
     [SerializeField] private LineRenderer line;
 
@@ -25,12 +26,13 @@ public class LensesController : MonoBehaviour
     [Header("Completion")]
     public UnityEvent onPuzzleComplete;
 
-    [SerializeField] private List<GameObject> lenses = new();
 
     private bool isMinigameActive = false;
     private bool completed;
 
     private Lens currentSelected;
+
+    private Vector3[] initialLinePositions;
 
     const float SURFACE_OFFSET = 0.001f;
     const float MIN_SEGMENT = 0.0005f; // prevent micro-bounce loops
@@ -84,10 +86,12 @@ public class LensesController : MonoBehaviour
     {
         if (currentSelected != null)
         {
-            currentSelected.Reset();
+            if (currentSelected.isSelected)
+                currentSelected.ToggleSelected();
             currentSelected = null;
         }
     }
+
 
     // Robust bouncing laser
     private void CastAndRenderBeam()
@@ -165,11 +169,41 @@ public class LensesController : MonoBehaviour
         completed = true;
         onPuzzleComplete?.Invoke();
         line.gameObject.SetActive(false);
+        DeselectAll();
+
     }
 
     //Call this to restart the puzzle
     public void ResetPuzzle()
     {
-        // reset puzzle state here if needed
+        DeselectAll();
+        foreach (var g in lenses)
+        {
+            if (g == null) continue;
+            var lens = g.GetComponent<Lens>();
+            lens?.ResetRotation();
+        }
+
+        if (line != null && !line.gameObject.activeSelf)
+            line.gameObject.SetActive(true);
+
+        if (line != null)
+        {
+            if (initialLinePositions != null && initialLinePositions.Length > 0)
+            {
+                line.positionCount = initialLinePositions.Length;
+                line.SetPositions(initialLinePositions);
+            }
+            else if (emitter != null)
+            {
+                // Fallback: reset to a single point at the emitter's position
+                line.positionCount = 1;
+                line.SetPosition(0, emitter.position);
+            }
+        }
+
+        // Allow the puzzle to be played again
+        //completed = false;
     }
+
 }
