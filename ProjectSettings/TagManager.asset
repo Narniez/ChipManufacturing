@@ -6,6 +6,7 @@ TagManager:
   tags:
   - PopupCanvas
   - Cuttable
+  - Target
   layers:
   - Default
   - TransparentFX

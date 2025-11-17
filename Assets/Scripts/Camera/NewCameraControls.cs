@@ -1,5 +1,7 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class NewCameraControls : MonoBehaviour
 {
@@ -78,6 +80,22 @@ public class NewCameraControls : MonoBehaviour
     [Tooltip("If true, once a two-finger rotation starts, suppress single-finger panning until all fingers are lifted.")]
     [SerializeField] private bool lockPanUntilReleaseAfterTwoFingerRotate = true;
 
+    [Header("Testing Settings")]
+    [SerializeField] private Slider panSpeedSlider;
+    [SerializeField] private float maxPanValue = 0.5f;
+    [SerializeField] private float minPanValue = 0.01f;
+    [SerializeField] private TextMeshProUGUI panSpeedValueText;
+
+    [Header("Hold-to-pan (no smoothing)")]
+    [Tooltip("Hold duration (seconds) before moving that disables pan smoothing for this drag.")]
+    [SerializeField] private float noSmoothHoldSeconds = 0.4f;
+
+    [Header("Pan scaling by zoom")]
+    [Tooltip("Multiplier applied to panSpeed when zoomed in (at minHeight). Higher = faster pan when zoomed in.")]
+    [SerializeField] private float panMultAtMinHeight = 1.5f;
+    [Tooltip("Multiplier applied to panSpeed when zoomed out (at maxHeight). Lower = slower pan when zoomed out.")]
+    [SerializeField] private float panMultAtMaxHeight = 0.6f;
+
     private Camera cam;
 
     // Mouse states
@@ -101,7 +119,7 @@ public class NewCameraControls : MonoBehaviour
     private Vector2 lastMid;
 
     // Targets
-    private Vector3 panTarget;      // XZ (Y separate)
+    private Vector3 panTarget;  
     private float targetYaw;
     private float targetHeight;
 
@@ -120,6 +138,11 @@ public class NewCameraControls : MonoBehaviour
     // Suppress single-finger pan after two-finger rotate until all fingers are released
     private bool suppressSingleFingerUntilAllReleased;
 
+    // Hold-to-pan smoothing control
+    private bool prevPrimaryDown;
+    private float primaryDownStartTime = -1f;
+    private bool panNoSmoothingActive; // true => pan smoothing disabled until all fingers lifted
+
     // Public API for mode changes
     public void SetTestMode(CameraTestMode mode)
     {
@@ -129,6 +152,13 @@ public class NewCameraControls : MonoBehaviour
 
     void Awake()
     {
+        if(panSpeedSlider != null)
+        {
+            panSpeedSlider.minValue = minPanValue;
+            panSpeedSlider.maxValue = maxPanValue;
+            panSpeedSlider.value = panSpeed;
+            panSpeedSlider.onValueChanged.AddListener(OnSpeedChanged);
+        }
         cam = GetComponent<Camera>();
 
         primaryTouchContact    = inputActionsAsset.FindAction("PrimaryTouchContact",  true);
@@ -190,11 +220,19 @@ public class NewCameraControls : MonoBehaviour
             else
             {
                 ProcessTouchLogic();
-                HandleMouseInput(); // Allow mouse fallback even in touch modes (editor)
+                //HandleMouseInput(); // Allow mouse fallback even in touch modes (editor)
             }
         }
 
         ApplySmoothing();
+    }
+
+    public void OnSpeedChanged(float value)
+    {
+        panSpeed = value;
+        if (panSpeedValueText != null)
+            panSpeedValueText.text = panSpeed.ToString("F2");
+       
     }
 
     // ---------- Public API (PlacementManager) ----------
@@ -224,6 +262,11 @@ public class NewCameraControls : MonoBehaviour
         isTwoFingerGestureActive = false;
         hasPivot = false;
         suppressSingleFingerUntilAllReleased = false;
+
+        // Reset no-smoothing state
+        panNoSmoothingActive = false;
+        primaryDownStartTime = -1f;
+        prevPrimaryDown = false;
     }
 
     public void SetInputLocked(bool locked) => inputLocked = locked;
@@ -257,15 +300,25 @@ public class NewCameraControls : MonoBehaviour
 
         Vector3 right = transform.right;
         Vector3 forward = transform.forward; forward.y = 0f; forward.Normalize();
-        Vector3 move = (right * xDir + forward * yDir) * edgeScrollSpeed * Time.unscaledDeltaTime;
+        // scale edge scrolling by zoom too (faster when zoomed in, slower when out)
+        float panScale = PanScaleFactor();
+        Vector3 move = (right * xDir + forward * yDir) * (edgeScrollSpeed * panScale) * Time.unscaledDeltaTime;
         NudgeWorld(move);
     }
 
     // ---------- Touch Logic (Modes) ----------
     private void ProcessTouchLogic()
     {
-        bool primaryDown = primaryTouchContact.ReadValue<float>() > 0.5f;
-        bool secondaryDown = secondaryTouchContact.ReadValue<float>() > 0.5f;
+        bool primaryDown = primaryTouchContact.ReadValue<float>() > 0.1f;
+        bool secondaryDown = secondaryTouchContact.ReadValue<float>() > 0.1f;
+
+        // Track primary down edges to measure hold duration
+        if (primaryDown && !prevPrimaryDown)
+        {
+            primaryDownStartTime = Time.unscaledTime;
+            panNoSmoothingActive = false; 
+        }
+        prevPrimaryDown = primaryDown;
 
         // Clear suppression only when ALL fingers are up
         if (!primaryDown && !secondaryDown)
@@ -273,6 +326,10 @@ public class NewCameraControls : MonoBehaviour
             isTwoFingerGestureActive = false;
             primaryState = PrimaryGesture.None;
             suppressSingleFingerUntilAllReleased = false;
+
+            // Reset no-smoothing state on release
+            panNoSmoothingActive = false;
+            primaryDownStartTime = -1f;
             return;
         }
 
@@ -326,6 +383,24 @@ public class NewCameraControls : MonoBehaviour
 
         if (delta.sqrMagnitude < deadzone * deadzone)
             return;
+
+        // Decide pan smoothing mode on first meaningful movement of this drag
+        if (!panNoSmoothingActive && primaryDownStartTime >= 0f)
+        {
+            float heldFor = Time.unscaledTime - primaryDownStartTime;
+            if (heldFor >= noSmoothHoldSeconds)
+            {
+                // Held long enough before moving -> disable pan smoothing for this drag
+                panNoSmoothingActive = true;
+            }
+            else
+            {
+                // Quick swipe -> keep smoothing
+                panNoSmoothingActive = false;
+            }
+            // After the first decision, keep it until release
+            primaryDownStartTime = -1f;
+        }
 
         if (testMode == CameraTestMode.D_OneFingerRotate_TwoFingerPan)
         {
@@ -384,7 +459,12 @@ public class NewCameraControls : MonoBehaviour
         else if (allowRotationWhenZooming)
         {
             if (pinchScore > pinchThreshold)
+            {
                 HandleHeightZoom(distanceDelta);
+                //Suppress subsequent single-finger pan after a zoom gesture until both fingers are released
+                if (lockPanUntilReleaseAfterTwoFingerRotate)
+                    suppressSingleFingerUntilAllReleased = true;
+            }
             if (rotateScore > rotateThreshold)
             {
                 HandleYawRotation(-rotationAmount);
@@ -405,7 +485,12 @@ public class NewCameraControls : MonoBehaviour
             }
 
             if (primaryState == PrimaryGesture.Zoom && pinchScore > pinchThreshold)
+            {
                 HandleHeightZoom(distanceDelta);
+                //Suppress single-finger pan after zoom until both fingers lifted
+                if (lockPanUntilReleaseAfterTwoFingerRotate)
+                    suppressSingleFingerUntilAllReleased = true;
+            }
             else if (primaryState == PrimaryGesture.Rotate && rotateScore > rotateThreshold)
             {
                 HandleYawRotation(-rotationAmount);
@@ -466,7 +551,8 @@ public class NewCameraControls : MonoBehaviour
     {
         Vector3 rightPlanar = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
         Vector3 forwardPlanar = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
-        Vector3 move = (-delta.x * panSpeed) * rightPlanar + (-delta.y * panSpeed) * forwardPlanar;
+        float effPanSpeed = EffectivePanSpeed(); // faster when zoomed in, slower when out
+        Vector3 move = (-delta.x * effPanSpeed) * rightPlanar + (-delta.y * effPanSpeed) * forwardPlanar;
         panTarget += new Vector3(move.x, 0f, move.z);
         ClampTargets();
     }
@@ -550,7 +636,8 @@ public class NewCameraControls : MonoBehaviour
         {
             Vector3 rightPlanar   = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
             Vector3 forwardPlanar = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
-            Vector3 move = (-effectiveDelta.x * panSpeed) * rightPlanar + (-effectiveDelta.y * panSpeed) * forwardPlanar;
+            float effPanSpeed = EffectivePanSpeed(); // faster when zoomed in, slower when out
+            Vector3 move = (-effectiveDelta.x * effPanSpeed) * rightPlanar + (-effectiveDelta.y * effPanSpeed) * forwardPlanar;
             panTarget += new Vector3(move.x, 0f, move.z);
             ClampTargets();
         }
@@ -581,10 +668,13 @@ public class NewCameraControls : MonoBehaviour
     // ---------- Smoothing & Clamp ----------
     private void ApplySmoothing()
     {
+        // If we decided this drag is a "held then drag" -> disable pan smoothing
+        float effectivePanSmooth = panNoSmoothingActive ? 0f : panSmoothTime;
+
         Vector2 currentXZ = new Vector2(transform.position.x, transform.position.z);
         Vector2 targetXZ  = new Vector2(panTarget.x, panTarget.z);
-        Vector2 smoothedXZ = panSmoothTime > 0f
-            ? Vector2.SmoothDamp(currentXZ, targetXZ, ref panVelocityXZ, panSmoothTime)
+        Vector2 smoothedXZ = effectivePanSmooth > 0f
+            ? Vector2.SmoothDamp(currentXZ, targetXZ, ref panVelocityXZ, effectivePanSmooth)
             : targetXZ;
 
         float currentY = transform.position.y;
@@ -633,6 +723,20 @@ public class NewCameraControls : MonoBehaviour
             minX = xLimits.x; maxX = xLimits.y;
             minZ = zLimits.x; maxZ = zLimits.y;
         }
+    }
+
+    // ---------- Helpers ----------
+    private float PanScaleFactor()
+    {
+        // t = 0 when zoomed in (minHeight), t = 1 when zoomed out (maxHeight)
+        float t = Mathf.InverseLerp(minHeight, maxHeight, targetHeight);
+        // faster at min height, slower at max height
+        return Mathf.Lerp(panMultAtMinHeight, panMultAtMaxHeight, t);
+    }
+
+    private float EffectivePanSpeed()
+    {
+        return panSpeed * PanScaleFactor();
     }
 
 #if UNITY_EDITOR

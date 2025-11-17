@@ -59,6 +59,18 @@ public static class GridOrientationExtentions
         }
     }
 
+    public static Vector2Int OrientationToDelta(GridOrientation o)
+    {
+        switch (o)
+        {
+            case GridOrientation.North: return Vector2Int.up;
+            case GridOrientation.East: return Vector2Int.right;
+            case GridOrientation.South: return Vector2Int.down;
+            case GridOrientation.West: return Vector2Int.left;
+            default: return Vector2Int.zero;
+        }
+    }
+
     public static Direction Opposite(this Direction d) => (Direction)(((int)d + 2) & 3);
 
     // Rotate a local direction by an orientation (i.e., machine/belt facing)

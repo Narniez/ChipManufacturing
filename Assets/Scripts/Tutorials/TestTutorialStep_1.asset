@@ -17,7 +17,7 @@ MonoBehaviour:
   anchor: 3
   waitForSignal: 0
   highlightTargetPath: 
-  gateInputOutsideHighlight: 0
+  gateInputOutsideHighlight: 1
   fingerMode: 0
   showFinger: 0
   fingerOffset: {x: 0, y: -30}

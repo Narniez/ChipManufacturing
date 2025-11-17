@@ -11,7 +11,7 @@ public class PlacementManager : MonoBehaviour
     [Header("Grid Snapping")]
     [SerializeField] private bool snapToGrid = true;
     [SerializeField] private GridService gridService;
-    [SerializeField] private float snapYOffset = 0f; 
+    [SerializeField] private float snapYOffset = 0f;
 
     [Header("Edge Scroll While Dragging")]
     [SerializeField] private float edgeZonePixels = 48f;
@@ -83,10 +83,10 @@ public class PlacementManager : MonoBehaviour
         if (InteractionManager.Instance != null)
         {
             InteractionManager.Instance.OnHoldStart += OnHoldStart;
-            InteractionManager.Instance.OnHoldMove  += OnHoldMove;
-            InteractionManager.Instance.OnHoldEnd   += OnHoldEnd;
-            InteractionManager.Instance.OnTap       += OnTap;
-            InteractionManager.Instance.OnTapEmpty  += OnTapEmpty;
+            InteractionManager.Instance.OnHoldMove += OnHoldMove;
+            InteractionManager.Instance.OnHoldEnd += OnHoldEnd;
+            InteractionManager.Instance.OnTap += OnTap;
+            InteractionManager.Instance.OnTapEmpty += OnTapEmpty;
         }
     }
 
@@ -95,10 +95,10 @@ public class PlacementManager : MonoBehaviour
         if (InteractionManager.Instance != null)
         {
             InteractionManager.Instance.OnHoldStart -= OnHoldStart;
-            InteractionManager.Instance.OnHoldMove  -= OnHoldMove;
-            InteractionManager.Instance.OnHoldEnd   -= OnHoldEnd;
-            InteractionManager.Instance.OnTap       -= OnTap;
-            InteractionManager.Instance.OnTapEmpty  -= OnTapEmpty;
+            InteractionManager.Instance.OnHoldMove -= OnHoldMove;
+            InteractionManager.Instance.OnHoldEnd -= OnHoldEnd;
+            InteractionManager.Instance.OnTap -= OnTap;
+            InteractionManager.Instance.OnTapEmpty -= OnTapEmpty;
         }
     }
 
@@ -114,7 +114,6 @@ public class PlacementManager : MonoBehaviour
 
     private void OnHoldMove(IInteractable interactable, Vector2 screen, Vector3 world)
     {
-        // Only scroll camera if dragged object reaches edge zones
         _camCtrl?.EdgeScrollFromScreen(screen);
         _state?.OnHoldMove(interactable, screen, world);
     }
@@ -250,10 +249,11 @@ public class PlacementManager : MonoBehaviour
             {
                 item = source.TakeItem();
                 if (item != null && item.Visual != null)
-                {
                     item.Visual.transform.position = world;
-                }
             }
+
+            var parent = source.PreviousInChain;
+            var child = source.NextInChain;
 
             source.gameObject.SetActive(false);
             gridService.SetAreaOccupant(anchor, size, null);
@@ -273,9 +273,20 @@ public class PlacementManager : MonoBehaviour
             newBelt.SetPlacement(anchor, overrideOrientation);
             gridService.SetAreaOccupant(anchor, size, go);
 
+            // Preserve chain links
+            newBelt.PreviousInChain = parent;
+            newBelt.NextInChain = child;
+            if (parent != null && parent.NextInChain == source)
+                parent.NextInChain = newBelt;
+            if (child != null && child.PreviousInChain == source)
+                child.PreviousInChain = newBelt;
+
             if (item != null)
                 newBelt.TrySetItem(item, snapVisual: true);
 
+            // Forward link auto-parent if missing
+            AutoLinkForward(newBelt);
+            newBelt.NotifyAdjacentMachinesOfConnection();
             Destroy(source.gameObject);
             return newBelt;
         }
@@ -285,10 +296,41 @@ public class PlacementManager : MonoBehaviour
         }
     }
 
+    private void AutoLinkForward(ConveyorBelt belt)
+    {
+        if (belt == null || gridService == null || !gridService.HasGrid) return;
+        var forwardCell = belt.Anchor + GridOrientationExtentions.OrientationToDelta(belt.Orientation);
+        if (gridService.TryGetCell(forwardCell, out var data) && data.occupant != null)
+        {
+            var go = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
+            var forward = go != null ? go.GetComponent<ConveyorBelt>() : null;
+            if (forward != null && forward.PreviousInChain == null && forward != belt)
+            {
+                belt.NextInChain = forward;
+                forward.PreviousInChain = belt;
+            }
+        }
+    }
+
+
+
     public void DestroyCurrentSelection()
     {
         var occ = CurrentSelection;
         if (occ == null) return;
+
+        var beltToDestroy = (occ as Component)?.GetComponent<ConveyorBelt>();
+
+        if (beltToDestroy != null)
+        {
+            // Re-link chain around destroyed belt
+            var parent = beltToDestroy.PreviousInChain;
+            var child = beltToDestroy.NextInChain;
+            if (parent != null && parent.NextInChain == beltToDestroy) parent.NextInChain = child;
+            if (child != null && child.PreviousInChain == beltToDestroy) child.PreviousInChain = parent;
+            beltToDestroy.PreviousInChain = null;
+            beltToDestroy.NextInChain = null;
+        }
 
         if (gridService != null && gridService.HasGrid)
         {
@@ -301,7 +343,16 @@ public class PlacementManager : MonoBehaviour
         SetCurrentSelection(null);
         selectionUI?.Hide();
 
-        if (go != null) Destroy(go);
+        if (go != null)
+        {
+            if (beltToDestroy != null)
+            {
+                var item = beltToDestroy.TakeItem();
+                if (item != null && item.Visual != null)
+                    Destroy(item.Visual);
+            }
+            Destroy(go);
+        }
 
         SetState(new IdleState(this));
     }
