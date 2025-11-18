@@ -9,23 +9,18 @@ public class PatternCutEvaluator : MonoBehaviour
     public Texture2D patternTexture; // black lines, transparent elsewhere (Read/Write Enabled)
 
     [Header("Sampling & Thresholds")]
-    [Range(0f,1f)] public float cutMaskThreshold = 0.5f;      // mask < threshold => considered cut
-    [Range(0f,1f)] public float lineLumaThreshold = 0.3f;     // pattern pixel luma < threshold => line
-    [Range(0f,1f)] public float lineAlphaThreshold = 0.1f;    // pattern alpha > threshold => line
-    public int evaluationResolution = 512;                    // downsample for faster scoring
+    [Range(0f,1f)] public float cutMaskThreshold = 0.5f;
+    [Range(0f,1f)] public float lineLumaThreshold = 0.3f;
+    [Range(0f,1f)] public float lineAlphaThreshold = 0.1f;
+    public int evaluationResolution = 512; // base width
 
     [Header("Tolerance Around Lines")]
-    public float maxAllowedDistanceUV = 0.01f;                // strict radius (UV units) used for coverage
-    public float extraToleranceUV = 0.008f;                   // soft band extra (make this larger for curves)
-    public bool distanceWeightedOvercut = true;               // scale penalty by distance beyond soft band
-
-    [Header("Coverage Mode")]
-    public bool coverageByDistance = true;                    // thickness-agnostic coverage (recommended)
+    public float maxAllowedDistanceUV = 0.01f;
+    public float extraToleranceUV = 0.008f;
+    public bool distanceWeightedOvercut = true;
 
     [Header("Score Weights")]
-    [Tooltip("Coverage drives the score almost 1:1. Set to 1 for direct mapping.")]
     [Range(0f, 1.5f)] public float wCoverage = 1f;
-    [Tooltip("Penalty strength for cutting outside the soft band around the line. Typical 0.4..0.9")]
     [Range(0f, 2f)] public float wOvercut = 0.6f;
 
     [Header("Line Thickness Estimation")]
@@ -34,12 +29,43 @@ public class PatternCutEvaluator : MonoBehaviour
     public float minHalfThicknessUV = 0.004f;
     [HideInInspector] public float lastEstimatedHalfThicknessUV = 0f;
 
-    [Header("Debug / Output")]
+    [Header("Debug")]
     public bool logDetails = true;
+    public bool dumpLineMapStats = true;
+
+    [Header("Performance")]
+    [Tooltip("Cache the pattern's line map and distance field once per pattern.")]
+    public bool cachePatternAnalysis = true;
+    [Tooltip("Pick a smaller evaluation grid for thick lines.")]
+    public bool autoAdjustEvalResolution = true;
+    [Range(128, 4096)] public int minEvalResolution = 256;
+    [Range(128, 4096)] public int maxEvalResolution = 1024;
 
     public Action<float> OnScoreComputed;
 
     bool _pending;
+
+    // Adaptive resolution override
+    int _evalResOverride = 0;
+    int EvalWidth => Mathf.Clamp(_evalResOverride > 0 ? _evalResOverride : evaluationResolution, 64, 4096);
+    int EvalHeight
+    {
+        get
+        {
+            if (!patternTexture) return EvalWidth;
+            float aspect = patternTexture.height / (float)patternTexture.width;
+            int h = Mathf.RoundToInt(EvalWidth * aspect);
+            return Mathf.Clamp(h, 64, 4096);
+        }
+    }
+
+    // Cache
+    float[] _lineCached;                  // 0/1 line map (letterboxed)
+    float[] _distFromLineCached;          // distance from line (pixels)
+    int _cacheW, _cacheH, _cacheLineCount;
+    int _cachedTexId;
+    float _cachedLumaTh, _cachedAlphaTh;
+    float _scaleX = 1f, _scaleY = 1f;     // letterbox scale
 
     public void EvaluateCut()
     {
@@ -61,22 +87,31 @@ public class PatternCutEvaluator : MonoBehaviour
             Debug.LogWarning("Mask readback error");
             return;
         }
-        if (patternTexture == null)
+        if (!patternTexture)
         {
             Debug.LogWarning("Pattern texture missing");
             return;
         }
 
-        var data = req.GetData<byte>();
+        int W = EvalWidth;
+        int H = EvalHeight;
         int maskW = sawCutter.maskResolution;
         int maskH = sawCutter.maskResolution;
 
-        int W = evaluationResolution;
-        int H = evaluationResolution;
+        // Ensure cached pattern analysis (line map + distance) is available
+        EnsurePatternCache(W, H);
 
-        // Resample mask -> cutBinary
+        if (_cacheLineCount == 0)
+        {
+            if (logDetails) Debug.LogWarning("[PatternCutEvaluator] No line pixels detected.");
+            OnScoreComputed?.Invoke(0f);
+            return;
+        }
+
+        // Read mask into local arrays (cutBinary + raw values for thresholding)
+        var data = req.GetData<byte>();
         float[] mask = new float[W * H];
-        float[] cutBinary = new float[W * H]; // 1 if cut, else 0
+        float[] cutBinary = new float[W * H];
         for (int y = 0; y < H; y++)
         {
             float v = (y + 0.5f) / H;
@@ -87,145 +122,205 @@ public class PatternCutEvaluator : MonoBehaviour
                 int srcX = Mathf.Clamp(Mathf.RoundToInt(u * (maskW - 1)), 0, maskW - 1);
                 int srcIdx = srcY * maskW + srcX;
                 float m = data[srcIdx] / 255f;
-                mask[y * W + x] = m;
-                cutBinary[y * W + x] = (m < cutMaskThreshold) ? 1f : 0f;
+                int i = y * W + x;
+                mask[i] = m;
+                cutBinary[i] = (m < cutMaskThreshold) ? 1f : 0f;
             }
         }
 
-        // Build binary pattern line map
-        float[] line = new float[W * H];
-        for (int y = 0; y < H; y++)
-        {
-            float v = (y + 0.5f) / H;
-            int srcY = Mathf.Clamp(Mathf.RoundToInt(v * (patternTexture.height - 1)), 0, patternTexture.height - 1);
-            for (int x = 0; x < W; x++)
-            {
-                float u = (x + 0.5f) / W;
-                int srcX = Mathf.Clamp(Mathf.RoundToInt(u * (patternTexture.width - 1)), 0, patternTexture.width - 1);
-                Color c = patternTexture.GetPixel(srcX, srcY);
-                float luma = c.r * 0.2126f + c.g * 0.7152f + c.b * 0.0722f;
-                bool isLine = c.a > lineAlphaThreshold && luma < lineLumaThreshold;
-                line[y * W + x] = isLine ? 1f : 0f;
-            }
-        }
+        // Distance field from cuts (for coverage test)
+        float[] distFromCut = BuildDistanceField(cutBinary, W, H);
 
-        // Distance fields
-        float[] distFromLine = BuildDistanceField(line, W, H);       // distance (px) from nearest line
-        float[] distFromCut  = BuildDistanceField(cutBinary, W, H);  // distance (px) from nearest cut
-
-        // Metrics accumulators
-        int linePixelCount   = 0;
-        int coveredCount     = 0;       // line pixels that are covered (within tol1)
-        int totalCutPixels   = 0;       // all pixels cut
+        int coveredCount = 0;
+        int totalCutPixels = 0;
         double overcutPenaltyAccum = 0.0;
 
-        // Strict coverage tolerance and wider soft band for penalty
-        float tol1Px = maxAllowedDistanceUV * W;                                  // coverage
-        float tol2Px = (maxAllowedDistanceUV + Mathf.Max(extraToleranceUV, 0.003f)) * W; // soft band (>= tol1)
+        float minDim = Mathf.Min(W, H);
+        float tol1Px = maxAllowedDistanceUV * minDim;
+        float tol2Px = (maxAllowedDistanceUV + Mathf.Max(extraToleranceUV, 0.003f)) * minDim;
 
-        // First pass: count total cut pixels and accumulate "bad cuts" only beyond tol2
+        // Penalty + coverage
         for (int i = 0; i < W * H; i++)
         {
-            bool isCut = mask[i] < cutMaskThreshold;
-            if (!isCut) continue;
-
-            totalCutPixels++;
-
-            float dPx = distFromLine[i];
-            if (dPx > tol2Px)
+            if (mask[i] < cutMaskThreshold)
             {
-                if (distanceWeightedOvercut)
+                totalCutPixels++;
+                float dLine = _distFromLineCached[i];
+                if (dLine > tol2Px)
                 {
-                    // Weight grows with distance beyond soft band; normalized by screen size
-                    float beyond = dPx - tol2Px;
-                    float weight = 1f + (beyond / (W * 0.25f)); // gentle growth
-                    overcutPenaltyAccum += weight;
-                }
-                else
-                {
-                    overcutPenaltyAccum += 1.0;
+                    if (distanceWeightedOvercut)
+                    {   
+                        float beyond = dLine - tol2Px;
+                        float weight = 1f + (beyond / (minDim * 0.25f));
+                        overcutPenaltyAccum += weight;
+                    }
+                    else overcutPenaltyAccum += 1.0;
                 }
             }
-            // Note: cuts between tol1 and tol2 do not penalize (near-miss region along thick/curvy lines)
-        }
 
-        // Coverage (thickness-agnostic): a line pixel is covered if any cut is within tol1
-        for (int i = 0; i < W * H; i++)
-        {
-            if (line[i] > 0.5f)
+            if (_lineCached[i] > 0.5f)
             {
-                linePixelCount++;
                 if (distFromCut[i] <= tol1Px)
                     coveredCount++;
             }
         }
 
-        // Final metrics
-        float coverage = linePixelCount > 0 ? (float)coveredCount / linePixelCount : 0f;
-        float overcutRatio = totalCutPixels > 0 ? (float)(overcutPenaltyAccum / totalCutPixels) : 0f;
-
-        // Score: coverage almost 1:1, minus penalty only for far-off cuts
-        float score = wCoverage * coverage - wOvercut * overcutRatio;
-        score = Mathf.Clamp01(score);
+        float coverage = _cacheLineCount > 0 ? (float)coveredCount / _cacheLineCount : 0f;
+        float overcutRatio = totalCutPixels > 0 ? Mathf.Clamp01((float)(overcutPenaltyAccum / totalCutPixels)) : 0f;
+        float score = Mathf.Clamp01(wCoverage * coverage - wOvercut * overcutRatio);
 
         if (logDetails)
         {
             Debug.Log(
-                $"Cut Evaluation -> Coverage:{coverage:F3} Overcut:{overcutRatio:F3} Score:{score:F3} " +
-                $"(covered {coveredCount}/{linePixelCount}, cutPixels:{totalCutPixels}, tol1Px:{tol1Px:F1}, tol2Px:{tol2Px:F1})");
+                $"[Eval] Pattern:{patternTexture.width}x{patternTexture.height} Grid:{W}x{H} " +
+                $"Lines:{_cacheLineCount} Covered:{coveredCount} Coverage:{coverage:P2} Overcut:{overcutRatio:P2} " +
+                $"tol1Px:{tol1Px:F1} tol2Px:{tol2Px:F1} Score:{score:P2}");
+        }
+        if (dumpLineMapStats)
+        {
+            float pctLines = (float)_cacheLineCount / (W * H);
+            Debug.Log($"[LineMapStats] linePixelFraction:{pctLines:P2}");
         }
 
         OnScoreComputed?.Invoke(score);
     }
 
-    // Call this after assigning patternTexture (e.g., when switching patterns)
     public void AutoTuneForCurrentPattern()
     {
-        if (patternTexture == null || sawCutter == null) return;
+        if (!patternTexture || !sawCutter) return;
 
-        int W = Mathf.Clamp(evaluationResolution, 128, 2048);
-        int H = W;
+        // Quick low-res pass to estimate thickness (uses current evaluationResolution but half to speed-up)
+        int baseW = Mathf.Clamp(evaluationResolution / 2, 128, 1024);
+        int baseH = Mathf.Clamp(Mathf.RoundToInt(baseW * (patternTexture.height / (float)patternTexture.width)), 128, 2048);
 
-        // Build binary line map at evaluation resolution using current thresholds
-        float[] line = new float[W * H];
-        for (int y = 0; y < H; y++)
+        // Letterbox scale
+        float texAspect = (float)patternTexture.width / Mathf.Max(1, patternTexture.height);
+        float scaleX = 1f, scaleY = 1f;
+        if (texAspect > 1f) scaleY = 1f / texAspect; else scaleX = texAspect;
+
+        // Build low-res line map
+        float[] lineLow = new float[baseW * baseH];
+        int lineCountLow = 0;
+        for (int y = 0; y < baseH; y++)
         {
-            float v = (y + 0.5f) / H;
-            int srcY = Mathf.Clamp(Mathf.RoundToInt(v * (patternTexture.height - 1)), 0, patternTexture.height - 1);
-            for (int x = 0; x < W; x++)
+            float v = (y + 0.5f) / baseH;
+            for (int x = 0; x < baseW; x++)
             {
-                float u = (x + 0.5f) / W;
-                int srcX = Mathf.Clamp(Mathf.RoundToInt(u * (patternTexture.width - 1)), 0, patternTexture.width - 1);
-                Color c = patternTexture.GetPixel(srcX, srcY);
+                float u = (x + 0.5f) / baseW;
+                float su = 0.5f + (u - 0.5f) * scaleX;
+                float sv = 0.5f + (v - 0.5f) * scaleY;
+                if (su < 0f || su > 1f || sv < 0f || sv > 1f) continue;
+                Color c = patternTexture.GetPixelBilinear(su, sv);
                 float luma = c.r * 0.2126f + c.g * 0.7152f + c.b * 0.0722f;
                 bool isLine = c.a > lineAlphaThreshold && luma < lineLumaThreshold;
-                line[y * W + x] = isLine ? 1f : 0f;
+                if (isLine)
+                {
+                    lineLow[y * baseW + x] = 1f;
+                    lineCountLow++;
+                }
             }
         }
 
-        // Estimate median half-thickness of the pattern lines in pixels
-        float halfThicknessPx = EstimateLineHalfThicknessPx(line, W, H);
-        float halfThicknessUV = Mathf.Max(minHalfThicknessUV, (halfThicknessPx / W) * thicknessScale);
+        float halfThicknessPx = EstimateLineHalfThicknessPx(lineLow, baseW, baseH);
+        float minDimLow = Mathf.Min(baseW, baseH);
+        float halfThicknessUV = Mathf.Max(minHalfThicknessUV, (halfThicknessPx / minDimLow) * thicknessScale);
         lastEstimatedHalfThicknessUV = halfThicknessUV;
 
-        // Strict tolerance: tie to brush & thickness (favor thickness first for lining)
+        // Adaptive resolution: target ~6 px half-thickness
+        if (autoAdjustEvalResolution)
+        {
+            const float targetHalfPx = 6f;
+            float scale = Mathf.Clamp(targetHalfPx / Mathf.Max(1f, halfThicknessPx), 0.25f, 2f);
+            _evalResOverride = Mathf.Clamp(Mathf.RoundToInt(evaluationResolution * scale), minEvalResolution, maxEvalResolution);
+        }
+        else
+        {
+            _evalResOverride = 0; // use evaluationResolution as-is
+        }
+
+        // Update coverage tolerances based on brush/line
         float brushUV = Mathf.Max(1e-5f, sawCutter.ApproxBrushUVRadius());
         float tol1UV = Mathf.Clamp(Mathf.Lerp(brushUV, halfThicknessUV, 0.75f), 0.5f * brushUV, halfThicknessUV * 1.15f);
         maxAllowedDistanceUV = tol1UV;
         extraToleranceUV = Mathf.Clamp(maxAllowedDistanceUV * 0.5f, 0.0005f, 0.05f);
 
-        // Coverage-first scoring (already set in your code)
-        wCoverage = Mathf.Clamp(wCoverage, 0.75f, 1.2f);
-        wOvercut = Mathf.Clamp(wOvercut, 0.5f, 1.25f);
+        // Build (or rebuild) cached line map + distance at the final chosen resolution
+        if (cachePatternAnalysis)
+            EnsurePatternCache(EvalWidth, EvalHeight, force: true);
 
-            if (logDetails)
-            Debug.Log($"[AutoTune] halfThicknessPx:{halfThicknessPx:F2} UV:{halfThicknessUV:F4} brushUV:{brushUV:F4} tol1UV:{tol1UV:F4} extra:{extraToleranceUV:F4}");
+        if (logDetails)
+        {
+            Debug.Log($"[AutoTune] halfPxLow:{halfThicknessPx:F2} halfUV:{halfThicknessUV:F4} brushUV:{brushUV:F4} " +
+                      $"eval:{EvalWidth}x{EvalHeight} tol1UV:{tol1UV:F4}");
+        }
     }
 
-    // Estimate average half-thickness by measuring distance from line pixels to nearest background
+    void EnsurePatternCache(int W, int H, bool force = false)
+    {
+        // Rebuild if:
+        // - no cache
+        // - resolution changed
+        // - thresholds changed
+        // - texture changed
+        int texId = patternTexture ? patternTexture.GetInstanceID() : 0;
+        bool needRebuild =
+            force ||
+            _lineCached == null || _distFromLineCached == null ||
+            _cacheW != W || _cacheH != H ||
+            _cachedTexId != texId ||
+            !Mathf.Approximately(_cachedLumaTh, lineLumaThreshold) ||
+            !Mathf.Approximately(_cachedAlphaTh, lineAlphaThreshold);
+
+        if (!needRebuild) return;
+
+        _cacheW = W;
+        _cacheH = H;
+        _cachedTexId = texId;
+        _cachedLumaTh = lineLumaThreshold;
+        _cachedAlphaTh = lineAlphaThreshold;
+
+        // Compute letterbox scale
+        float texAspect = (float)patternTexture.width / Mathf.Max(1, patternTexture.height);
+        _scaleX = 1f; _scaleY = 1f;
+        if (texAspect > 1f) _scaleY = 1f / texAspect; else _scaleX = texAspect;
+
+        // Build line map
+        _lineCached = new float[W * H];
+        _cacheLineCount = 0;
+        for (int y = 0; y < H; y++)
+        {
+            float v = (y + 0.5f) / H;
+            for (int x = 0; x < W; x++)
+            {
+                float u = (x + 0.5f) / W;
+                float su = 0.5f + (u - 0.5f) * _scaleX;
+                float sv = 0.5f + (v - 0.5f) * _scaleY;
+                if (su < 0f || su > 1f || sv < 0f || sv > 1f) continue;
+
+                Color c = patternTexture.GetPixelBilinear(su, sv);
+                float luma = c.r * 0.2126f + c.g * 0.7152f + c.b * 0.0722f;
+                bool isLine = c.a > lineAlphaThreshold && luma < lineLumaThreshold;
+                if (isLine)
+                {
+                    int i = y * W + x;
+                    _lineCached[i] = 1f;
+                    _cacheLineCount++;
+                }
+            }
+        }
+
+        // Build distance field from line (cached)
+        _distFromLineCached = BuildDistanceField(_lineCached, W, H);
+
+        if (logDetails)
+        {
+            float pctLines = (float)_cacheLineCount / (W * H);
+            Debug.Log($"[Cache] Built line/dist cache {W}x{H} lines:{_cacheLineCount} ({pctLines:P1})");
+        }
+    }
+
     float EstimateLineHalfThicknessPx(float[] line, int W, int H)
     {
-        // Build background (seeds = background)
         float[] background = new float[W * H];
         int lineCount = 0;
         for (int i = 0; i < W * H; i++)
@@ -235,39 +330,28 @@ public class PatternCutEvaluator : MonoBehaviour
             background[i] = isLine ? 0f : 1f;
         }
         if (lineCount == 0) return 2f;
-
         float[] distToBackground = BuildDistanceField(background, W, H);
 
-        // Collect distances only for line pixels (cap for performance)
         int sampleCap = Mathf.Min(lineCount, 30000);
         float[] samples = new float[sampleCap];
         int stride = Mathf.Max(1, (W * H) / sampleCap);
         int si = 0;
         for (int i = 0; i < W * H && si < sampleCap; i += stride)
-        {
-            if (line[i] > 0.5f)
-                samples[si++] = distToBackground[i];
-        }
+            if (line[i] > 0.5f) samples[si++] = distToBackground[i];
         Array.Sort(samples, 0, si);
         if (si == 0) return 2f;
-
-        // Use chosen percentile of interior distances (values are in pixels)
-        int idx = Mathf.Clamp(Mathf.RoundToInt((thicknessPercentile) * (si - 1)), 0, si - 1);
-        float pct = samples[idx];
-        // Guard against zero (very thin AA lines)
-        return Mathf.Max(1f, pct);
+        int idx = Mathf.Clamp(Mathf.RoundToInt(thicknessPercentile * (si - 1)), 0, si - 1);
+        return Mathf.Max(1f, samples[idx]);
     }
 
-    // Distance transform (two pass, approx Euclidean)
     float[] BuildDistanceField(float[] seeds, int W, int H)
     {
         const float INF = 1e6f;
         float[] d = new float[W * H];
-
         for (int i = 0; i < W * H; i++)
             d[i] = seeds[i] > 0.5f ? 0f : INF;
 
-        // Pass 1
+        // Forward
         for (int y = 0; y < H; y++)
         {
             for (int x = 0; x < W; x++)
@@ -280,8 +364,7 @@ public class PatternCutEvaluator : MonoBehaviour
                 d[i] = best;
             }
         }
-
-        // Pass 2
+        // Backward
         for (int y = H - 1; y >= 0; y--)
         {
             for (int x = W - 1; x >= 0; x--)

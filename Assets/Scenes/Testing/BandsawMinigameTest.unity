@@ -218,7 +218,7 @@ Transform:
   m_GameObject: {fileID: 26419932}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.23, y: 0.47, z: 9.77}
+  m_LocalPosition: {x: -0.02, y: 0.47, z: 0.22}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -709,7 +709,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: ef1f1cd14766df94f93cfc43751e0485, type: 2}
+  - {fileID: 2100000, guid: dc280225c2ea95e40971a23c056ecdb3, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -867,7 +867,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 623603276}
-  - {fileID: 1355302786}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &756629874
@@ -1048,12 +1047,8 @@ MonoBehaviour:
     texture: {fileID: 2800000, guid: ec42bd7312a9f6c43868933a6264ba63, type: 3}
     lineTint: {r: 1, g: 1, b: 1, a: 0}
     overlayAlpha: 0.1
-  - name: ArrowPattern
-    texture: {fileID: 2800000, guid: 017274310d6127949becddeb22b0824d, type: 3}
-    lineTint: {r: 1, g: 1, b: 1, a: 0}
-    overlayAlpha: 0.1
   defaultPatternIndex: 0
-  autoApplyOnStart: 0
+  autoApplyOnStart: 1
   resetScoreOnPatternChange: 1
   resetMaskOnPatternChange: 1
   autoMatchBrushToLine: 1
@@ -1715,13 +1710,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1355302783}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.6427876, y: -0, z: -0, w: 0.7660445}
-  m_LocalPosition: {x: 0, y: 9.93, z: -1.722}
+  m_LocalRotation: {x: 0.39779204, y: -0, z: -0, w: 0.91747564}
+  m_LocalPosition: {x: 0, y: 10.45, z: -4.92}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 756629873}
-  m_LocalEulerAnglesHint: {x: 80, y: 0, z: 0}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 46.88, y: 0, z: 0}
 --- !u!114 &1355302787
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2010,21 +2005,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PatternCutEvaluator
   sawCutter: {fileID: 26419937}
   patternTexture: {fileID: 2800000, guid: ec42bd7312a9f6c43868933a6264ba63, type: 3}
-  cutMaskThreshold: 0.6
-  lineLumaThreshold: 0.35
-  lineAlphaThreshold: 0.3
+  cutMaskThreshold: 0.8
+  lineLumaThreshold: 0.5
+  lineAlphaThreshold: 0.05
   evaluationResolution: 512
-  maxAllowedDistanceUV: 0.01
-  extraToleranceUV: 0.005
-  distanceWeightedOvercut: 1
-  coverageByDistance: 1
+  maxAllowedDistanceUV: 0.02
+  extraToleranceUV: 0.01
+  distanceWeightedOvercut: 0
   wCoverage: 1
-  wOvercut: 0.75
-  logDetails: 1
+  wOvercut: 0.3
   thicknessPercentile: 0.9
   thicknessScale: 1
   minHalfThicknessUV: 0.004
   lastEstimatedHalfThicknessUV: 0
+  logDetails: 1
+  dumpLineMapStats: 1
+  cachePatternAnalysis: 1
+  autoAdjustEvalResolution: 1
+  minEvalResolution: 256
+  maxEvalResolution: 1024
 --- !u!4 &1659318261
 Transform:
   m_ObjectHideFlags: 0
@@ -2369,6 +2368,7 @@ SceneRoots:
   - {fileID: 909027610}
   - {fileID: 262160552}
   - {fileID: 1767004324}
+  - {fileID: 1355302786}
   - {fileID: 756629873}
   - {fileID: 26419936}
   - {fileID: 1659318261}
