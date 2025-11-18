@@ -15,19 +15,24 @@ public class PatternCutEvaluator : MonoBehaviour
     public int evaluationResolution = 512;                    // downsample for faster scoring
 
     [Header("Tolerance Around Lines")]
-    public float maxAllowedDistanceUV = 0.01f;                // strict radius (UV units)
-    public float extraToleranceUV = 0.005f;                   // soft band extra
-    public float outsidePenaltyMultiplier = 2f;               // outside penalty weight
-    public bool distanceWeightedOvercut = true;               // scale penalty by distance
-    public bool useDiceInsteadOfCoverage = false;             // optional alt metric
+    public float maxAllowedDistanceUV = 0.01f;                // strict radius (UV units) used for coverage
+    public float extraToleranceUV = 0.008f;                   // soft band extra (make this larger for curves)
+    public bool distanceWeightedOvercut = true;               // scale penalty by distance beyond soft band
 
     [Header("Coverage Mode")]
-    public bool coverageByDistance = true;                    // NEW: make coverage thickness-agnostic
+    public bool coverageByDistance = true;                    // thickness-agnostic coverage (recommended)
 
-    [Header("Weights")]
-    [Range(0,1)] public float wCoverage = 0.5f;
-    [Range(0,1)] public float wPrecision = 0.3f;
-    [Range(0,1)] public float wOvercut = 0.2f;
+    [Header("Score Weights")]
+    [Tooltip("Coverage drives the score almost 1:1. Set to 1 for direct mapping.")]
+    [Range(0f, 1.5f)] public float wCoverage = 1f;
+    [Tooltip("Penalty strength for cutting outside the soft band around the line. Typical 0.4..0.9")]
+    [Range(0f, 2f)] public float wOvercut = 0.6f;
+
+    [Header("Line Thickness Estimation")]
+    [Range(0.6f, 0.99f)] public float thicknessPercentile = 0.9f;
+    [Range(0.5f, 2f)] public float thicknessScale = 1.0f;
+    public float minHalfThicknessUV = 0.004f;
+    [HideInInspector] public float lastEstimatedHalfThicknessUV = 0f;
 
     [Header("Debug / Output")]
     public bool logDetails = true;
@@ -108,110 +113,149 @@ public class PatternCutEvaluator : MonoBehaviour
         float[] distFromLine = BuildDistanceField(line, W, H);       // distance (px) from nearest line
         float[] distFromCut  = BuildDistanceField(cutBinary, W, H);  // distance (px) from nearest cut
 
+        // Metrics accumulators
         int linePixelCount   = 0;
-        int coveredCount     = 0;       // for coverage-by-pixel or after distance threshold
-        int totalCutPixels   = 0;       // for Dice / overcut
-        double precisionAccum = 0.0;
-        double precisionSamples = 0.0;
+        int coveredCount     = 0;       // line pixels that are covered (within tol1)
+        int totalCutPixels   = 0;       // all pixels cut
         double overcutPenaltyAccum = 0.0;
 
-        float tol1Px = maxAllowedDistanceUV * W;
-        float tol2Px = (maxAllowedDistanceUV + extraToleranceUV) * W;
+        // Strict coverage tolerance and wider soft band for penalty
+        float tol1Px = maxAllowedDistanceUV * W;                                  // coverage
+        float tol2Px = (maxAllowedDistanceUV + Mathf.Max(extraToleranceUV, 0.003f)) * W; // soft band (>= tol1)
 
-        // Pass for precision and overcut
+        // First pass: count total cut pixels and accumulate "bad cuts" only beyond tol2
         for (int i = 0; i < W * H; i++)
         {
             bool isCut = mask[i] < cutMaskThreshold;
-            if (isCut) totalCutPixels++;
+            if (!isCut) continue;
 
-            bool isLine = line[i] > 0.5f;
+            totalCutPixels++;
+
             float dPx = distFromLine[i];
-
-            if (isLine && isCut)
+            if (dPx > tol2Px)
             {
-                // Precision only within strict tolerance
-                if (dPx <= tol1Px)
+                if (distanceWeightedOvercut)
                 {
-                    float norm = 1f - (dPx / tol1Px); // 1 center, 0 at tol edge
-                    precisionAccum += norm;
-                    precisionSamples++;
+                    // Weight grows with distance beyond soft band; normalized by screen size
+                    float beyond = dPx - tol2Px;
+                    float weight = 1f + (beyond / (W * 0.25f)); // gentle growth
+                    overcutPenaltyAccum += weight;
+                }
+                else
+                {
+                    overcutPenaltyAccum += 1.0;
                 }
             }
-            else if (!isLine && isCut)
-            {
-                // Overcut: penalize cuts away from the line
-                if (dPx > tol1Px)
-                {
-                    float outsideFactor = dPx <= tol2Px ? 0.5f : 1f;
-                    if (distanceWeightedOvercut && dPx > tol2Px)
-                    {
-                        float beyond = dPx - tol2Px;
-                        outsideFactor += beyond / (W * 0.5f);
-                    }
-                    overcutPenaltyAccum += outsideFactor;
-                }
-            }
+            // Note: cuts between tol1 and tol2 do not penalize (near-miss region along thick/curvy lines)
         }
 
-        // Coverage computation
-        if (coverageByDistance)
+        // Coverage (thickness-agnostic): a line pixel is covered if any cut is within tol1
+        for (int i = 0; i < W * H; i++)
         {
-            // Thickness-agnostic: a line pixel is "covered" if any cut is within tol1
-            for (int i = 0; i < W * H; i++)
+            if (line[i] > 0.5f)
             {
-                if (line[i] > 0.5f)
-                {
-                    linePixelCount++;
-                    if (distFromCut[i] <= tol1Px)
-                        coveredCount++;
-                }
-            }
-        }
-        else
-        {
-            // Pixel-wise (old): requires line pixel itself to be cut
-            for (int i = 0; i < W * H; i++)
-            {
-                if (line[i] > 0.5f)
-                {
-                    linePixelCount++;
-                    if (mask[i] < cutMaskThreshold)
-                        coveredCount++;
-                }
+                linePixelCount++;
+                if (distFromCut[i] <= tol1Px)
+                    coveredCount++;
             }
         }
 
-        // Metrics
+        // Final metrics
         float coverage = linePixelCount > 0 ? (float)coveredCount / linePixelCount : 0f;
-        float precision = precisionSamples > 0 ? (float)(precisionAccum / precisionSamples) : 0f;
+        float overcutRatio = totalCutPixels > 0 ? (float)(overcutPenaltyAccum / totalCutPixels) : 0f;
 
-        int nonLinePixels = W * H - linePixelCount;
-        float rawOvercut = nonLinePixels > 0 ? (float)(overcutPenaltyAccum / nonLinePixels) : 0f;
-        float overcut = rawOvercut * outsidePenaltyMultiplier;
-
-        // Optional Dice
-        float dice = 0f;
-        if (useDiceInsteadOfCoverage && (totalCutPixels + linePixelCount) > 0)
-            dice = 2f * coveredCount / (float)(totalCutPixels + linePixelCount);
-
-        float primaryCoverageMetric = useDiceInsteadOfCoverage ? dice : coverage;
-
-        // Combine score
-        float score = wCoverage * primaryCoverageMetric
-                    + wPrecision * precision
-                    - wOvercut * overcut;
-
+        // Score: coverage almost 1:1, minus penalty only for far-off cuts
+        float score = wCoverage * coverage - wOvercut * overcutRatio;
         score = Mathf.Clamp01(score);
 
         if (logDetails)
         {
-            string covName = useDiceInsteadOfCoverage ? "Dice" : (coverageByDistance ? "CoverageDist" : "CoveragePix");
             Debug.Log(
-                $"Cut Evaluation -> {covName}:{primaryCoverageMetric:F3} Precision:{precision:F3} Overcut:{overcut:F3} Score:{score:F3} " +
-                $"(covered {coveredCount}/{linePixelCount}, cutPixels:{totalCutPixels}, tol1Px:{tol1Px:F1})");
+                $"Cut Evaluation -> Coverage:{coverage:F3} Overcut:{overcutRatio:F3} Score:{score:F3} " +
+                $"(covered {coveredCount}/{linePixelCount}, cutPixels:{totalCutPixels}, tol1Px:{tol1Px:F1}, tol2Px:{tol2Px:F1})");
         }
 
         OnScoreComputed?.Invoke(score);
+    }
+
+    // Call this after assigning patternTexture (e.g., when switching patterns)
+    public void AutoTuneForCurrentPattern()
+    {
+        if (patternTexture == null || sawCutter == null) return;
+
+        int W = Mathf.Clamp(evaluationResolution, 128, 2048);
+        int H = W;
+
+        // Build binary line map at evaluation resolution using current thresholds
+        float[] line = new float[W * H];
+        for (int y = 0; y < H; y++)
+        {
+            float v = (y + 0.5f) / H;
+            int srcY = Mathf.Clamp(Mathf.RoundToInt(v * (patternTexture.height - 1)), 0, patternTexture.height - 1);
+            for (int x = 0; x < W; x++)
+            {
+                float u = (x + 0.5f) / W;
+                int srcX = Mathf.Clamp(Mathf.RoundToInt(u * (patternTexture.width - 1)), 0, patternTexture.width - 1);
+                Color c = patternTexture.GetPixel(srcX, srcY);
+                float luma = c.r * 0.2126f + c.g * 0.7152f + c.b * 0.0722f;
+                bool isLine = c.a > lineAlphaThreshold && luma < lineLumaThreshold;
+                line[y * W + x] = isLine ? 1f : 0f;
+            }
+        }
+
+        // Estimate median half-thickness of the pattern lines in pixels
+        float halfThicknessPx = EstimateLineHalfThicknessPx(line, W, H);
+        float halfThicknessUV = Mathf.Max(minHalfThicknessUV, (halfThicknessPx / W) * thicknessScale);
+        lastEstimatedHalfThicknessUV = halfThicknessUV;
+
+        // Strict tolerance: tie to brush & thickness (favor thickness first for lining)
+        float brushUV = Mathf.Max(1e-5f, sawCutter.ApproxBrushUVRadius());
+        float tol1UV = Mathf.Clamp(Mathf.Lerp(brushUV, halfThicknessUV, 0.75f), 0.5f * brushUV, halfThicknessUV * 1.15f);
+        maxAllowedDistanceUV = tol1UV;
+        extraToleranceUV = Mathf.Clamp(maxAllowedDistanceUV * 0.5f, 0.0005f, 0.05f);
+
+        // Coverage-first scoring (already set in your code)
+        wCoverage = Mathf.Clamp(wCoverage, 0.75f, 1.2f);
+        wOvercut = Mathf.Clamp(wOvercut, 0.5f, 1.25f);
+
+            if (logDetails)
+            Debug.Log($"[AutoTune] halfThicknessPx:{halfThicknessPx:F2} UV:{halfThicknessUV:F4} brushUV:{brushUV:F4} tol1UV:{tol1UV:F4} extra:{extraToleranceUV:F4}");
+    }
+
+    // Estimate average half-thickness by measuring distance from line pixels to nearest background
+    float EstimateLineHalfThicknessPx(float[] line, int W, int H)
+    {
+        // Build background (seeds = background)
+        float[] background = new float[W * H];
+        int lineCount = 0;
+        for (int i = 0; i < W * H; i++)
+        {
+            bool isLine = line[i] > 0.5f;
+            if (isLine) lineCount++;
+            background[i] = isLine ? 0f : 1f;
+        }
+        if (lineCount == 0) return 2f;
+
+        float[] distToBackground = BuildDistanceField(background, W, H);
+
+        // Collect distances only for line pixels (cap for performance)
+        int sampleCap = Mathf.Min(lineCount, 30000);
+        float[] samples = new float[sampleCap];
+        int stride = Mathf.Max(1, (W * H) / sampleCap);
+        int si = 0;
+        for (int i = 0; i < W * H && si < sampleCap; i += stride)
+        {
+            if (line[i] > 0.5f)
+                samples[si++] = distToBackground[i];
+        }
+        Array.Sort(samples, 0, si);
+        if (si == 0) return 2f;
+
+        // Use chosen percentile of interior distances (values are in pixels)
+        int idx = Mathf.Clamp(Mathf.RoundToInt((thicknessPercentile) * (si - 1)), 0, si - 1);
+        float pct = samples[idx];
+        // Guard against zero (very thin AA lines)
+        return Mathf.Max(1f, pct);
     }
 
     // Distance transform (two pass, approx Euclidean)

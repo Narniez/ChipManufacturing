@@ -218,4 +218,19 @@ public class SawCutter : MonoBehaviour
         // Re-assign current read texture to material (ensure consistency)
         plateMaterial.SetTexture(CutMaskId, _maskRead);
     }
+
+    public float ApproxBrushUVRadius()
+    {
+        return WorldToUVRadius(brushWorldRadius);
+    }
+
+    public float UVToWorldRadius(float uvRadius)
+    {
+        if (!plateRenderer) return uvRadius;
+        Vector3 lossy = plateRenderer.transform.lossyScale;
+        float avgScale = (Mathf.Abs(lossy.x) + Mathf.Abs(lossy.z)) * 0.5f;
+        float denom = Mathf.Max(_meshBounds.size.x, _meshBounds.size.z);
+        float localR = uvRadius * denom;
+        return localR * avgScale;
+    }
 }
