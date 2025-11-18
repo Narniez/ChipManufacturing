@@ -7,17 +7,27 @@ public class BandsawMinigameManager : MonoBehaviour
     [Header("Core References")]
     public SawCutter sawCutter;
     public PatternCutEvaluator patternEvaluator;
-    public CutScoreUI scoreUI;                      
-    public Renderer patternOverlayRenderer;        
+    public CutScoreUI scoreUI;
+    public Renderer patternOverlayRenderer;
 
     [Header("Patterns")]
-    public List<PatternEntry> patterns = new();     
+    public List<PatternEntry> patterns = new();
     public int defaultPatternIndex = 0;
 
     [Header("Behaviour")]
     public bool autoApplyOnStart = true;
     public bool resetScoreOnPatternChange = true;
     public bool resetMaskOnPatternChange = true;
+
+    [Header("Brush Auto-Match")]
+    [Tooltip("Automatically adjust brush radius to match line thickness of the selected pattern.")]
+    public bool autoMatchBrushToLine = true;
+    [Tooltip("Scale factor applied to half line thickness (UV) when setting brush radius. 1 = full half-thickness.")]
+    [Range(0.5f, 1.5f)] public float brushToLineScale = 0.9f;
+    [Tooltip("Minimum world radius clamp when auto-matching.")]
+    public float minWorldBrushRadius = 0.005f;
+    [Tooltip("Maximum world radius clamp when auto-matching.")]
+    public float maxWorldBrushRadius = 0.2f;
 
     [Header("Events")]
     public Action<PatternEntry> OnPatternChanged;
@@ -39,7 +49,6 @@ public class BandsawMinigameManager : MonoBehaviour
             ApplyPattern(defaultPatternIndex);
     }
 
-    // UI button can call this with an index
     public void ApplyPattern(int index)
     {
         if (index < 0 || index >= patterns.Count)
@@ -50,24 +59,38 @@ public class BandsawMinigameManager : MonoBehaviour
         var entry = patterns[index];
         _current = entry;
 
-        // Update overlay
+        // Overlay
         if (patternOverlayRenderer && entry.texture)
         {
-            var mat = patternOverlayRenderer.material; 
+            var mat = patternOverlayRenderer.material;
             mat.SetTexture("_PatternTex", entry.texture);
             mat.SetColor("_LineTint", entry.lineTint);
             mat.SetFloat("_Alpha", entry.overlayAlpha);
         }
 
-        // Update evaluator
+        // Evaluator + auto-tune
         if (patternEvaluator)
+        {
             patternEvaluator.patternTexture = entry.texture;
+            patternEvaluator.AutoTuneForCurrentPattern();
 
-        // Reset mask (clear holes)
+            if (autoMatchBrushToLine && sawCutter)
+            {
+                float halfThicknessUV = patternEvaluator.lastEstimatedHalfThicknessUV;
+                if (halfThicknessUV > 0f)
+                {
+                    // Use half-thickness directly (already scaled/tuned), optionally enlarge slightly
+                    float desiredUVRadius = halfThicknessUV;
+                    float worldR = sawCutter.UVToWorldRadius(desiredUVRadius);
+                    worldR = Mathf.Clamp(worldR, minWorldBrushRadius, maxWorldBrushRadius);
+                    sawCutter.brushWorldRadius = worldR;
+                }
+            }
+        }
+
         if (resetMaskOnPatternChange && sawCutter)
             sawCutter.ResetCutMask();
 
-        // Reset score display
         if (resetScoreOnPatternChange && scoreUI)
             scoreUI.ResetDisplay();
 
@@ -81,7 +104,6 @@ public class BandsawMinigameManager : MonoBehaviour
         else Debug.LogWarning($"Pattern '{patternName}' not found.");
     }
 
-    // Example helper to cycle through patterns (assign to a “Next Pattern” button)
     public void NextPattern()
     {
         if (patterns.Count == 0) return;

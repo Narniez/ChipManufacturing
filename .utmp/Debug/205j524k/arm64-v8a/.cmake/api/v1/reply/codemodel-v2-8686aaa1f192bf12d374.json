@@ -95,14 +95,14 @@
 				{
 					"directoryIndex" : 1,
 					"id" : "game::@d02bb112ea9f9c2ed29f",
-					"jsonFile" : "target-game-Debug-ba134015651b7ca762f4.json",
+					"jsonFile" : "target-game-Debug-4caabcabff1828a04c07.json",
 					"name" : "game",
 					"projectIndex" : 1
 				},
 				{
 					"directoryIndex" : 2,
 					"id" : "swappywrapper::@7e25bd1f32ce224db4e9",
-					"jsonFile" : "target-swappywrapper-Debug-39939d187bc9416baca3.json",
+					"jsonFile" : "target-swappywrapper-Debug-95000ded74e537a6df69.json",
 					"name" : "swappywrapper",
 					"projectIndex" : 2
 				}

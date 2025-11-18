@@ -1043,19 +1043,23 @@ MonoBehaviour:
   - name: HeartPattern
     texture: {fileID: 2800000, guid: 962b558b9acbcdc4baaa3417f7dda197, type: 3}
     lineTint: {r: 1, g: 1, b: 1, a: 0}
-    overlayAlpha: 1
+    overlayAlpha: 0.1
   - name: SquarePattern
     texture: {fileID: 2800000, guid: ec42bd7312a9f6c43868933a6264ba63, type: 3}
     lineTint: {r: 1, g: 1, b: 1, a: 0}
-    overlayAlpha: 1
+    overlayAlpha: 0.1
   - name: ArrowPattern
     texture: {fileID: 2800000, guid: 017274310d6127949becddeb22b0824d, type: 3}
     lineTint: {r: 1, g: 1, b: 1, a: 0}
-    overlayAlpha: 1
+    overlayAlpha: 0.1
   defaultPatternIndex: 0
   autoApplyOnStart: 0
   resetScoreOnPatternChange: 1
   resetMaskOnPatternChange: 1
+  autoMatchBrushToLine: 1
+  brushToLineScale: 1.1
+  minWorldBrushRadius: 0.1
+  maxWorldBrushRadius: 0.2
 --- !u!4 &870042181
 Transform:
   m_ObjectHideFlags: 0
@@ -2006,20 +2010,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PatternCutEvaluator
   sawCutter: {fileID: 26419937}
   patternTexture: {fileID: 2800000, guid: ec42bd7312a9f6c43868933a6264ba63, type: 3}
-  cutMaskThreshold: 1
-  lineLumaThreshold: 0.3
-  lineAlphaThreshold: 0.1
+  cutMaskThreshold: 0.6
+  lineLumaThreshold: 0.35
+  lineAlphaThreshold: 0.3
   evaluationResolution: 512
-  maxAllowedDistanceUV: 0.1
+  maxAllowedDistanceUV: 0.01
   extraToleranceUV: 0.005
-  outsidePenaltyMultiplier: 10
-  distanceWeightedOvercut: 0
-  useDiceInsteadOfCoverage: 1
+  distanceWeightedOvercut: 1
   coverageByDistance: 1
-  wCoverage: 0.5
-  wPrecision: 0.4
-  wOvercut: 1
+  wCoverage: 1
+  wOvercut: 0.75
   logDetails: 1
+  thicknessPercentile: 0.9
+  thicknessScale: 1
+  minHalfThicknessUV: 0.004
+  lastEstimatedHalfThicknessUV: 0
 --- !u!4 &1659318261
 Transform:
   m_ObjectHideFlags: 0
