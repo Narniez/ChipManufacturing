@@ -12,6 +12,11 @@ public class LensesController : MonoBehaviour
     [SerializeField] private Transform emitter;
     [SerializeField] private LineRenderer line;
 
+    [Header("Obstacle Settings")]
+    [SerializeField] private GameObject obstaclePrefab;
+    [Tooltip("Spawn this many obstacles when spawning is enabled.")]
+    [SerializeField] private int obstacleCount = 5;
+
     [Header("Spawn Settings")]
     [Tooltip("Add slight random offset in X around each column base position.")]
     [SerializeField] private bool randomizeColumnX = true;
@@ -34,6 +39,16 @@ public class LensesController : MonoBehaviour
     [Tooltip("If true, spawn into two columns: one at spawnXRange.x and the other at spawnXRange.y.")]
     [SerializeField] private bool spawnInTwoColumns = true;
 
+    [Header("Spawn Collision")]
+    [Tooltip("Which layers should block lens/obstacle placement checks.")]
+    [SerializeField] private LayerMask spawnBlockMask = ~0;
+    [Tooltip("Minimum clearance radius to check around spawned obstacles.")]
+    [SerializeField] private float obstaclePlacementClearance = 0.5f;
+    [Tooltip("Minimum clearance radius to check around spawned lenses.")]
+    [SerializeField] private float lensPlacementClearance = 0.5f;
+    [Tooltip("How many attempts to try to find a free location per spawned object.")]
+    [SerializeField] private int maxPlacementAttempts = 50;
+
     [Header("Bounce Settings")]
     [Tooltip("Total path length the beam can travel across all bounces.")]
     [SerializeField] private float maxDistance = 5000f;
@@ -54,6 +69,8 @@ public class LensesController : MonoBehaviour
     private const float SURFACE_OFFSET = 0.001f;
     private const float MIN_SEGMENT = 0.0005f; // prevent micro-bounce loops
 
+    private List<GameObject> obstacles = new();
+
     private void Awake()
     {
         foreach (var lens in lenses)
@@ -69,7 +86,10 @@ public class LensesController : MonoBehaviour
     private void Start()
     {
         if (spawnOnStart && lensPrefab != null)
+        {
             SpawnLenses();
+            SpawnObstacles();
+        }
 
         if (autoFindLenses)
             AutoFindLenses();
@@ -82,18 +102,55 @@ public class LensesController : MonoBehaviour
 
     public void RegisterLens(GameObject lens)
     {
-        lenses.Add(lens);
+        if (!lenses.Contains(lens))
+            lenses.Add(lens);
+
         Debug.Log("Registered lens: " + lens.name);
     }
 
     private void AutoFindLenses()
     {
-        lenses = FindObjectsOfType<Lens>()
-            .Select(l => l.gameObject)
-            .ToList();
+        lenses = FindObjectsOfType<Lens>().Select(l => l.gameObject).ToList();
     }
 
     #region Spawning
+
+    private void SpawnObstacles()
+    {
+        if (obstaclePrefab == null) return;
+
+        float z = emitter != null ? emitter.position.z : 0f;
+
+        for (int i = 0; i < obstacleCount; i++)
+        {
+            bool placed = false;
+            for (int attempt = 0; attempt < maxPlacementAttempts; attempt++)
+            {
+                float randomX = Random.Range(spawnXRange.x, spawnXRange.y);
+                float randomY = Random.Range(spawnYRange.x - 5, spawnYRange.y - 5);
+                var candidate = new Vector3(randomX, randomY, z);
+
+                if (IsAreaFree(candidate, obstaclePlacementClearance))
+                {
+                    var obst = Instantiate(obstaclePrefab, candidate, Quaternion.identity, transform);
+                    obstacles.Add(obst);
+
+                    var rb = obst.GetComponent<Rigidbody>();
+                    if (rb == null)
+                        rb = obst.AddComponent<Rigidbody>();
+
+                    rb.isKinematic = true;
+                    rb.useGravity = false;
+
+                    placed = true;
+                    break;
+                }
+            }
+
+            if (!placed)
+                Debug.LogWarning($"LensesController: Failed to place obstacle {i} after {maxPlacementAttempts} attempts. Consider increasing spawn area or lowering clearance.");
+        }
+    }
 
     private void SpawnLenses()
     {
@@ -107,8 +164,7 @@ public class LensesController : MonoBehaviour
 
         if (spawnInTwoColumns)
             SpawnTwoColumns(z);
-        else
-            SpawnSingleRow(z);
+        // else: add single-row logic if you want
     }
 
     private void ClearExistingLenses()
@@ -131,6 +187,47 @@ public class LensesController : MonoBehaviour
         lenses.Clear();
     }
 
+    private void ClearObstacles()
+    {
+        if (obstacles == null || obstacles.Count == 0) return;
+
+        foreach (var o in obstacles)
+        {
+            if (o == null) continue;
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                DestroyImmediate(o);
+            else
+                Destroy(o);
+#else
+            Destroy(o);
+#endif
+        }
+
+        obstacles.Clear();
+    }
+
+    [ContextMenu("Regenerate Spawns")]
+    public void RegenerateSpawns()
+    {
+        RegenerateSpawns(true, true);
+    }
+
+    public void RegenerateSpawns(bool clearLenses, bool clearObstacles)
+    {
+        if (clearObstacles)
+            ClearObstacles();
+
+        if (clearLenses)
+            ClearExistingLenses();
+
+        SpawnLenses();
+        SpawnObstacles();
+
+        if (autoFindLenses)
+            AutoFindLenses();
+    }
+
     private void SpawnTwoColumns(float z)
     {
         int leftCount = spawnCount / 2;
@@ -147,61 +244,104 @@ public class LensesController : MonoBehaviour
         // Left column
         foreach (float y in leftYs)
         {
-            float x = leftX;
+            float baseX = leftX;
+            bool placed = false;
 
-            if (randomizeColumnX && columnXJitter > 0f)
+            for (int attempt = 0; attempt < maxPlacementAttempts; attempt++)
             {
-                x += Random.Range(-columnXJitter, columnXJitter);
-                x = Mathf.Clamp(x, minX, maxX);
+                float x = baseX;
+                if (randomizeColumnX && columnXJitter > 0f)
+                {
+                    x += Random.Range(-columnXJitter, columnXJitter);
+                    x = Mathf.Clamp(x, minX, maxX);
+                }
+
+                float yCandidate = y + Random.Range(-minVerticalSpacing * 0.5f, minVerticalSpacing * 0.5f);
+                yCandidate = Mathf.Clamp(yCandidate, spawnYRange.x, spawnYRange.y);
+
+                var pos = new Vector3(x, yCandidate, z);
+
+                if (IsAreaFree(pos, lensPlacementClearance))
+                {
+                    var go = Instantiate(lensPrefab, pos, Quaternion.identity, transform);
+                    go.name = $"{lensPrefab.name}_L";
+
+                    // Ensure lens Rigidbody is set up correctly
+                    var rb = go.GetComponent<Rigidbody>();
+                    if (rb == null)
+                        rb = go.AddComponent<Rigidbody>();
+
+                    rb.isKinematic = false;
+                    rb.useGravity = false;
+                    rb.constraints = RigidbodyConstraints.FreezePositionZ
+                                   | RigidbodyConstraints.FreezeRotationX
+                                   | RigidbodyConstraints.FreezeRotationY;
+
+                    RegisterLens(go);
+                    placed = true;
+                    break;
+                }
             }
 
-            var pos = new Vector3(x, y, z);
-            var go = Instantiate(lensPrefab, pos, Quaternion.identity, transform);
-            go.name = $"{lensPrefab.name}_L";
+            if (!placed)
+                Debug.LogWarning($"LensesController: Could not place lens in left column at base Y={y} after {maxPlacementAttempts} attempts.");
         }
 
         // Right column
         foreach (float y in rightYs)
         {
-            float x = rightX;
+            float baseX = rightX;
+            bool placed = false;
 
-            if (randomizeColumnX && columnXJitter > 0f)
+            for (int attempt = 0; attempt < maxPlacementAttempts; attempt++)
             {
-                x += Random.Range(-columnXJitter, columnXJitter);
-                x = Mathf.Clamp(x, minX, maxX);
+                float x = baseX;
+                if (randomizeColumnX && columnXJitter > 0f)
+                {
+                    x += Random.Range(-columnXJitter, columnXJitter);
+                    x = Mathf.Clamp(x, minX, maxX);
+                }
+
+                float yCandidate = y + Random.Range(-minVerticalSpacing * 0.5f, minVerticalSpacing * 0.5f);
+                yCandidate = Mathf.Clamp(yCandidate, spawnYRange.x, spawnYRange.y);
+
+                var pos = new Vector3(x, yCandidate, z);
+
+                if (IsAreaFree(pos, lensPlacementClearance))
+                {
+                    var go = Instantiate(lensPrefab, pos, Quaternion.identity, transform);
+                    go.name = $"{lensPrefab.name}_R";
+
+                    var rb = go.GetComponent<Rigidbody>();
+                    if (rb == null)
+                        rb = go.AddComponent<Rigidbody>();
+
+                    rb.isKinematic = false;
+                    rb.useGravity = false;
+                    rb.constraints = RigidbodyConstraints.FreezePositionZ
+                                   | RigidbodyConstraints.FreezeRotationX
+                                   | RigidbodyConstraints.FreezeRotationY;
+
+                    RegisterLens(go);
+                    placed = true;
+                    break;
+                }
             }
 
-            var pos = new Vector3(x, y, z);
-            var go = Instantiate(lensPrefab, pos, Quaternion.identity, transform);
-            go.name = $"{lensPrefab.name}_R";
+            if (!placed)
+                Debug.LogWarning($"LensesController: Could not place lens in right column at base Y={y} after {maxPlacementAttempts} attempts.");
         }
     }
 
-    private void SpawnSingleRow(float z)
-    {
-        var xs = GenerateRandomSpacedValues(spawnCount, spawnXRange.x, spawnXRange.y, minVerticalSpacing);
-        float fixedY = (spawnYRange.x + spawnYRange.y) * 0.5f;
-
-        foreach (float x in xs)
-        {
-            var pos = new Vector3(x, fixedY, z);
-            var go = Instantiate(lensPrefab, pos, Quaternion.identity, transform);
-            go.name = $"{lensPrefab.name}_Spawned_{x:F2}";
-        }
-    }
-
-    /// <summary>
-    /// Generic helper: random values in [min, max] with min spacing; falls back to evenly spaced.
-    /// </summary>
     private List<float> GenerateRandomSpacedValues(int count, float min, float max, float minDistance)
     {
         var result = new List<float>(count);
         if (count <= 0) return result;
 
         int attempts = 0;
-        int maxAttempts = Mathf.Max(1000, count * 200);
+        int maxAttemptsLocal = Mathf.Max(1000, count * 200);
 
-        while (result.Count < count && attempts < maxAttempts)
+        while (result.Count < count && attempts < maxAttemptsLocal)
         {
             float candidate = Random.Range(min, max);
 
@@ -247,8 +387,7 @@ public class LensesController : MonoBehaviour
 
     public void ActivateMinigame()
     {
-        // if you ever want to gate Update() on this:
-        // isMinigameActive = true; and early-return in Update when false
+        // hook if you want to gate Update()
     }
 
     public void SelectLens(Lens lens)
@@ -329,12 +468,10 @@ public class LensesController : MonoBehaviour
                     continue;
                 }
 
-                // Hit something non-reflective or out of reflections
                 break;
             }
             else
             {
-                // No hit within remaining distance
                 points.Add(origin + dir * remaining);
                 break;
             }
@@ -389,6 +526,19 @@ public class LensesController : MonoBehaviour
     }
 
     #endregion
+
+    /// <summary>
+    /// Check whether any physics collider exists within a sphere of 'clearance' around 'position'.
+    /// Uses spawnBlockMask so only selected layers block placement.
+    /// </summary>
+    private bool IsAreaFree(Vector3 position, float clearance)
+    {
+        if (clearance <= 0f)
+            return true;
+
+        var hits = Physics.OverlapSphere(position, clearance, spawnBlockMask, QueryTriggerInteraction.Ignore);
+        return hits == null || hits.Length == 0;
+    }
 
     private void OnDrawGizmosSelected()
     {
