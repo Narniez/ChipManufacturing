@@ -138,7 +138,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &45878721
 Transform:
   m_ObjectHideFlags: 0
@@ -1020,7 +1020,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1034785139
 Transform:
   m_ObjectHideFlags: 0
@@ -1362,7 +1362,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1401406824
 Transform:
   m_ObjectHideFlags: 0
@@ -1783,6 +1783,16 @@ MonoBehaviour:
   lenses: []
   emitter: {fileID: 649207493}
   line: {fileID: 982947424}
+  randomizeColumnX: 1
+  lensPrefab: {fileID: 6559874751202024966, guid: e907dcd0f1501d146878b8df55d8d184, type: 3}
+  spawnCount: 4
+  spawnXRange: {x: -25, y: 25}
+  columnXJitter: 10
+  spawnYRange: {x: -35, y: 10}
+  minVerticalSpacing: 15
+  clearExistingLensesOnSpawn: 1
+  spawnOnStart: 1
+  spawnInTwoColumns: 1
   maxDistance: 1000
   maxBounces: 4
   rayMask:
@@ -1824,7 +1834,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &1925633647
 BoxCollider:
   m_ObjectHideFlags: 0
