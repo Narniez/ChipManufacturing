@@ -66,6 +66,9 @@ public class BandsawMinigameManager : MonoBehaviour
             mat.SetTexture("_PatternTex", entry.texture);
             mat.SetColor("_LineTint", entry.lineTint);
             mat.SetFloat("_Alpha", entry.overlayAlpha);
+
+            // Ensure overlay uses same bounds-based UV mapping as the plate/mask
+            if (sawCutter) sawCutter.PushPlateMappingTo(mat);
         }
 
         // Evaluator + auto-tune
@@ -79,8 +82,7 @@ public class BandsawMinigameManager : MonoBehaviour
                 float halfThicknessUV = patternEvaluator.lastEstimatedHalfThicknessUV;
                 if (halfThicknessUV > 0f)
                 {
-                    // Use half-thickness directly (already scaled/tuned), optionally enlarge slightly
-                    float desiredUVRadius = halfThicknessUV;
+                    float desiredUVRadius = halfThicknessUV * Mathf.Clamp(brushToLineScale, 0.5f, 1.5f);
                     float worldR = sawCutter.UVToWorldRadius(desiredUVRadius);
                     worldR = Mathf.Clamp(worldR, minWorldBrushRadius, maxWorldBrushRadius);
                     sawCutter.brushWorldRadius = worldR;
