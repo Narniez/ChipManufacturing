@@ -3,12 +3,12 @@
 public class SawCutter : MonoBehaviour
 {
     public Transform sawBlade;
-    public Collider sawCollider;              // assign the Saw's Collider
+    public Collider sawCollider;
     public MeshCollider plateCollider;
-    public Renderer plateRenderer;            // Plate's MeshRenderer
-    public Material plateMaterial;            // Custom/PlateCutReveal
-    public Material paintMaterial;            // Custom/CutPaint
-    public RenderTexture maskAsset;           // optional (used as the "read" RT)
+    public Renderer plateRenderer;
+    public Material plateMaterial;
+    public Material paintMaterial;
+    public RenderTexture maskAsset;
 
     [Range(0.001f, 1f)]
     public float brushWorldRadius = 0.05f;
@@ -24,13 +24,16 @@ public class SawCutter : MonoBehaviour
 
     public bool invertV = false;
 
-    RenderTexture _maskRead;   // the texture the plate samples
-    RenderTexture _maskWrite;  // the texture we render into this frame
+    [Header("Stroke Continuity")]
+    [Range(0.2f, 1.0f)] public float strokeSpacing = 0.8f;
+    [Range(4, 256)] public int maxStampsPerFrame = 64;
+
+    RenderTexture _maskRead;
+    RenderTexture _maskWrite;
     Material _paintMat;
 
-    Bounds _meshBounds; // renderer local bounds (Unity Plane: ~min(-5,0,-5), size(10,0,10))
+    Bounds _meshBounds;
 
-    // Force Unity Plane axes: U = X, V = Z
     const int _uAxis = 0;
     const int _vAxis = 2;
 
@@ -45,6 +48,10 @@ public class SawCutter : MonoBehaviour
     static readonly int VAxisMaskId   = Shader.PropertyToID("_VAxisMask");
     static readonly int InvertVId     = Shader.PropertyToID("_InvertV");
 
+    bool _hasPrevUV;
+    Vector2 _prevUV;
+    float _prevUvRadius;
+
     void Start()
     {
         if (plateRenderer != null)
@@ -57,10 +64,8 @@ public class SawCutter : MonoBehaviour
                 _meshBounds = mf.sharedMesh.bounds;
         }
 
-        // Create/adopt read RT
         _maskRead = maskAsset != null ? maskAsset : CreateMaskRT();
         ClearRT(_maskRead, Color.white);
-        // Create write RT (always created, same spec)
         _maskWrite = CreateMaskRT();
         ClearRT(_maskWrite, Color.white);
 
@@ -84,7 +89,7 @@ public class SawCutter : MonoBehaviour
         {
             useMipMap = false,
             autoGenerateMips = false,
-            wrapMode = TextureWrapMode.Repeat,
+            wrapMode = TextureWrapMode.Clamp,      // CHANGED: prevent wrap across edges
             filterMode = FilterMode.Bilinear
         };
         rt.Create();
@@ -101,7 +106,7 @@ public class SawCutter : MonoBehaviour
 
     void Update()
     {
-        if (!plateCollider || !plateRenderer) return;
+        if (!plateCollider || !plateRenderer) { _hasPrevUV = false; return; }
 
         Vector3 from = sawBlade ? sawBlade.position : transform.position;
         Vector3 toPlate = plateCollider.bounds.ClosestPoint(from) - from;
@@ -109,30 +114,74 @@ public class SawCutter : MonoBehaviour
 
         if (!plateCollider.Raycast(new Ray(from, dir), out var hit, 100f) &&
             !plateCollider.Raycast(new Ray(from, -dir), out hit, 100f))
+        {
+            _hasPrevUV = false;
             return;
+        }
 
         if (!IsNearPlateSurface(hit))
+        {
+            _hasPrevUV = false;
             return;
+        }
 
-        // Map contact point to plate renderer local XZ bounds (0..1)
         Vector2 uv = WorldToRendererBoundsUV(hit.point);
         float uvRadius = WorldToUVRadius(brushWorldRadius);
 
-        // Stamp by reading from _maskRead and writing to _maskWrite
+        StampAlongSegment(uv, uvRadius);
+    }
+
+    void StampAlongSegment(Vector2 uv, float uvRadius)
+    {
+        if (!_hasPrevUV)
+        {
+            DoStamp(uv, uvRadius);
+            _prevUV = uv;
+            _prevUvRadius = uvRadius;
+            _hasPrevUV = true;
+            return;
+        }
+
+        float baseRadius = Mathf.Max(_prevUvRadius, uvRadius);
+        float stepUV = Mathf.Max(1e-5f, baseRadius * Mathf.Clamp(strokeSpacing, 0.2f, 1.0f));
+
+        float dist = Vector2.Distance(_prevUV, uv);
+        if (dist <= stepUV * 0.5f)
+        {
+            DoStamp(uv, uvRadius);
+            _prevUV = uv;
+            _prevUvRadius = uvRadius;
+            return;
+        }
+
+        int steps = Mathf.CeilToInt(dist / stepUV);
+        steps = Mathf.Clamp(steps, 1, maxStampsPerFrame);
+
+        for (int s = 1; s <= steps; s++)
+        {
+            float t = (float)s / steps;
+            Vector2 p = Vector2.Lerp(_prevUV, uv, t);
+            float r = Mathf.Lerp(_prevUvRadius, uvRadius, t);
+            DoStamp(p, r);
+        }
+
+        _prevUV = uv;
+        _prevUvRadius = uvRadius;
+    }
+
+    void DoStamp(Vector2 uv, float uvRadius)
+    {
         _paintMat.SetTexture(PrevMaskId, _maskRead);
         _paintMat.SetVector(CenterId, uv);
         _paintMat.SetFloat(RadiusId, uvRadius);
         _paintMat.SetFloat(HardnessId, Mathf.Clamp01(hardness));
 
-        // Important: read=_maskRead, write=_maskWrite (ping-pong)
         Graphics.Blit(_maskRead, _maskWrite, _paintMat);
 
-        // Swap
         var tmp = _maskRead;
         _maskRead = _maskWrite;
         _maskWrite = tmp;
 
-        // Ensure plate samples the latest mask
         if (plateMaterial != null)
             plateMaterial.SetTexture(CutMaskId, _maskRead);
     }
@@ -150,7 +199,7 @@ public class SawCutter : MonoBehaviour
         return separation <= maxPaintSeparation;
     }
 
-    // Map world contact to renderer-local X/Z bounds 0..1
+    // Map world contact to renderer-local X/Z bounds 0..1 (no wrap)
     Vector2 WorldToRendererBoundsUV(Vector3 worldPoint)
     {
         var tf = plateRenderer.transform;
@@ -161,7 +210,11 @@ public class SawCutter : MonoBehaviour
         float u = Mathf.InverseLerp(min.x, min.x + size.x, p.x);
         float v = Mathf.InverseLerp(min.z, min.z + size.z, p.z);
         if (invertV) v = 1f - v;
-        return new Vector2(Mathf.Repeat(u, 1f), Mathf.Repeat(v, 1f));
+
+        // CHANGED: clamp instead of wrap to avoid jumping across the seam
+        u = Mathf.Clamp01(u);
+        v = Mathf.Clamp01(v);
+        return new Vector2(u, v);
     }
 
     float WorldToUVRadius(float worldR)
@@ -176,13 +229,19 @@ public class SawCutter : MonoBehaviour
         return localR / Mathf.Max(1e-5f, denom);
     }
 
-    // Existing PushPlateMappingToMaterial becomes a thin wrapper
     void PushPlateMappingToMaterial()
     {
-        PushPlateMappingTo(plateMaterial);
+        if (plateMaterial == null) return;
+        Vector3 min = _meshBounds.min;
+        Vector3 size = _meshBounds.size;
+
+        plateMaterial.SetVector(PlateUVMinId,   new Vector4(min.x,  min.y,  min.z,  0f));
+        plateMaterial.SetVector(PlateUVSizeId,  new Vector4(size.x, size.y, size.z, 0f));
+        plateMaterial.SetVector(UAxisMaskId,    new Vector4(1f, 0f, 0f, 0f));
+        plateMaterial.SetVector(VAxisMaskId,    new Vector4(0f, 0f, 1f, 0f));
+        plateMaterial.SetFloat(InvertVId, invertV ? 1f : 0f);
     }
 
-    // NEW: expose mapping push so other materials (overlay) can use the same mapping
     public void PushPlateMappingTo(Material mat)
     {
         if (!mat) return;
@@ -191,8 +250,8 @@ public class SawCutter : MonoBehaviour
 
         mat.SetVector(PlateUVMinId,   new Vector4(min.x,  min.y,  min.z,  0f));
         mat.SetVector(PlateUVSizeId,  new Vector4(size.x, size.y, size.z, 0f));
-        mat.SetVector(UAxisMaskId,    new Vector4(1f, 0f, 0f, 0f)); // U = X
-        mat.SetVector(VAxisMaskId,    new Vector4(0f, 0f, 1f, 0f)); // V = Z
+        mat.SetVector(UAxisMaskId,    new Vector4(1f, 0f, 0f, 0f));
+        mat.SetVector(VAxisMaskId,    new Vector4(0f, 0f, 1f, 0f));
         mat.SetFloat(InvertVId, invertV ? 1f : 0f);
     }
 
@@ -205,7 +264,6 @@ public class SawCutter : MonoBehaviour
 
     public void ResetCutMask()
     {
-        // Clear both ping-pong RTs back to white (uncut)
         if (plateMaterial == null) return;
         if (_maskRead)
         {
@@ -221,8 +279,8 @@ public class SawCutter : MonoBehaviour
             GL.Clear(false, true, Color.white);
             RenderTexture.active = prev2;
         }
-        // Re-assign current read texture to material (ensure consistency)
         plateMaterial.SetTexture(CutMaskId, _maskRead);
+        _hasPrevUV = false;
     }
 
     public float ApproxBrushUVRadius()

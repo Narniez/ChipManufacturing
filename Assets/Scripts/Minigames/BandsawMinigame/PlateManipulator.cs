@@ -1,60 +1,153 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using TMPro;
 
 [RequireComponent(typeof(MeshRenderer))]
 public class PlateManipulator : MonoBehaviour
 {
     [Header("Movement")]
-    [Tooltip("Units moved per screen pixel drag (single finger / mouse).")]
     public float translateSpeed = 0.01f;
-    [Tooltip("Degrees rotated per screen pixel (two finger twist / mouse right drag).")]
-    public float rotationSpeed = 0.3f;
-    [Tooltip("Optional clamp area in world space (XZ). Leave disabled for free movement.")]
+    public float rotationSpeed = 0.3f; // unused now but kept for UI consistency
     public bool useClampArea = false;
     public Vector2 clampMinXZ = new Vector2(-5, -5);
     public Vector2 clampMaxXZ = new Vector2(5, 5);
 
     [Header("Smoothing")]
-    [Tooltip("Interpolation for movement (0 = instant).")]
     [Range(0, 1)] public float moveSmooth = 0.15f;
-    [Tooltip("Interpolation for rotation (0 = instant).")]
     [Range(0, 1)] public float rotSmooth = 0.15f;
 
     [Header("Interaction")]
-    [Tooltip("Ignore touches that begin over UI.")]
     public bool ignoreUI = true;
-    [Tooltip("Allow translation only with single touch / left mouse.")]
     public bool singleTouchMoves = true;
-    [Tooltip("Allow rotation with two-finger twist or right mouse drag.")]
-    public bool multiTouchRotates = true;
 
     [Header("Y Lock")]
-    [Tooltip("Keep plate Y constant (recommended).")]
     public bool lockY = true;
+
+    [Header("Zoom & Camera Pan (two-finger)")]
+    public bool enableZoom = true;
+    [Tooltip("Mouse scroll wheel zoom speed (FOV or ortho size).")]
+    public float zoomSpeedScroll = 5f;
+    [Tooltip("Pinch zoom speed multiplier.")]
+    public float zoomSpeedPinch = 0.3f;
+    [Tooltip("Min/Max orthographic size (if camera is orthographic).")]
+    public float minOrthoSize = 2f;
+    public float maxOrthoSize = 20f;
+
+    [Header("Two-finger latching thresholds")]
+    [Tooltip("Minimum pinch distance change (in pixels) to latch pinch mode.")]
+    public float pinchStartThresholdPx = 10f;
+    [Tooltip("Minimum average 2-finger movement (in pixels) to latch camera vertical pan.")]
+    public float panStartThresholdPx = 8f;
+    [Tooltip("Small pinch delta required to continue pinch updates (prevents jitter).")]
+    public float pinchContinueEpsilonPx = 1.5f;
+    [Tooltip("Small movement required to continue pan (prevents jitter).")]
+    public float panContinueEpsilonPx = 1.0f;
+
+    [Header("Camera vertical pan")]
+    [Tooltip("World units moved vertically per screen pixel of two-finger vertical movement.")]
+    public float cameraPanSpeed = 0.01f;
+
+    [Header("UI (Optional)")]
+    public TextMeshProUGUI translateSpeedText;
+    public TextMeshProUGUI rotationSpeedText;
+    public TextMeshProUGUI zoomText;
+    public string translateFormat = "Translate: {0:0.000}";
+    public string rotationFormat = "Rotate: {0:0.00}";
+    public string zoomFormatPerspective = "FOV: {0:0.0}";
+    public string zoomFormatOrtho = "Size: {0:0.0}";
+    public bool showDebugHUD = false;
 
     Camera _cam;
     float _yLock;
     Vector3 _targetPos;
     Quaternion _targetRot;
 
-    // For two-finger rotation
+    // Start pose cache
+    Vector3 _startPos;
+    Quaternion _startRot;
+    bool _startCached;
+
+    // Two-finger state
     Vector2 _prevTouchA;
     Vector2 _prevTouchB;
     bool _havePrevTwo;
 
-    // For single-finger movement (screen position tracking)
+    // Pinch zoom
+    float _prevPinchDist;
+    bool _havePrevPinch;
+
+    // Single touch move tracking
     Vector2 _prevSingleTouch;
 
-    // Mouse helpers
+    // Mouse state
     bool _mouseTranslating;
-    bool _mouseRotating;
+
+    // Block single-touch translation until all touches released after a multi-touch gesture
+    bool _blockSingleAfterMulti;
+
+    enum InteractionMode { None, Translate, TwoFinger }
+    InteractionMode _mode = InteractionMode.None;
+
+    enum TwoFingerMode { None, Pinch, Pan }
+    TwoFingerMode _twoFingerMode = TwoFingerMode.None;
 
     void Awake()
     {
         _cam = Camera.main;
-        _targetPos = transform.position;
-        _targetRot = transform.rotation;
-        if (lockY) _yLock = transform.position.y;
+        CacheStartPoseIfNeeded();
+        _targetPos = _startPos;
+        _targetRot = _startRot;
+        if (lockY) _yLock = _startPos.y;
+        UpdateUI();
+    }
+
+    void CacheStartPoseIfNeeded()
+    {
+        if (_startCached) return;
+        _startPos = transform.position;
+        _startRot = transform.rotation;
+        _startCached = true;
+    }
+
+    public void ResetToStart()
+    {
+        CacheStartPoseIfNeeded();
+        _targetPos = _startPos;
+        _targetRot = _startRot;
+        transform.position = _startPos;
+        transform.rotation = _startRot;
+        if (lockY) _yLock = _startPos.y;
+
+        _havePrevTwo = false;
+        _havePrevPinch = false;
+        _mouseTranslating = false;
+        _blockSingleAfterMulti = false;
+        _twoFingerMode = TwoFingerMode.None;
+        _mode = InteractionMode.None;
+    }
+
+    public void SetTranslateSpeed(float value)
+    {
+        translateSpeed = Mathf.Max(0f, value);
+        UpdateUI();
+    }
+
+    public void SetRotationSpeed(float value) // kept for UI compatibility
+    {
+        rotationSpeed = Mathf.Max(0f, value);
+        UpdateUI();
+    }
+
+    public void SetScrollZoomSpeed(float value)
+    {
+        zoomSpeedScroll = Mathf.Max(0f, value);
+        UpdateUI();
+    }
+
+    public void SetPinchZoomSpeed(float value)
+    {
+        zoomSpeedPinch = Mathf.Max(0f, value);
+        UpdateUI();
     }
 
     void Update()
@@ -65,32 +158,37 @@ public class PlateManipulator : MonoBehaviour
 #else
         HandleTouch();
 #endif
+        HandleScrollZoom();
         ApplySmooth();
+        UpdateUI();
     }
 
     void HandleTouch()
     {
         int count = Input.touchCount;
+
+        // If all fingers lifted, clear multi-touch block and state
         if (count == 0)
         {
             _havePrevTwo = false;
+            _havePrevPinch = false;
+            _blockSingleAfterMulti = false;
+            _twoFingerMode = TwoFingerMode.None;
+            _mode = InteractionMode.None;
             return;
         }
 
-        // Ignore touches that start over UI
         if (ignoreUI)
-        {
             for (int i = 0; i < count; i++)
                 if (IsPointerOverUI(Input.touches[i].fingerId)) return;
-        }
 
         if (count == 1 && singleTouchMoves)
         {
+            if (_blockSingleAfterMulti) return;
+            _mode = InteractionMode.Translate;
             var t = Input.GetTouch(0);
             if (t.phase == TouchPhase.Began)
-            {
                 _prevSingleTouch = t.position;
-            }
             else if (t.phase == TouchPhase.Moved || t.phase == TouchPhase.Stationary)
             {
                 Vector2 delta = t.position - _prevSingleTouch;
@@ -98,80 +196,134 @@ public class PlateManipulator : MonoBehaviour
                 TranslateFromScreenDelta(delta);
             }
         }
-        else if (count >= 2 && multiTouchRotates)
+        else if (count >= 2)
         {
+            _blockSingleAfterMulti = true;
+            _mode = InteractionMode.TwoFinger;
             var tA = Input.GetTouch(0);
             var tB = Input.GetTouch(1);
-
             Vector2 a = tA.position;
             Vector2 b = tB.position;
+            float currentPinchDist = Vector2.Distance(a, b);
 
             if (!_havePrevTwo)
             {
                 _prevTouchA = a;
                 _prevTouchB = b;
-                _havePrevTwo = true;
+                _prevPinchDist = currentPinchDist;
+                _havePrevTwo = _havePrevPinch = true;
+                _twoFingerMode = TwoFingerMode.None;
                 return;
             }
 
-            // Rotation angle (signed) between previous and current segment AB
-            float anglePrev = Mathf.Atan2((_prevTouchB - _prevTouchA).y, (_prevTouchB - _prevTouchA).x);
-            float angleNow = Mathf.Atan2((b - a).y, (b - a).x);
-            float deltaAngleDeg = Mathf.DeltaAngle(anglePrev * Mathf.Rad2Deg, angleNow * Mathf.Rad2Deg);
+            Vector2 da = a - _prevTouchA;
+            Vector2 db = b - _prevTouchB;
+            Vector2 avgDelta = 0.5f * (da + db);
+            float verticalPixels = avgDelta.y;
 
-            // Optional translation: average center movement
-            Vector2 centerPrev = (_prevTouchA + _prevTouchB) * 0.5f;
-            Vector2 centerNow = (a + b) * 0.5f;
-            Vector2 centerDelta = centerNow - centerPrev;
+            float pinchDelta = currentPinchDist - _prevPinchDist;
+            float absPinch = Mathf.Abs(pinchDelta);
+            float absPan = Mathf.Abs(verticalPixels);
 
-            RotateBy(deltaAngleDeg);
-            TranslateFromScreenDelta(centerDelta);
+            if (_twoFingerMode == TwoFingerMode.None)
+            {
+                if (enableZoom && absPinch > pinchStartThresholdPx)
+                    _twoFingerMode = TwoFingerMode.Pinch;
+                else if (absPan > panStartThresholdPx)
+                    _twoFingerMode = TwoFingerMode.Pan;
+            }
 
+            if (_twoFingerMode == TwoFingerMode.Pinch && enableZoom)
+            {
+                if (absPinch > pinchContinueEpsilonPx)
+                    ApplyPinchZoom(pinchDelta);
+                _prevPinchDist = currentPinchDist;
+            }
+            else if (_twoFingerMode == TwoFingerMode.Pan)
+            {
+                if (absPan > panContinueEpsilonPx)
+                {
+                    // Two fingers down (verticalPixels < 0) => camera up (+Y)
+                    float dy = -verticalPixels * cameraPanSpeed;
+                    var pos = _cam.transform.position;
+                    pos.y += dy;
+                    _cam.transform.position = pos;
+                }
+            }
+
+            // Update refs
             _prevTouchA = a;
             _prevTouchB = b;
+            if (_twoFingerMode == TwoFingerMode.None)
+                _prevPinchDist = currentPinchDist;
         }
     }
 
     void HandleMouse()
     {
-        // Left button translates
+        // Left mouse translates (exclusive)
         if (Input.GetMouseButtonDown(0))
         {
             if (ignoreUI && IsPointerOverUI(-1)) return;
             _mouseTranslating = true;
+            _mode = InteractionMode.Translate;
         }
-        if (Input.GetMouseButtonUp(0)) _mouseTranslating = false;
-
-        // Right button rotates
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonUp(0))
         {
-            if (ignoreUI && IsPointerOverUI(-1)) return;
-            _mouseRotating = true;
+            _mouseTranslating = false;
+            _mode = InteractionMode.None;
         }
-        if (Input.GetMouseButtonUp(1)) _mouseRotating = false;
 
-        if (_mouseTranslating)
+        if (_mouseTranslating && _mode == InteractionMode.Translate)
         {
             Vector2 delta = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")) * 100f;
             TranslateFromScreenDelta(delta);
         }
 
-        if (_mouseRotating)
+        // Scroll zoom
+        if (enableZoom)
         {
-            float deltaAngle = Input.GetAxis("Mouse X") * 10f; // horizontal drag rotates
-            RotateBy(deltaAngle);
+            HandleScrollZoom();
+        }
+    }
+
+    void HandleScrollZoom()
+    {
+        if (!enableZoom) return;
+        float scroll = Input.mouseScrollDelta.y;
+        if (Mathf.Abs(scroll) > 0.001f)
+        {
+            ApplyScrollZoom(scroll);
+        }
+    }
+
+    void ApplyScrollZoom(float scrollDelta)
+    {
+        if (_cam.orthographic)
+        {
+            _cam.orthographicSize = Mathf.Clamp(
+                _cam.orthographicSize - scrollDelta * zoomSpeedScroll,
+                minOrthoSize,
+                maxOrthoSize);
+        }
+    }
+
+    void ApplyPinchZoom(float pinchDelta)
+    {
+        if (_cam.orthographic)
+        {
+            _cam.orthographicSize = Mathf.Clamp(
+                _cam.orthographicSize - (pinchDelta * zoomSpeedPinch * 0.01f),
+                minOrthoSize,
+                maxOrthoSize);
         }
     }
 
     void TranslateFromScreenDelta(Vector2 screenDelta)
     {
-        // Convert screen delta to world XZ displacement based on camera orientation
-        // Use camera right & forward projected onto XZ plane
         Vector3 right = _cam.transform.right; right.y = 0f; right.Normalize();
         Vector3 fwd = _cam.transform.forward; fwd.y = 0f; fwd.Normalize();
-
         Vector3 move = (right * screenDelta.x + fwd * screenDelta.y) * translateSpeed;
-
         _targetPos += move;
 
         if (lockY) _targetPos.y = _yLock;
@@ -181,11 +333,6 @@ public class PlateManipulator : MonoBehaviour
             _targetPos.x = Mathf.Clamp(_targetPos.x, clampMinXZ.x, clampMaxXZ.x);
             _targetPos.z = Mathf.Clamp(_targetPos.z, clampMinXZ.y, clampMaxXZ.y);
         }
-    }
-
-    void RotateBy(float deltaAngleDeg)
-    {
-        _targetRot = Quaternion.Euler(0f, deltaAngleDeg * rotationSpeed, 0f) * _targetRot;
     }
 
     void ApplySmooth()
@@ -206,7 +353,38 @@ public class PlateManipulator : MonoBehaviour
 #endif
     }
 
-    // Optional gizmo to visualize clamp area
+    void OnGUI()
+    {
+        if (!showDebugHUD) return;
+        const float pad = 8f;
+        const float line = 20f;
+        Rect r1 = new Rect(pad, pad, 240f, line);
+        Rect r2 = new Rect(pad, pad + line, 240f, line);
+        Rect r3 = new Rect(pad, pad + line * 2, 240f, line);
+
+        GUI.Label(r1, string.Format(translateFormat, translateSpeed));
+        GUI.Label(r2, string.Format(rotationFormat, rotationSpeed));
+        GUI.Label(r3, GetZoomString());
+    }
+
+    void UpdateUI()
+    {
+        if (translateSpeedText)
+            translateSpeedText.text = string.Format(translateFormat, translateSpeed);
+        if (rotationSpeedText)
+            rotationSpeedText.text = string.Format(rotationFormat, rotationSpeed);
+        if (zoomText)
+            zoomText.text = GetZoomString();
+    }
+
+    string GetZoomString()
+    {
+        if (_cam == null) return "";
+        return _cam.orthographic
+            ? string.Format(zoomFormatOrtho, _cam.orthographicSize)
+            : string.Format(zoomFormatPerspective, _cam.fieldOfView);
+    }
+
     void OnDrawGizmosSelected()
     {
         if (!useClampArea) return;
