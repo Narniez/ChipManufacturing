@@ -1510,7 +1510,7 @@ MonoBehaviour:
   obstaclePrefab: {fileID: 497198193891790151, guid: 25255c4c7b739f84ba61e698e9250912, type: 3}
   obstacleCount: 4
   randomizeColumnX: 1
-  lensPrefab: {fileID: 6559874751202024966, guid: e907dcd0f1501d146878b8df55d8d184, type: 3}
+  lensPrefab: {fileID: 6559874751202024966, guid: c3199b6342966dc42906ce7090bdeefb, type: 3}
   spawnCount: 4
   spawnXRange: {x: -26, y: 26}
   columnXJitter: 4
@@ -1519,6 +1519,9 @@ MonoBehaviour:
   clearExistingLensesOnSpawn: 1
   spawnOnStart: 1
   spawnInTwoColumns: 1
+  spawnBlockMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   obstaclePlacementClearance: 0
   lensPlacementClearance: 0
   maxPlacementAttempts: 50
