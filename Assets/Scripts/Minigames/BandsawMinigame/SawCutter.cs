@@ -176,18 +176,24 @@ public class SawCutter : MonoBehaviour
         return localR / Mathf.Max(1e-5f, denom);
     }
 
+    // Existing PushPlateMappingToMaterial becomes a thin wrapper
     void PushPlateMappingToMaterial()
     {
-        if (plateMaterial == null) return;
+        PushPlateMappingTo(plateMaterial);
+    }
+
+    // NEW: expose mapping push so other materials (overlay) can use the same mapping
+    public void PushPlateMappingTo(Material mat)
+    {
+        if (!mat) return;
         Vector3 min = _meshBounds.min;
         Vector3 size = _meshBounds.size;
 
-        // U = X, V = Z (Unity Plane)
-        plateMaterial.SetVector(PlateUVMinId,   new Vector4(min.x,  min.y,  min.z,  0f));
-        plateMaterial.SetVector(PlateUVSizeId,  new Vector4(size.x, size.y, size.z, 0f));
-        plateMaterial.SetVector(UAxisMaskId,    new Vector4(1f, 0f, 0f, 0f));
-        plateMaterial.SetVector(VAxisMaskId,    new Vector4(0f, 0f, 1f, 0f));
-        plateMaterial.SetFloat(InvertVId, invertV ? 1f : 0f);
+        mat.SetVector(PlateUVMinId,   new Vector4(min.x,  min.y,  min.z,  0f));
+        mat.SetVector(PlateUVSizeId,  new Vector4(size.x, size.y, size.z, 0f));
+        mat.SetVector(UAxisMaskId,    new Vector4(1f, 0f, 0f, 0f)); // U = X
+        mat.SetVector(VAxisMaskId,    new Vector4(0f, 0f, 1f, 0f)); // V = Z
+        mat.SetFloat(InvertVId, invertV ? 1f : 0f);
     }
 
     void OnDestroy()
@@ -217,5 +223,20 @@ public class SawCutter : MonoBehaviour
         }
         // Re-assign current read texture to material (ensure consistency)
         plateMaterial.SetTexture(CutMaskId, _maskRead);
+    }
+
+    public float ApproxBrushUVRadius()
+    {
+        return WorldToUVRadius(brushWorldRadius);
+    }
+
+    public float UVToWorldRadius(float uvRadius)
+    {
+        if (!plateRenderer) return uvRadius;
+        Vector3 lossy = plateRenderer.transform.lossyScale;
+        float avgScale = (Mathf.Abs(lossy.x) + Mathf.Abs(lossy.z)) * 0.5f;
+        float denom = Mathf.Max(_meshBounds.size.x, _meshBounds.size.z);
+        float localR = uvRadius * denom;
+        return localR * avgScale;
     }
 }
