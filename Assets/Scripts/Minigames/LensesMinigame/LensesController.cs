@@ -110,7 +110,8 @@ public class LensesController : MonoBehaviour
 
     private void AutoFindLenses()
     {
-        lenses = FindObjectsOfType<Lens>().Select(l => l.gameObject).ToList();
+          lenses = FindObjectsOfType<Lens>().Select(l => l.gameObject).ToList();
+       // lenses = FindAnyObjectByType<Lens>().ToList();
     }
 
     #region Spawning
@@ -164,7 +165,6 @@ public class LensesController : MonoBehaviour
 
         if (spawnInTwoColumns)
             SpawnTwoColumns(z);
-        // else: add single-row logic if you want
     }
 
     private void ClearExistingLenses()
@@ -271,8 +271,8 @@ public class LensesController : MonoBehaviour
                     if (rb == null)
                         rb = go.AddComponent<Rigidbody>();
 
-                    rb.isKinematic = false;
-                    rb.useGravity = false;
+                   // rb.isKinematic = false;
+                   // rb.useGravity = false;
                     rb.constraints = RigidbodyConstraints.FreezePositionZ
                                    | RigidbodyConstraints.FreezeRotationX
                                    | RigidbodyConstraints.FreezeRotationY;
@@ -316,8 +316,8 @@ public class LensesController : MonoBehaviour
                     if (rb == null)
                         rb = go.AddComponent<Rigidbody>();
 
-                    rb.isKinematic = false;
-                    rb.useGravity = false;
+                   /* rb.isKinematic = false;
+                    rb.useGravity = false;*/
                     rb.constraints = RigidbodyConstraints.FreezePositionZ
                                    | RigidbodyConstraints.FreezeRotationX
                                    | RigidbodyConstraints.FreezeRotationY;

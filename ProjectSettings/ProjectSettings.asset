@@ -918,7 +918,13 @@ PlayerSettings:
   XboxOneOverrideIdentityPublisher: 
   vrEditorSettings: {}
   cloudServicesEnabled:
+    Build: 0
+    Game Performance: 0
+    Legacy Analytics: 0
+    Purchasing: 0
+    UDP: 0
     UNet: 1
+    Unity Ads: 0
   luminIcon:
     m_Name: 
     m_ModelFolderPath: 
@@ -940,11 +946,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
-  cloudProjectId: fc62343c-5816-4c78-99fc-38e329b20d85
+  cloudProjectId: dd831172-a6b0-40f1-98fa-d4be5d567c4b
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: IMT&S-Chip-Manufacturing
-  organizationId: narniez
+  projectName: ChipFac_Demo
+  organizationId: amncaa
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}

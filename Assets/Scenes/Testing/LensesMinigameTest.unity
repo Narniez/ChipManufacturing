@@ -499,6 +499,58 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &238425720
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 238425721}
+  - component: {fileID: 238425722}
+  m_Layer: 0
+  m_Name: InputHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &238425721
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 238425720}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.25814, y: -18.78867, z: 64.46448}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &238425722
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 238425720}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33087fccbd53ee74f821b3cd0159bd81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LensInputHandler
+  mainCamera: {fileID: 1527111757}
+  lensesController: {fileID: 1591193412}
+  pointAction: {fileID: -8512583164950136511, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  clickAction: {fileID: 7039969376841225932, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  maxRayDistance: 50000
+  lensHitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &649207489
 GameObject:
   m_ObjectHideFlags: 0
@@ -1513,18 +1565,18 @@ MonoBehaviour:
   lensPrefab: {fileID: 6559874751202024966, guid: c3199b6342966dc42906ce7090bdeefb, type: 3}
   spawnCount: 4
   spawnXRange: {x: -26, y: 26}
-  columnXJitter: 4
+  columnXJitter: 7.4
   spawnYRange: {x: -35, y: 10}
-  minVerticalSpacing: 10
+  minVerticalSpacing: 15
   clearExistingLensesOnSpawn: 1
   spawnOnStart: 1
   spawnInTwoColumns: 1
   spawnBlockMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  obstaclePlacementClearance: 0
-  lensPlacementClearance: 0
-  maxPlacementAttempts: 50
+  obstaclePlacementClearance: 5
+  lensPlacementClearance: 5
+  maxPlacementAttempts: 30
   maxDistance: 1000
   maxBounces: 4
   rayMask:
@@ -1697,3 +1749,4 @@ SceneRoots:
   - {fileID: 807264182}
   - {fileID: 649207493}
   - {fileID: 982947425}
+  - {fileID: 238425721}
