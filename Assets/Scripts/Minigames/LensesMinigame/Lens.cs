@@ -37,13 +37,17 @@ public class Lens : MonoBehaviour
     [SerializeField] private LayerMask blockingLayers = ~0;
     [Tooltip("Shrinks the collision box slightly to avoid tiny overlaps.")]
     [SerializeField] private float skinWidth = 0.01f;
-
+/*
     [Header("Input (New Input System)")]
     [Tooltip("Input Actions asset that contains a 'Touch' map with 'Point' (Vector2) and 'Click' (Button).")]
-    [SerializeField] private InputActionAsset inputActions;
+    [SerializeField] private InputActionAsset inputActions;*/
 
-    [Tooltip("Camera used for screen-to-world raycasts.")]
-    [SerializeField] private Camera mainCamera;
+    private Camera mainCamera;
+
+    [Header("Touch Drag Settings")]
+    [SerializeField] private float touchMoveSensitivity = 0.01f;   // world units per pixel
+    [SerializeField] private float touchRotateSensitivity = 0.1f;  // degrees per pixel
+
 
     [HideInInspector] public bool isSelected;
 
@@ -98,10 +102,9 @@ public class Lens : MonoBehaviour
         if (cachedRenderer != null)
             originalColor = cachedRenderer.material.color;
 
-        if (mainCamera == null)
             mainCamera = Camera.main;
 
-        // --- New Input System setup ---
+     /*   // --- New Input System setup ---
         if (inputActions != null)
         {
             var touchMap = inputActions.FindActionMap("Touch", true);
@@ -112,12 +115,12 @@ public class Lens : MonoBehaviour
         else
         {
             Debug.LogWarning($"Lens '{name}': InputActionAsset not assigned.");
-        }
+        }*/
     }
 
     private void OnEnable()
     {
-        inputActions.Enable();
+        //inputActions.Enable();
 
         if (pointAction != null)
             pointAction.Enable();
@@ -164,6 +167,53 @@ public class Lens : MonoBehaviour
     {
         ApplyMovement();
         ApplyRotation();
+    }
+
+
+    public void HandleTouch(Vector2 dragDelta)
+    {
+        // dragDelta.x -> horizontal (move), dragDelta.y -> vertical (rotate)
+        if (rb == null) return;
+
+        // --- Horizontal movement ---
+        if (allowMovement && Mathf.Abs(dragDelta.x) > 0.001f)
+        {
+            float move = dragDelta.x * touchMoveSensitivity; // convert pixels to world units
+            Vector3 targetPos = rb.position + Vector3.right * move;
+
+            if (clampMovement)
+            {
+                Vector3 offset = targetPos - initialPosition;
+                offset.x = Mathf.Clamp(offset.x, xClampRange.x, xClampRange.y);
+                targetPos = initialPosition + offset;
+            }
+
+            if (CanMoveTo(targetPos, rb.rotation))
+            {
+                rb.MovePosition(targetPos);
+            }
+        }
+
+        // --- Vertical rotation ---
+        if (allowRotation && Mathf.Abs(dragDelta.y) > 0.001f)
+        {
+            // finger up (positive Y) = rotate one way, down the other – tweak sign if you prefer
+            float deltaAngle = -dragDelta.y * touchRotateSensitivity;
+
+            float newAngle = currentAngle + deltaAngle;
+            if (clampRotation)
+                newAngle = Mathf.Clamp(newAngle, minAngle, maxAngle);
+
+            Quaternion targetRot =
+                initialRotation * Quaternion.AngleAxis(newAngle, rotationAxis.normalized);
+
+            if (CanMoveTo(rb.position, targetRot))
+            {
+                rb.MoveRotation(targetRot);
+                currentAngle = newAngle;
+            }
+        }
+
     }
 
 
