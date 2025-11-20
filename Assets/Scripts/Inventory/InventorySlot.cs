@@ -29,7 +29,8 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
 
     [SerializeField] private InventoryItem inventoryItemPrefab; // your existing InventoryItem prefab
     private GameObject _activeProxy;
-    private CameraController mainCamera;
+    //private CameraController mainCamera;
+    private NewCameraControls mainCamera;
 
 
     // Backing data for this slot
@@ -61,7 +62,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
             _slotColor = icon.color;
         }
 
-        mainCamera = GameObject.FindGameObjectWithTag("MainCamera")?.GetComponent<CameraController>();
+        mainCamera = GameObject.FindGameObjectWithTag("MainCamera")?.GetComponent<NewCameraControls>();
 
         //UpdateUi();
     }
