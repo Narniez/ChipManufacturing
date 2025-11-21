@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 [RequireComponent(typeof(Collider))]
@@ -218,7 +218,12 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         GameStateSync.TryUpdateBeltOrientation(this);
     }
 
-    public void OnTap() { }
+    // Interaction
+    public void OnTap() {
+    
+       //Debug.Log($"Conveyor Belt tapped at {Anchor} facing {orientation}. Is connected to machine: {_isConnectedToMachine}");
+
+    }
     public void OnHold() { }
 
     public void TickMoveAttempt()
@@ -403,7 +408,6 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         PreviousInChain = null;
         NextInChain = null;
     }
-
     public void NotifyAdjacentMachinesOfConnection()
     {
         if (_grid == null || !_grid.HasGrid) return;

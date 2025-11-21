@@ -78,10 +78,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _chanceToBreakIncrement = data.chanceIncreasePerOutput;
         _miniMimumChanceToBreak = data.minimunChanceToBreak;
         _isBroken = false;
-        _grid = FindFirstObjectByType<GridService>();
+         _grid = FindFirstObjectByType<GridService>();
 
-        _initialized = true;
-;
 
         StartProduction();
     }
@@ -474,6 +472,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         GameStateSync.TryUpdateMachineOrientation(this); // If orientation changed during drag+rotate workflow.
     }
 
+    #endregion
+
+    #region Grid Placement 
+    // --- Grid Footprint & Placement (IGridOccupant) ---
     public Vector2Int BaseSize => data != null ? data.size : Vector2Int.one;
     public GridOrientation Orientation { get; private set; } = GridOrientation.North;
     public Vector2Int Anchor { get; private set; }
