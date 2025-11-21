@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "MachineUpgrade", menuName = "Scriptable Objects/MachineUpgrade")]
+[CreateAssetMenu(fileName = "MachineUpgrade", menuName = "Scriptable Objects/Machine/MachineUpgrade")]
 public class MachineUpgrade : ScriptableObject
 {
     public float prrocessingSpeedMultiplier = 1.2f;
