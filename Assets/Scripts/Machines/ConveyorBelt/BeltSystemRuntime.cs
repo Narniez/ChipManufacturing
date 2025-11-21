@@ -6,6 +6,8 @@ public class BeltSystemRuntime : MonoBehaviour
     public static BeltSystemRuntime Instance { get; private set; }
 
     [SerializeField] private float itemMoveDuration = 0.2f;
+    [Tooltip("Set to true if there are any conveyor belts already in the scene.")]
+    [SerializeField] private bool registerBeltsOnStart = false;
     public float ItemMoveDuration => itemMoveDuration;
 
     private readonly List<ConveyorBelt> _belts = new List<ConveyorBelt>();
@@ -18,9 +20,12 @@ public class BeltSystemRuntime : MonoBehaviour
 
     private void Start()
     {
-        var belts = FindObjectsByType<ConveyorBelt>(FindObjectsSortMode.InstanceID);
-        for (int i = 0; i < belts.Length; i++)
-            Register(belts[i]);
+        if (registerBeltsOnStart)
+        {
+            var belts = FindObjectsByType<ConveyorBelt>(FindObjectsSortMode.InstanceID);
+            for (int i = 0; i < belts.Length; i++)
+                Register(belts[i]);
+        }
     }
 
     private void Update()
