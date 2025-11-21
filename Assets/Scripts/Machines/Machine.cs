@@ -2,14 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using UnityEngine.VFX;
-using Unity.VisualScripting;
 
 public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 {
-    private MachineData data;   // Factory sets this via Initialize
+    // Factory sets this via Initialize
+    private MachineData data;   
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
+    private GridService _grid;
 
     private InventoryItem inventoryItem;
 
@@ -55,6 +55,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _chanceToBreakIncrement = data.chanceIncreasePerOutput;
         _miniMimumChanceToBreak = data.minimunChanceToBreak;
         _isBroken = false;
+         _grid = FindFirstObjectByType<GridService>();
+
 
         StartProduction();
     }
@@ -267,6 +269,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         StartProduction();
     }
 
+    #region Belt Output Logic
+
     // --- Output belt acceptance logic ---
     // Straight belt: must face outward (worldSide).
     // Corner belt: accept if machine outward side equals belt forward OR either orthogonal turn side.
@@ -276,6 +280,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         if (!belt.IsCorner && !belt.IsTurnPrefab) // plain straight
             return belt.Orientation == worldSide;
+
+        
 
         // Corner visual: outward side can be belt forward or its CW/CCW rotation
         var fwd = belt.Orientation;
@@ -287,8 +293,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     private void TryPushOutputToBelt(MaterialData mat)
     {
-        var grid = FindFirstObjectByType<GridService>();
-        if (grid == null || !grid.HasGrid) return;
+        if (_grid == null || !_grid.HasGrid) return;
 
         var orientedSize = BaseSize.OrientedSize(Orientation);
         var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
@@ -319,7 +324,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         foreach (var (cell, worldSide) in outputs)
         {
-            if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
+            if (!_grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
             GameObject occGO = cd.occupant as GameObject ?? (cd.occupant as Component)?.gameObject;
             if (occGO == null) continue;
             var belt = occGO.GetComponent<ConveyorBelt>();
@@ -344,8 +349,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private List<ConveyorBelt> GetConnectedOutputBelts()
     {
         var belts = new List<ConveyorBelt>();
-        var grid = FindFirstObjectByType<GridService>();
-        if (grid == null || !grid.HasGrid) return belts;
+        if (_grid == null || !_grid.HasGrid) return belts;
 
         var orientedSize = BaseSize.OrientedSize(Orientation);
         var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
@@ -369,7 +373,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         foreach (var (cell, worldSide) in outputs)
         {
-            if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
+            if (!_grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
             GameObject occGO = cd.occupant as GameObject ?? (cd.occupant as Component)?.gameObject;
             if (occGO == null) continue;
             var belt = occGO.GetComponent<ConveyorBelt>();
@@ -388,6 +392,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         if (svc == null) return;
         svc.AddOrStack(mat, amount);
     }
+    #endregion
 
     public void Upgrade()
     {
@@ -406,6 +411,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         return random < _chanceToBreak;
     }
 
+    #region Interaction
     // --- Interaction (IInteractable) ---
     public void OnTap()
     {
@@ -424,6 +430,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     }
     public void OnHold() { }
 
+    #endregion
+
+    #region Drag
     // --- Drag (IDraggable) ---
     public bool CanDrag => true;
     public Transform DragTransform => transform;
@@ -435,6 +444,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         ScanOutputsAndStartIfPossible();
     }
 
+    #endregion
+
+    #region Grid Placement 
     // --- Grid Footprint & Placement (IGridOccupant) ---
     public Vector2Int BaseSize => data != null ? data.size : Vector2Int.one;
     public GridOrientation Orientation { get; private set; } = GridOrientation.North;
@@ -465,7 +477,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         float wz = grid.Origin.z + (Anchor.y + size.y * 0.5f) * grid.CellSize;
         transform.position = new Vector3(wx, y, wz);
     }
+    #endregion
 
+
+    #region Conveyor I/O & Inventory
     // --- Conveyor I/O & Inventory bridge ---
     private void ScanOutputsAndStartIfPossible()
     {
@@ -549,8 +564,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // True if at least one acceptable belt is connected to any output
     private bool HasConnectedOutputBelt()
     {
-        var grid = FindFirstObjectByType<GridService>();
-        if (grid == null || !grid.HasGrid) return false;
+        if (_grid == null || !_grid.HasGrid) return false;
 
         var orientedSize = BaseSize.OrientedSize(Orientation);
         var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
@@ -574,7 +588,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         foreach (var (cell, worldSide) in outputs)
         {
-            if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
+            if (!_grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
             GameObject occGO = cd.occupant as GameObject ?? (cd.occupant as Component)?.gameObject;
             if (occGO == null) continue;
             var belt = occGO.GetComponent<ConveyorBelt>();
@@ -646,6 +660,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             default: return Anchor;
         }
     }
+    #endregion
 
     private static GridOrientation RotateSide(GridOrientation local, GridOrientation by)
         => (GridOrientation)(((int)local + (int)by) & 3);

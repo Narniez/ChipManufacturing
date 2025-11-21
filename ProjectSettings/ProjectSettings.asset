@@ -949,11 +949,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
-  cloudProjectId: dd831172-a6b0-40f1-98fa-d4be5d567c4b
+  cloudProjectId: fc62343c-5816-4c78-99fc-38e329b20d85
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: ChipFac_Demo
-  organizationId: amncaa
+  projectName: IMT&S-Chip-Manufacturing
+  organizationId: narniez
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
