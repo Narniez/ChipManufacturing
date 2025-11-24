@@ -6916,8 +6916,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b09ccdeed181e984bb3e552bfc20ebdb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FactorySceneBuilder
+  machineFactory: {fileID: 45226635}
   placement: {fileID: 682233058}
-  factorySceneName: Demo
 --- !u!4 &1062132405
 Transform:
   m_ObjectHideFlags: 0

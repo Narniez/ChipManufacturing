@@ -262,7 +262,7 @@ public class PlacementManager : MonoBehaviour
 
   // Place a machine using MachineData (used by FactorySceneBuilder)
 // This one performs all placement responsibilities: initialize, set internal state on machine,
-// position, mark grid occupancy and persist GameState — mirrors PreviewPlacementState.ConfirmPlacement.
+// position, mark grid occupancy and persist GameState ï¿½ mirrors PreviewPlacementState.ConfirmPlacement.
 public GameObject PlaceMachineFromSave(MachineData machineData, Vector2Int anchor, GridOrientation orientation, bool isBroken = false)
 {
     if (machineData == null || machineData.prefab == null)

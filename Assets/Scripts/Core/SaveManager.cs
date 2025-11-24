@@ -52,7 +52,7 @@ public class SaveManager : MonoBehaviour
             Directory.CreateDirectory(SaveDir);
             if (!File.Exists(SavePath))
             {
-                // No file yet – return a fresh state (NOT null) so the game can proceed and later save
+                // No file yet ï¿½ return a fresh state (NOT null) so the game can proceed and later save
                 return new GameState();
             }
 

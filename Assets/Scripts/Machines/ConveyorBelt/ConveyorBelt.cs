@@ -163,6 +163,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         NotifyAdjacentMachinesOfConnection();
         ApplyTurnVisualRotation();
         RefreshChainLinks();
+        GameStateSync.TryAddOrUpdateBelt(this);
     }
 
     private void ApplyWorldFromPlacement()
@@ -183,6 +184,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     {
         _turnKind = kind;
         ApplyTurnVisualRotation();
+        GameStateSync.TryAddOrUpdateBelt(this);
     }
 
     private void ApplyTurnVisualRotation()
@@ -218,12 +220,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         GameStateSync.TryUpdateBeltOrientation(this);
     }
 
-    // Interaction
-    public void OnTap() {
-    
-       //Debug.Log($"Conveyor Belt tapped at {Anchor} facing {orientation}. Is connected to machine: {_isConnectedToMachine}");
-
-    }
+    public void OnTap() { }
     public void OnHold() { }
 
     public void TickMoveAttempt()
@@ -408,6 +405,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         PreviousInChain = null;
         NextInChain = null;
     }
+
     public void NotifyAdjacentMachinesOfConnection()
     {
         if (_grid == null || !_grid.HasGrid) return;
