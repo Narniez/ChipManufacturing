@@ -341,8 +341,6 @@ public class PlacementManager : MonoBehaviour
         }
     }
 
-
-
     public void DestroyCurrentSelection()
     {
         var occ = CurrentSelection;

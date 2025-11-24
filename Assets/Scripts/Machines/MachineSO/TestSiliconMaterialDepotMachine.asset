@@ -16,7 +16,7 @@ MonoBehaviour:
   machineName: Sillicon Material Depo
   prefab: {fileID: 4423430148241660529, guid: 247b70cae7a8ff44ca94e85a7c945b62, type: 3}
   icon: {fileID: 0}
-  cost: 0
+  cost: 100
   inputMaterial: {fileID: 0}
   outputMaterial: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
   processingTime: 4
