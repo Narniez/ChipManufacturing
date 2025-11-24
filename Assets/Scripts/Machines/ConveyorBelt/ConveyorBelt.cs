@@ -50,14 +50,31 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     private IEnumerator DeferredInit()
     {
         yield return null;
+
+        // Re-snap existing item visual after reactivation (e.g. after isolation)
+        if (_item != null && _item.Visual != null)
+            _item.Visual.transform.position = GetWorldCenter();
+
         NotifyAdjacentMachinesOfConnection();
-        RefreshChainLinks(); // establish chain after placement/replacement
+        RefreshChainLinks();
+        GameStateSync.TryAddOrUpdateBelt(this); // Do NOT remove on isolation
     }
 
     private void OnDisable()
     {
+        // Disabled due to scene isolation or replacement; keep belt entry & item state
         UnlinkFromChain();
         BeltSystemRuntime.Instance?.Unregister(this);
+        // IMPORTANT: We no longer remove belt from GameState here to preserve items when isolating.
+    }
+
+    private void OnDestroy()
+    {
+        // Actual destruction -> remove from GameState
+        GameStateSync.TryRemoveBelt(this);
+        if (_item != null && _item.Visual != null)
+            Destroy(_item.Visual);
+        _item = null;
     }
 
     public void LockCorner() { if (isTurnPrefab) lockCorner = true; }
@@ -96,6 +113,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         NotifyAdjacentMachinesOfConnection();
         ApplyTurnVisualRotation();
         RefreshChainLinks();
+        GameStateSync.TryAddOrUpdateBelt(this);
     }
 
     public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation newOrientation) =>
@@ -105,6 +123,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     {
         _turnKind = kind;
         ApplyTurnVisualRotation();
+        GameStateSync.TryAddOrUpdateBelt(this);
     }
 
     private void ApplyTurnVisualRotation()
@@ -114,14 +133,9 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         {
             if (_turnKind == BeltTurnKind.Right)
                 transform.rotation *= Quaternion.Euler(0f, 90f, 0f);
-            else if (_turnKind == BeltTurnKind.Left)
-            {
-                // optional tweak for left corner
-            }
         }
     }
 
-    // Dragging
     public bool CanDrag => true;
     public Transform DragTransform => transform;
 
@@ -142,23 +156,17 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     {
         _isDragging = false;
         RefreshChainLinks();
+        GameStateSync.TryUpdateBeltOrientation(this);
     }
 
-    // Interaction
-    public void OnTap() {
-    
-       //Debug.Log($"Conveyor Belt tapped at {Anchor} facing {orientation}. Is connected to machine: {_isConnectedToMachine}");
-
-    }
+    public void OnTap() { }
     public void OnHold() { }
 
-    // Movement tick – fallback scan added if explicit chain link missing (fix for corner stalls)
     public void TickMoveAttempt()
     {
         if (_item == null) return;
         if (IsItemAnimating()) return;
 
-       
         EnsureForwardLinkStrict();
 
         if (NextInChain != null && TryMoveOntoChainChild(NextInChain))
@@ -223,10 +231,8 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         if (occGO == null) return false;
 
         var forwardBelt = occGO.GetComponent<ConveyorBelt>();
-        if (forwardBelt == null) return false;
-        if (forwardBelt.HasItem) return false; 
+        if (forwardBelt == null || forwardBelt.HasItem) return false;
 
-        // Establish chain for future ticks
         if (forwardBelt.PreviousInChain == null)
         {
             forwardBelt.PreviousInChain = this;
@@ -338,6 +344,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         PreviousInChain = null;
         NextInChain = null;
     }
+
     public void NotifyAdjacentMachinesOfConnection()
     {
         if (_grid == null || !_grid.HasGrid) return;
@@ -365,6 +372,8 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     private static GridOrientation Opposite(GridOrientation o) => (GridOrientation)(((int)o + 2) & 3);
 
     public bool IsCorner => isTurnPrefab && _turnKind != BeltTurnKind.None;
+
+    public BeltTurnKind TurnKind => _turnKind;
 
     public bool IsItemAnimating() =>
         _item != null && _item.Visual != null && _item.Duration > 0f && _item.smoothTime < 1f;
