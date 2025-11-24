@@ -44,6 +44,30 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         (data.inputMaterial == null || data.inputMaterial.materialType == MaterialType.None) &&
         data.outputMaterial != null && data.outputMaterial.materialType != MaterialType.None;
 
+    // Resume production after re-activation (e.g., when exiting minigame)
+    private void OnEnable()
+    {
+        if (_grid == null) _grid = FindFirstObjectByType<GridService>();
+        // Defer one frame so belts re-link and GridService is ready
+        StartCoroutine(DeferredResume());
+    }
+
+    private IEnumerator DeferredResume()
+    {
+        yield return null;
+        TryStartIfIdle();
+    }
+
+    // Clear stale coroutine handle when disabled (Unity stops coroutines on inactive GameObjects)
+    private void OnDisable()
+    {
+        if (productionRoutine != null)
+        {
+            try { StopCoroutine(productionRoutine); } catch { /* ignored */ }
+            productionRoutine = null;
+        }
+    }
+
     public void Initialize(MachineData machineData)
     {
         data = machineData;
@@ -55,8 +79,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _chanceToBreakIncrement = data.chanceIncreasePerOutput;
         _miniMimumChanceToBreak = data.minimunChanceToBreak;
         _isBroken = false;
-         _grid = FindFirstObjectByType<GridService>();
-
+        _grid = FindFirstObjectByType<GridService>();
 
         StartProduction();
     }
@@ -71,7 +94,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // Try to start one cycle if inputs are ready
     private void StartProduction()
     {
-        if (data == null) { Debug.LogError("Machine.StartProduction: MachineData not set."); return; }
+        //if (data == null) { Debug.LogError("Machine.StartProduction: MachineData not set."); return; }
         if (productionRoutine != null) return;
         if (_isBroken) return;
 
@@ -256,6 +279,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             productionRoutine = null;
         }
 
+        // Persist broken state
+        GameStateSync.TrySetMachineBroken(this, true);
+
         OnMachineBroken?.Invoke(this, transform.position);
     }
 
@@ -264,6 +290,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         if (!_isBroken) return;
         _isBroken = false;
         _chanceToBreak = 0f;
+
+        // Persist repaired state
+        GameStateSync.TrySetMachineBroken(this, false);
 
         OnMachineRepaired?.Invoke(this);
         StartProduction();
@@ -440,14 +469,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public void OnDrag(Vector3 worldPosition) { DragTransform.position = worldPosition; }
     public void OnDragEnd()
     {
-        // When drag finishes, re-scan for output belts at new position/orientation.
         ScanOutputsAndStartIfPossible();
+        GameStateSync.TryUpdateMachineOrientation(this); // If orientation changed during drag+rotate workflow.
     }
 
-    #endregion
-
-    #region Grid Placement 
-    // --- Grid Footprint & Placement (IGridOccupant) ---
     public Vector2Int BaseSize => data != null ? data.size : Vector2Int.one;
     public GridOrientation Orientation { get; private set; } = GridOrientation.North;
     public Vector2Int Anchor { get; private set; }
@@ -459,6 +484,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         transform.rotation = orientation.ToRotation();
 
         ScanOutputsAndStartIfPossible();
+        GameStateSync.TryAddOrUpdateMachine(this);
     }
 
     public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation orientation)

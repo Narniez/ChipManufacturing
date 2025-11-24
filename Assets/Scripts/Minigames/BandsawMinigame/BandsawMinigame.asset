@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RepairMinigame
   displayName: BandsawMinigame
   icon: {fileID: 0}
-  launchMode: 0
+  launchMode: 1
   sceneName: BandsawMinigameTest
   overlayPrefab: {fileID: 0}
   evaluator: {fileID: 11400000, guid: f496be32f0722e747aedf9c4c193975f, type: 2}
