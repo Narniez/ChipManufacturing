@@ -53,6 +53,24 @@ public class BeltChainPreviewController
         if (_currentTail == null) return null;
         if (!_grid.IsInside(p.Cell) || !_grid.IsAreaFree(p.Cell, Vector2Int.one)) return null;
 
+        //cannot place belt from preview if not enough money
+        var econ = EconomyManager.Instance;
+        if (econ != null)
+        {
+            // Get cost from the prefab's ConveyorBelt component
+            var beltTemplate = _straightPrefab != null ? _straightPrefab.GetComponent<ConveyorBelt>() : null;
+            int cost = beltTemplate != null ? beltTemplate.Cost : 0;
+
+            if (econ.playerBalance < cost)
+            {
+                Debug.LogWarning("Cannot confirm belt placement: not enough moni:(");
+                return null;
+            }
+
+            // charge now
+           econ.PurchaseConveyor(beltTemplate, ref econ.playerBalance);
+        }
+
         // Always straight child
         GameObject prefab = _straightPrefab;
         if (prefab == null) return null;
@@ -85,6 +103,8 @@ public class BeltChainPreviewController
         ShowOptionsFrom(child);
         return child;
     }
+
+
 
     private void PromoteTailIfBend(ConveyorBelt parent, ConveyorBelt child)
     {
@@ -193,9 +213,9 @@ public class BeltChainPreviewController
         switch (o)
         {
             case GridOrientation.North: return Vector2Int.up;
-            case GridOrientation.East:  return Vector2Int.right;
+            case GridOrientation.East: return Vector2Int.right;
             case GridOrientation.South: return Vector2Int.down;
-            case GridOrientation.West:  return Vector2Int.left;
+            case GridOrientation.West: return Vector2Int.left;
             default: return Vector2Int.up;
         }
     }

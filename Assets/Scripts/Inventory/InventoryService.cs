@@ -43,11 +43,6 @@ public class InventoryService : MonoBehaviour, IInventory
     public int GetCount(int itemId) =>
         _counts.TryGetValue(itemId, out var n) ? n : 0;
 
-    private void Add(int itemId, int qty)
-    {
-        if (qty <= 0) return;
-        TryApply(new Dictionary<int, int> { { itemId, qty } });
-    }
 
     public bool TryRemove(int itemId, int qty)
     {

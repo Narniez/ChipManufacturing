@@ -31,8 +31,28 @@ public class SelectionUI : MonoBehaviour
         _onRotateRight = onRotateRight;
         if (testDestroyButton != null)
         {
-            testDestroyButton.gameObject.SetActive(true); 
-            testDestroyButton.onClick.AddListener(() => PlacementManager.Instance?.DestroyCurrentSelection());
+            testDestroyButton.gameObject.SetActive(true);
+            testDestroyButton.onClick.AddListener(() =>
+            {
+                var placementManager = PlacementManager.Instance;
+                if (placementManager != null)
+                {
+                    var selectedMachine = placementManager.CurrentSelection as Machine;
+                    if (selectedMachine != null)
+                    {
+                        // Call ReturnMachine to refund the cost
+                        EconomyManager.Instance.ReturnMachine(selectedMachine.Data, ref EconomyManager.Instance.playerBalance);
+                    }
+                    var selectedConveyor = placementManager.CurrentSelection as ConveyorBelt;
+                    if(selectedConveyor != null)
+                    {
+                        // Return conveyor belt cost
+                        EconomyManager.Instance.ReturnConveyor(selectedConveyor, ref EconomyManager.Instance.playerBalance);
+                    }
+
+                    placementManager.DestroyCurrentSelection();
+                }
+            });
         }
         if (selectionName != null) selectionName.text = string.IsNullOrEmpty(title) ? "Selected" : title;
         if (panel != null) panel.SetActive(true);

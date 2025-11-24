@@ -50,7 +50,10 @@ public class BeltSystemRuntime : MonoBehaviour
     public void Register(ConveyorBelt belt)
     {
         if (belt == null) return;
-        if (!_belts.Contains(belt)) _belts.Add(belt);
+        if (!_belts.Contains(belt))
+        {
+            _belts.Add(belt);
+        }
     }
 
     public void Unregister(ConveyorBelt belt)

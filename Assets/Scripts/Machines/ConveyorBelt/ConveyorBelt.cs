@@ -20,6 +20,10 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     [SerializeField, Tooltip("If true (set at runtime), an existing corner will not auto-downgrade back to straight.")]
     private bool lockCorner = false;
 
+    [Header("Economy")]
+    [SerializeField] private int cost = 50;   // tweak in Inspector
+    public int Cost => cost;
+
     public bool IsTurnPrefab => isTurnPrefab;
     public bool CornerLocked => lockCorner;
     public GridOrientation Orientation => orientation;
