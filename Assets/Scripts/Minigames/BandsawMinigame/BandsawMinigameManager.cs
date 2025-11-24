@@ -9,6 +9,13 @@ public class BandsawMinigameManager : MonoBehaviour
     public PatternCutEvaluator patternEvaluator;
     public CutScoreUI scoreUI;
     public Renderer patternOverlayRenderer;
+    public Transform plateTransform;
+
+    [Header("Camera Reset")]
+    [Tooltip("Camera to reset on pattern change. If null, Camera.main is used.")]
+    public Camera gameCamera;
+    [Tooltip("Reset camera position & FOV/OrthoSize when pattern changes.")]
+    public bool resetCameraOnPatternChange = true;
 
     [Header("Patterns")]
     public List<PatternEntry> patterns = new();
@@ -18,15 +25,9 @@ public class BandsawMinigameManager : MonoBehaviour
     public bool autoApplyOnStart = true;
     public bool resetScoreOnPatternChange = true;
     public bool resetMaskOnPatternChange = true;
-
-    [Header("Brush Auto-Match")]
-    [Tooltip("Automatically adjust brush radius to match line thickness of the selected pattern.")]
     public bool autoMatchBrushToLine = true;
-    [Tooltip("Scale factor applied to half line thickness (UV) when setting brush radius. 1 = full half-thickness.")]
     [Range(0.5f, 1.5f)] public float brushToLineScale = 0.9f;
-    [Tooltip("Minimum world radius clamp when auto-matching.")]
     public float minWorldBrushRadius = 0.005f;
-    [Tooltip("Maximum world radius clamp when auto-matching.")]
     public float maxWorldBrushRadius = 0.2f;
 
     [Header("Events")]
@@ -42,11 +43,58 @@ public class BandsawMinigameManager : MonoBehaviour
     }
 
     PatternEntry? _current;
+    PlateManipulator _plateManipulator;
+
+    // Plate start pose
+    Vector3 _plateStartPosition;
+    Quaternion _plateStartRotation;
+    bool _plateStartCaptured;
+
+    // Camera start cache
+    bool _camStartCaptured;
+    Vector3 _camStartPosition;
+    Quaternion _camStartRotation;
+    float _camStartOrthoSize;
 
     void Start()
     {
+        if (plateTransform)
+        {
+            _plateStartPosition = plateTransform.position;
+            _plateStartRotation = plateTransform.rotation;
+            _plateStartCaptured = true;
+            _plateManipulator = plateTransform.GetComponent<PlateManipulator>();
+        }
+
+        CaptureCameraStartIfNeeded();
+
         if (autoApplyOnStart && patterns.Count > 0)
             ApplyPattern(defaultPatternIndex);
+    }
+
+    void CaptureCameraStartIfNeeded()
+    {
+        if (_camStartCaptured) return;
+        if (!gameCamera) gameCamera = Camera.main;
+        if (!gameCamera) return;
+
+        _camStartPosition = gameCamera.transform.position;
+        _camStartRotation = gameCamera.transform.rotation;
+        _camStartOrthoSize = gameCamera.orthographicSize;
+        _camStartCaptured = true;
+    }
+
+    void ResetCameraToStart()
+    {
+        if (!resetCameraOnPatternChange || !_camStartCaptured || !gameCamera) return;
+
+        // Restore transform
+        gameCamera.transform.position = _camStartPosition;
+        gameCamera.transform.rotation = _camStartRotation;
+
+        // Restore projection size
+        if (gameCamera.orthographic)
+            gameCamera.orthographicSize = _camStartOrthoSize;
     }
 
     public void ApplyPattern(int index)
@@ -56,8 +104,24 @@ public class BandsawMinigameManager : MonoBehaviour
             Debug.LogWarning($"Pattern index {index} out of range.");
             return;
         }
+
         var entry = patterns[index];
         _current = entry;
+
+        // Reset plate pose (syncs PlateManipulator internal targets)
+        if (_plateManipulator)
+        {
+            _plateManipulator.ResetToStart();
+        }
+        else if (_plateStartCaptured && plateTransform)
+        {
+            plateTransform.position = _plateStartPosition;
+            plateTransform.rotation = _plateStartRotation;
+        }
+
+        // Reset camera view if requested
+        if (resetCameraOnPatternChange)
+            ResetCameraToStart();
 
         // Overlay
         if (patternOverlayRenderer && entry.texture)
@@ -66,8 +130,6 @@ public class BandsawMinigameManager : MonoBehaviour
             mat.SetTexture("_PatternTex", entry.texture);
             mat.SetColor("_LineTint", entry.lineTint);
             mat.SetFloat("_Alpha", entry.overlayAlpha);
-
-            // Ensure overlay uses same bounds-based UV mapping as the plate/mask
             if (sawCutter) sawCutter.PushPlateMappingTo(mat);
         }
 
@@ -84,8 +146,7 @@ public class BandsawMinigameManager : MonoBehaviour
                 {
                     float desiredUVRadius = halfThicknessUV * Mathf.Clamp(brushToLineScale, 0.5f, 1.5f);
                     float worldR = sawCutter.UVToWorldRadius(desiredUVRadius);
-                    worldR = Mathf.Clamp(worldR, minWorldBrushRadius, maxWorldBrushRadius);
-                    sawCutter.brushWorldRadius = worldR;
+                    sawCutter.brushWorldRadius = Mathf.Clamp(worldR, minWorldBrushRadius, maxWorldBrushRadius);
                 }
             }
         }

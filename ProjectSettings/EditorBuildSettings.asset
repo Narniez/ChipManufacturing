@@ -8,12 +8,15 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Testing/TouchControlls.unity
     guid: 52d0c5c1cae9234439a4df691f5767bc
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Testing/Demo.unity
     guid: dcf7bed7022a13449a7843acb789b28c
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Testing/BandsawMinigameTest.unity
     guid: 60fcf30b9261cce4787848849abae1b6
+  - enabled: 1
+    path: Assets/Scenes/Testing/LensesMinigameTest.unity
+    guid: 5a0253c12de44bb429b6eff386c9bc53
   m_configObjects:
     com.unity.adaptiveperformance.google.android.provider_settings: {fileID: 11400000, guid: a584c411712cecd4da10dbebbef897fa, type: 2}
     com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: 5cbe3a8819fe41b499ccbd8b82015d4c, type: 2}

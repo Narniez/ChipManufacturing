@@ -149,6 +149,9 @@ PlayerSettings:
   - {fileID: 0}
   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   - {fileID: -944628639613478452, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  - {fileID: -892507152279541857, guid: 5cbe3a8819fe41b499ccbd8b82015d4c, type: 2}
+  - {fileID: 11400000, guid: a584c411712cecd4da10dbebbef897fa, type: 2}
+  - {fileID: 11400000, guid: 96863f04a9bd654499fc66fc0ef31b49, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -918,7 +921,13 @@ PlayerSettings:
   XboxOneOverrideIdentityPublisher: 
   vrEditorSettings: {}
   cloudServicesEnabled:
+    Build: 0
+    Game Performance: 0
+    Legacy Analytics: 0
+    Purchasing: 0
+    UDP: 0
     UNet: 1
+    Unity Ads: 0
   luminIcon:
     m_Name: 
     m_ModelFolderPath: 
@@ -940,11 +949,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
-  cloudProjectId: fc62343c-5816-4c78-99fc-38e329b20d85
+  cloudProjectId: dd831172-a6b0-40f1-98fa-d4be5d567c4b
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: IMT&S-Chip-Manufacturing
-  organizationId: narniez
+  projectName: ChipFac_Demo
+  organizationId: amncaa
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}

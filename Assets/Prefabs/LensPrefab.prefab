@@ -30,8 +30,8 @@ Transform:
   m_GameObject: {fileID: 6559874751202024966}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 87.70011}
-  m_LocalScale: {x: 4, y: 10, z: 6}
+  m_LocalPosition: {x: 0, y: 0, z: 70}
+  m_LocalScale: {x: 3, y: 12, z: 8}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -131,8 +131,8 @@ MonoBehaviour:
   rotationAxis: {x: 0, y: 0, z: 1}
   allowRotation: 1
   clampRotation: 1
-  minAngle: -30
-  maxAngle: 30
+  minAngle: -35
+  maxAngle: 35
   moveLeft: 97
   moveRight: 100
   movementSpeed: 12
@@ -145,6 +145,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   skinWidth: 0.01
+  touchMoveSensitivity: 0.05
+  touchRotateSensitivity: 0.2
   isSelected: 0
 --- !u!54 &1459363607796162803
 Rigidbody:

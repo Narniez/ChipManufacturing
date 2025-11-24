@@ -1,5 +1,6 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
@@ -36,6 +37,17 @@ public class Lens : MonoBehaviour
     [SerializeField] private LayerMask blockingLayers = ~0;
     [Tooltip("Shrinks the collision box slightly to avoid tiny overlaps.")]
     [SerializeField] private float skinWidth = 0.01f;
+/*
+    [Header("Input (New Input System)")]
+    [Tooltip("Input Actions asset that contains a 'Touch' map with 'Point' (Vector2) and 'Click' (Button).")]
+    [SerializeField] private InputActionAsset inputActions;*/
+
+    private Camera mainCamera;
+
+    [Header("Touch Drag Settings")]
+    [SerializeField] private float touchMoveSensitivity = 0.01f;   // world units per pixel
+    [SerializeField] private float touchRotateSensitivity = 0.1f;  // degrees per pixel
+
 
     [HideInInspector] public bool isSelected;
 
@@ -55,6 +67,11 @@ public class Lens : MonoBehaviour
     private float movementInput;
     private float rotationInput;
 
+    // New Input System actions
+    private InputAction pointAction; // Vector2 pointer position
+    private InputAction clickAction; // Button pointer press
+    private InputAction deltaAction; // Button pointer press
+
     private void Awake()
     {
         minigameController = FindAnyObjectByType<LensesController>();
@@ -63,8 +80,8 @@ public class Lens : MonoBehaviour
         col = GetComponent<Collider>();
 
         // Script-driven kinematic body: no gravity, no physics pushing it around
-        rb.useGravity = false;
         rb.isKinematic = true;
+        rb.useGravity = false;
 
         // Lock Z-position, and only allow rotation around your chosen axis via script
         rb.constraints = RigidbodyConstraints.FreezePositionZ
@@ -84,6 +101,52 @@ public class Lens : MonoBehaviour
         cachedRenderer = GetComponent<Renderer>();
         if (cachedRenderer != null)
             originalColor = cachedRenderer.material.color;
+
+            mainCamera = Camera.main;
+
+     /*   // --- New Input System setup ---
+        if (inputActions != null)
+        {
+            var touchMap = inputActions.FindActionMap("Touch", true);
+            pointAction = touchMap.FindAction("Point", true); // Vector2
+            clickAction = touchMap.FindAction("Click", true); // Button
+            deltaAction = touchMap.FindAction("Delta", true); // Vector2
+        }
+        else
+        {
+            Debug.LogWarning($"Lens '{name}': InputActionAsset not assigned.");
+        }*/
+    }
+
+    private void OnEnable()
+    {
+        //inputActions.Enable();
+
+        if (pointAction != null)
+            pointAction.Enable();
+
+        if (clickAction != null)
+        {
+            clickAction.Enable();
+            clickAction.performed += OnPointerClick;
+        }
+        if (deltaAction != null)
+        {
+            deltaAction.Enable();
+            deltaAction.performed += OnPointerClick;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (pointAction != null)
+            pointAction.Disable();
+
+        if (clickAction != null)
+        {
+            clickAction.performed -= OnPointerClick;
+            clickAction.Disable();
+        }
     }
 
     private void Update()
@@ -106,7 +169,87 @@ public class Lens : MonoBehaviour
         ApplyRotation();
     }
 
-    #region Movement / Rotation (via Rigidbody + collision checks)
+
+    public void HandleTouch(Vector2 dragDelta)
+    {
+        // dragDelta.x -> horizontal (move), dragDelta.y -> vertical (rotate)
+        if (rb == null) return;
+
+        // --- Horizontal movement ---
+        if (allowMovement && Mathf.Abs(dragDelta.x) > 0.001f)
+        {
+            float move = dragDelta.x * touchMoveSensitivity; // convert pixels to world units
+            Vector3 targetPos = rb.position + Vector3.right * move;
+
+            if (clampMovement)
+            {
+                Vector3 offset = targetPos - initialPosition;
+                offset.x = Mathf.Clamp(offset.x, xClampRange.x, xClampRange.y);
+                targetPos = initialPosition + offset;
+            }
+
+            if (CanMoveTo(targetPos, rb.rotation))
+            {
+                rb.MovePosition(targetPos);
+            }
+        }
+
+        // --- Vertical rotation ---
+        if (allowRotation && Mathf.Abs(dragDelta.y) > 0.001f)
+        {
+            // finger up (positive Y) = rotate one way, down the other – tweak sign if you prefer
+            float deltaAngle = -dragDelta.y * touchRotateSensitivity;
+
+            float newAngle = currentAngle + deltaAngle;
+            if (clampRotation)
+                newAngle = Mathf.Clamp(newAngle, minAngle, maxAngle);
+
+            Quaternion targetRot =
+                initialRotation * Quaternion.AngleAxis(newAngle, rotationAxis.normalized);
+
+            if (CanMoveTo(rb.position, targetRot))
+            {
+                rb.MoveRotation(targetRot);
+                currentAngle = newAngle;
+            }
+        }
+
+    }
+
+
+    #region Selection via new Input System
+
+    private void OnPointerClick(InputAction.CallbackContext ctx)
+    {
+        if (mainCamera == null || pointAction == null || minigameController == null)
+            return;
+
+        // This fires on mouse click AND touch tap (because Click is bound to <Pointer>/press)
+        Vector2 screenPos = pointAction.ReadValue<Vector2>();
+        Ray ray = mainCamera.ScreenPointToRay(screenPos);
+
+        if (Physics.Raycast(ray, out RaycastHit hit, 10000f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            // Check if THIS lens was hit
+            var hitLens = hit.collider.GetComponentInParent<Lens>();
+            if (hitLens == this)
+            {
+                minigameController.SelectLens(this);
+            }
+        }
+    }
+
+
+    public void ToggleSelected()
+    {
+        isSelected = !isSelected;
+        if (cachedRenderer == null) return;
+        cachedRenderer.material.color = isSelected ? Color.yellow : originalColor;
+    }
+
+    #endregion
+
+    #region Movement / Rotation (keyboard for now)
 
     private void ReadMovementInput()
     {
@@ -124,7 +267,6 @@ public class Lens : MonoBehaviour
 
         float dt = Time.fixedDeltaTime;
 
-        // Same world-space horizontal movement as before
         Vector3 moveDir = Vector3.right;
         Vector3 targetPos = rb.position + moveDir * movementInput * movementSpeed * dt;
 
@@ -135,14 +277,12 @@ public class Lens : MonoBehaviour
             targetPos = initialPosition + offset;
         }
 
-        // Only move if the new position does NOT overlap blocking layers
         if (CanMoveTo(targetPos, rb.rotation))
         {
             rb.MovePosition(targetPos);
         }
         else
         {
-            // Hit something -> stop input this frame so it doesn't jitter
             movementInput = 0f;
         }
     }
@@ -173,28 +313,32 @@ public class Lens : MonoBehaviour
         Quaternion targetRot =
             initialRotation * Quaternion.AngleAxis(currentAngle, rotationAxis.normalized);
 
-        // Only rotate if the new pose doesn't overlap obstacles
         if (CanMoveTo(rb.position, targetRot))
         {
             rb.MoveRotation(targetRot);
         }
         else
         {
-            // Block rotation and undo the angle change so clamp stays consistent
             currentAngle -= delta;
             rotationInput = 0f;
         }
     }
 
-    /// <summary>
-    /// Checks if moving/rotating the lens to the given pose would overlap any blocking colliders.
-    /// </summary>
+    public void ResetRotation()
+    {
+        currentAngle = 0f;
+        rb.MoveRotation(initialRotation);
+    }
+
+    #endregion
+
+    #region Collision helper
+
     private bool CanMoveTo(Vector3 targetPos, Quaternion targetRot)
     {
         if (col == null)
             return true;
 
-        // Use the collider's current bounds size as an approximation
         Vector3 halfExtents = col.bounds.extents;
         halfExtents -= Vector3.one * skinWidth;
         if (halfExtents.x < 0f) halfExtents.x = 0.001f;
@@ -214,33 +358,10 @@ public class Lens : MonoBehaviour
         foreach (var hit in hits)
         {
             if (hit == col) continue; // ignore self
-            return false;             // would hit something
+            return false;
         }
 
         return true;
-    }
-
-    public void ResetRotation()
-    {
-        currentAngle = 0f;
-        rb.MoveRotation(initialRotation);
-    }
-
-    #endregion
-
-    #region Selection
-
-    private void OnMouseDown()
-    {
-        if (minigameController != null)
-            minigameController.SelectLens(this);
-    }
-
-    public void ToggleSelected()
-    {
-        isSelected = !isSelected;
-        if (cachedRenderer == null) return;
-        cachedRenderer.material.color = isSelected ? Color.yellow : originalColor;
     }
 
     #endregion
