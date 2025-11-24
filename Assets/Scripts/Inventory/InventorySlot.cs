@@ -29,7 +29,6 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
 
     [SerializeField] private InventoryItem inventoryItemPrefab; // your existing InventoryItem prefab
     private GameObject _activeProxy;
-    //private CameraController mainCamera;
     private NewCameraControls mainCamera;
 
 
