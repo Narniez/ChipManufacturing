@@ -37,12 +37,13 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     public int Amount { get; private set; }
     public bool IsEmpty => Item == null || Amount <= 0;
 
-    private Sprite _slotSprite;
+    //private Sprite _slotSprite;
   
-    //private Color _originalIconColor;
     private Color _slotColor;
 
-    //private Transform _originalParent;
+    [Tooltip("Sprite to use when the slot is empty (background frame).")]
+    [SerializeField] private Sprite emptySlotSprite;
+
 
     private void Awake()
     {
@@ -57,7 +58,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
         // Cache original icon sprite/color so we can restore them when the slot is empty
         if (icon != null)
         {
-            _slotSprite = img.sprite;
+            //_slotSprite = img.sprite;
             _slotColor = icon.color;
         }
 
@@ -96,7 +97,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
 
     public void Clear()
     {
-        icon.sprite = _slotSprite;
+        icon.sprite = emptySlotSprite;
         Item = null;
         Amount = 0;
         UpdateUI();
@@ -123,7 +124,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
             {
                 // Restore original icon sprite & color when slot is empty
                 //icon.enabled = true;
-                icon.sprite = _slotSprite;
+                icon.sprite = emptySlotSprite;
                 icon.color = _slotColor;
             }
         }
