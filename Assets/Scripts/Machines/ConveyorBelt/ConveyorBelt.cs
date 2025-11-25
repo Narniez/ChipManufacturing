@@ -163,7 +163,17 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         NotifyAdjacentMachinesOfConnection();
         ApplyTurnVisualRotation();
         RefreshChainLinks();
-        GameStateSync.TryAddOrUpdateBelt(this);
+    }
+
+    private void ApplyWorldFromPlacement()
+    {
+        EnsureGrid();
+        if (_grid == null) return;
+        float y = _grid.Origin.y; // ground Y
+        Vector2Int size = BaseSize; // 1x1
+        float wx = _grid.Origin.x + (Anchor.x + size.x * 0.5f) * _grid.CellSize;
+        float wz = _grid.Origin.z + (Anchor.y + size.y * 0.5f) * _grid.CellSize;
+        transform.position = new Vector3(wx, y, wz);
     }
 
     private void ApplyWorldFromPlacement()

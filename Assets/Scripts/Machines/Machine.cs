@@ -27,7 +27,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private float _miniMimumChanceToBreak = 0;
     private bool _isBroken = false;
 
-    private bool _initialized; 
+    private bool _initialized; // NEW: set after Initialize completes
 
     public static event Action<Machine, Vector3> OnMachineBroken;
     public static event Action<Machine> OnMachineRepaired;
@@ -47,7 +47,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private void OnEnable()
     {
         if (_grid == null) _grid = FindFirstObjectByType<GridService>();
-        // Only resume if machine was initialized (avoid running before Initialize())
+        // Only resume if we were initialized (avoid running before Initialize())
         if (_initialized) StartCoroutine(DeferredResume());
     }
 
@@ -79,6 +79,11 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _miniMimumChanceToBreak = data.minimunChanceToBreak;
         _isBroken = false;
         _grid = FindFirstObjectByType<GridService>();
+
+        _initialized = true;
+
+        // Ensure save has correct machineDataPath now that data is valid
+        GameStateSync.ForceUpdateMachineDataPath(this);
 
         StartProduction();
     }
@@ -490,7 +495,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         ApplyWorldFromPlacement(_grid);
 
         ScanOutputsAndStartIfPossible();
-        GameStateSync.TryAddOrUpdateMachine(this);
     }
 
     public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation orientation)
