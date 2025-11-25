@@ -5,7 +5,7 @@ using UnityEngine;
 [Serializable]
 public class MachineState
 {
-    public string machineDataPath;           // Resources/Addressables path or GUID to MachineData
+    public string machineDataPath;
     public Vector2Int anchor;
     public GridOrientation orientation;
     public bool isBroken;
@@ -17,7 +17,10 @@ public class BeltState
     public Vector2Int anchor;
     public GridOrientation orientation;
     public bool isTurn;
-    public int turnKind; // cast to ConveyorBelt.BeltTurnKind
+    public int turnKind; 
+
+    public string itemMaterialKey;
+    public int itemAmount;
 }
 
 [Serializable]

@@ -33,10 +33,10 @@ public class SaveManager : MonoBehaviour
 
     void Update()
     {
-        if (_dirty && Time.unscaledTime - _lastWriteTime >= autosaveIntervalSeconds)
-        {
-            Flush();
-        }
+        //if (_dirty && Time.unscaledTime - _lastWriteTime >= autosaveIntervalSeconds)
+        //{
+        //    Flush();
+        //}
     }
 
     // Called by GameStateService.MarkDirty()
@@ -76,7 +76,7 @@ public class SaveManager : MonoBehaviour
         try
         {
             Directory.CreateDirectory(SaveDir);
-            var json = JsonUtility.ToJson(state, prettyPrint: false);
+            var json = JsonUtility.ToJson(state, prettyPrint: true);
 
             // Atomic-ish write: write temp then replace
             var tmp = SavePath + ".tmp";
