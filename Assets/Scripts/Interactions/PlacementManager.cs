@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 public class PlacementManager : MonoBehaviour
 {
@@ -177,6 +178,7 @@ public class PlacementManager : MonoBehaviour
         // After confirm, ensure GameState record exists (PreviewPlacementState already called SetPlacement).
         if (CurrentSelection is Machine m)
         {
+            Debug.Log("Should save machine to game state.");
             GameStateSync.TryAddOrUpdateMachine(m);
         }
         else if (CurrentSelection is ConveyorBelt b)
@@ -249,7 +251,116 @@ public class PlacementManager : MonoBehaviour
             SceneManager.MoveGameObjectToScene(go, active);
     }
 
-    public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefab, GridOrientation overrideOrientation, ConveyorBelt.BeltTurnKind turnKind = ConveyorBelt.BeltTurnKind.None)
+    // Helper used by loader to instantiate a prefab and move to factory scene
+    public GameObject InstantiateAndMove(GameObject prefab)
+    {
+        if (prefab == null) return null;
+        var go = Instantiate(prefab);
+        MoveToFactoryScene(go);
+        return go;
+    }
+
+  // Place a machine using MachineData (used by FactorySceneBuilder)
+// This one performs all placement responsibilities: initialize, set internal state on machine,
+// position, mark grid occupancy and persist GameState — mirrors PreviewPlacementState.ConfirmPlacement.
+public GameObject PlaceMachineFromSave(MachineData machineData, Vector2Int anchor, GridOrientation orientation, bool isBroken = false)
+{
+    if (machineData == null || machineData.prefab == null)
+    {
+        Debug.LogWarning("PlaceMachineFromSave: invalid data.");
+        return null;
+    }
+
+    var go = InstantiateAndMove(machineData.prefab);
+    if (go == null) return null;
+
+    var machine = go.GetComponent<Machine>();
+    if (machine == null)
+    {
+        Debug.LogError("PlaceMachineFromSave: prefab missing Machine component.");
+        Destroy(go);
+        return null;
+    }
+
+    // Initialize machine internals
+    machine.Initialize(machineData);
+
+    // Set transform/orientation on the machine (component-local setter)
+    machine.SetPlacement(anchor, orientation); // assume it only sets fields + transform
+
+    // Ensure we have a valid GridService reference
+    var grid = gridService ?? FindFirstObjectByType<GridService>();
+    if (grid == null || !grid.HasGrid)
+    {
+        Debug.LogError("PlaceMachineFromSave: GridService not ready. Machine placed but grid occupancy NOT set.");
+    }
+    else
+    {
+        // Mark occupancy exactly like ConfirmPlacement()
+        var size = machine.BaseSize.OrientedSize(orientation);
+        grid.SetAreaOccupant(anchor, size, go);
+
+        // Persist to game state
+        GameStateSync.TryAddOrUpdateMachine(machine);
+
+        // Validate immediately (helpful during debugging)
+#if UNITY_EDITOR
+        if (!grid.TryGetCell(anchor, out var cd) || cd.occupant != go)
+            Debug.LogWarning($"PlaceMachineFromSave: occupancy write failed at {anchor} for {go.name}.");
+#endif
+    }
+
+    if (isBroken) machine.Break();
+    return go;
+}
+
+// Place a belt using prefab (used by FactorySceneBuilder)
+// Mirrors PreviewPlacementState Confirm flow for belts (occupancy + state).
+public ConveyorBelt PlaceBeltFromSave(GameObject prefab, Vector2Int anchor, GridOrientation orientation, bool isTurn, int turnKind)
+{
+    if (prefab == null)
+    {
+        Debug.LogWarning("PlaceBeltFromSave: prefab null.");
+        return null;
+    }
+
+    var go = InstantiateAndMove(prefab);
+    if (go == null) return null;
+
+    var belt = go.GetComponent<ConveyorBelt>();
+    if (belt == null)
+    {
+        Debug.LogError("PlaceBeltFromSave: prefab missing ConveyorBelt component.");
+        Destroy(go);
+        return null;
+    }
+
+    belt.SetTurnKind((ConveyorBelt.BeltTurnKind)turnKind);
+
+    // Set transform/orientation
+    belt.SetPlacement(anchor, orientation); // lightweight setter on component
+
+    // Ensure we have a grid
+    var grid = gridService ?? FindFirstObjectByType<GridService>();
+    if (grid == null || !grid.HasGrid)
+    {
+        Debug.LogError("PlaceBeltFromSave: GridService not ready. Belt placed but grid occupancy NOT set.");
+    }
+    else
+    {
+        grid.SetAreaOccupant(anchor, Vector2Int.one, go);
+        GameStateSync.TryAddOrUpdateBelt(belt);
+
+#if UNITY_EDITOR
+        if (!grid.TryGetCell(anchor, out var cd) || cd.occupant != go)
+            Debug.LogWarning($"PlaceBeltFromSave: occupancy write failed at {anchor} for {go.name}.");
+#endif
+    }
+
+    return belt;
+}
+
+public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefab, GridOrientation overrideOrientation, ConveyorBelt.BeltTurnKind turnKind = ConveyorBelt.BeltTurnKind.None)
     {
         if (gridService == null || !gridService.HasGrid || source == null) return source;
 
