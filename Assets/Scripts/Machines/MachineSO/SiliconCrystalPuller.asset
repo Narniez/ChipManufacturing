@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8967eb2bc9f92e94cb009538a9497d84, type: 3}
+  m_Name: SiliconCrystalPuller
+  m_EditorClassIdentifier: Assembly-CSharp::MachineData
+  defaultOrientation: 0
+  machineName: 'Silicon Crystal Puller '
+  prefab: {fileID: 7759455347919647037, guid: 61ddd5b76606fd642bc9e5cff83b9fd0, type: 3}
+  icon: {fileID: 0}
+  cost: 50
+  inputMaterial: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
+  outputMaterial: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
+  processingTime: 2
+  recipes: []
+  size: {x: 1, y: 1}
+  repairMinigame: {fileID: 0}
+  upgrades: []
+  ports:
+  - kind: 1
+    side: 0
+    offset: 0
+  - kind: 2
+    side: 2
+    offset: 0
+  inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
+  outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
+  chanceIncreasePerOutput: 0
+  minimunChanceToBreak: 20
+  brokenMachineParticleEffect: {fileID: 0}

@@ -1,19 +1,40 @@
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
+#endif
 
 public static class GameStateSync
 {
-    // Utility: derive a Resources path or fallback to asset name 
-    private static string GetMachineDataPath(MachineData data)
+    // Editor/runtime helpers to derive an address/key for MachineData and MaterialData
+    private static string ResolveAssetAddress(Object asset)
     {
-        if (data == null) return string.Empty;
-        // If stored under Resources, you can compute relative path. For now use name.
-        return data.name;
+        if (asset == null) return string.Empty;
+
+#if UNITY_EDITOR
+        string path = AssetDatabase.GetAssetPath(asset);
+        if (string.IsNullOrEmpty(path)) return string.Empty;
+        string guid = AssetDatabase.AssetPathToGUID(path);
+        var settings = AddressableAssetSettingsDefaultObject.Settings;
+        if (settings != null)
+        {
+            var entry = settings.FindAssetEntry(guid);
+            if (entry != null && !string.IsNullOrEmpty(entry.address))
+                return entry.address;
+        }
+        // fallback to GUID (stable if you set entry.address = guid) or asset name
+        return guid;
+#else
+        // At runtime fallback to name (or saved address produced in editor)
+        return (asset as ScriptableObject)?.name ?? string.Empty;
+#endif
     }
 
     public static void TryAddOrUpdateMachine(Machine m)
     {
         var svc = GameStateService.Instance;
-        if (svc == null || m == null || m.Data == null) return;
+        if (svc == null || m == null) return;
 
         var list = svc.State.machines;
         var entry = list.Find(x => x.anchor == m.Anchor);
@@ -21,7 +42,7 @@ public static class GameStateSync
         {
             list.Add(new MachineState
             {
-                machineDataPath = GetMachineDataPath(m.Data),
+                machineDataPath = m.Data != null ? ResolveAssetAddress(m.Data) : string.Empty,
                 anchor = m.Anchor,
                 orientation = m.Orientation,
                 isBroken = m.IsBroken
@@ -29,6 +50,38 @@ public static class GameStateSync
         }
         else
         {
+            if (m.Data != null && string.IsNullOrEmpty(entry.machineDataPath))
+                entry.machineDataPath = ResolveAssetAddress(m.Data);
+            entry.orientation = m.Orientation;
+            entry.isBroken = m.IsBroken;
+        }
+        GameStateService.MarkDirty();
+    }
+
+    public static void ForceUpdateMachineDataPath(Machine m)
+    {
+        // Called after Initialize when machine.Data is guaranteed
+        var svc = GameStateService.Instance;
+        if (svc == null || m == null || m.Data == null) return;
+
+        var list = svc.State.machines;
+        var entry = list.Find(x => x.anchor == m.Anchor);
+        string key = ResolveAssetAddress(m.Data);
+
+        if (entry == null)
+        {
+            list.Add(new MachineState
+            {
+                machineDataPath = key,
+                anchor = m.Anchor,
+                orientation = m.Orientation,
+                isBroken = m.IsBroken
+            });
+        }
+        else
+        {
+            if (string.IsNullOrEmpty(entry.machineDataPath) || entry.machineDataPath != key)
+                entry.machineDataPath = key;
             entry.orientation = m.Orientation;
             entry.isBroken = m.IsBroken;
         }
@@ -74,6 +127,18 @@ public static class GameStateSync
 
         var list = svc.State.belts;
         var entryIndex = list.FindIndex(x => x.anchor == b.Anchor);
+        int turnKind = (int)(b.IsCorner ? b.TurnKind : ConveyorBelt.BeltTurnKind.None);
+
+        // if belt has an item, capture its material key + amount (amount = 1 for single item)
+        string itemKey = string.Empty;
+        int itemAmount = 0;
+        var item = b.PeekItem();
+        if (item != null && item.materialData != null)
+        {
+            itemKey = ResolveAssetAddress(item.materialData);
+            itemAmount = 1;
+        }
+
         if (entryIndex < 0)
         {
             list.Add(new BeltState
@@ -81,7 +146,9 @@ public static class GameStateSync
                 anchor = b.Anchor,
                 orientation = b.Orientation,
                 isTurn = b.IsTurnPrefab,
-                turnKind = (int)(b.IsCorner ? GetTurnKind(b) : ConveyorBelt.BeltTurnKind.None)
+                turnKind = turnKind,
+                itemMaterialKey = itemKey,
+                itemAmount = itemAmount
             });
         }
         else
@@ -89,7 +156,9 @@ public static class GameStateSync
             var e = list[entryIndex];
             e.orientation = b.Orientation;
             e.isTurn = b.IsTurnPrefab;
-            e.turnKind = (int)(b.IsCorner ? GetTurnKind(b) : ConveyorBelt.BeltTurnKind.None);
+            e.turnKind = turnKind;
+            e.itemMaterialKey = itemKey;
+            e.itemAmount = itemAmount;
             list[entryIndex] = e;
         }
         GameStateService.MarkDirty();
@@ -104,6 +173,12 @@ public static class GameStateSync
         {
             var e = svc.State.belts[idx];
             e.orientation = b.Orientation;
+            e.isTurn = b.IsTurnPrefab;
+            e.turnKind = (int)(b.IsCorner ? b.TurnKind : ConveyorBelt.BeltTurnKind.None);
+            // update item presence if any
+            var item = b.PeekItem();
+            e.itemMaterialKey = item != null && item.materialData != null ? ResolveAssetAddress(item.materialData) : string.Empty;
+            e.itemAmount = item != null ? 1 : 0;
             svc.State.belts[idx] = e;
             GameStateService.MarkDirty();
         }
@@ -123,14 +198,5 @@ public static class GameStateSync
         if (svc == null || b == null) return;
         svc.State.belts.RemoveAll(x => x.anchor == b.Anchor);
         GameStateService.MarkDirty();
-    }
-
-    // Extract current turn kind if needed (reflection avoided for simplicity)
-    private static ConveyorBelt.BeltTurnKind GetTurnKind(ConveyorBelt b)
-    {
-        // Since _turnKind is private we infer from rotation if needed.
-        // For now assume corner orientation flagged externally; return Left/Right based on transform yaw delta.
-        // If you expose a public TurnKind property, use that instead.
-        return b.TurnKind;
     }
 }

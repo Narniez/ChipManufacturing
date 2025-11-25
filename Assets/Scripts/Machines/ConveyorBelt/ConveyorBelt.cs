@@ -61,15 +61,13 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         // Disabled due to scene isolation or replacement; keep belt entry & item state
         UnlinkFromChain();
         BeltSystemRuntime.Instance?.Unregister(this);
-        // IMPORTANT: We no longer remove belt from GameState here to preserve items when isolating.
+        // keep GameState entry until actual destruction
     }
 
     private void OnDestroy()
     {
-        // Actual destruction -> remove from GameState
         GameStateSync.TryRemoveBelt(this);
-        if (_item != null && _item.Visual != null)
-            Destroy(_item.Visual);
+        if (_item != null && _item.Visual != null) Destroy(_item.Visual);
         _item = null;
     }
 
@@ -92,6 +90,8 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
             _item.smoothTime = 1f;
             _item.Duration = 0f;
         }
+        // Update persisted belt item state
+        GameStateSync.TryAddOrUpdateBelt(this);
         return true;
     }
 
@@ -99,17 +99,37 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     {
         var item = _item;
         _item = null;
+        GameStateSync.TryAddOrUpdateBelt(this);
         return item;
+    }
+
+    private void EnsureGrid()
+    {
+        if (_grid == null) _grid = FindFirstObjectByType<GridService>();
     }
 
     public void SetPlacement(Vector2Int anchor, GridOrientation newOrientation)
     {
         Anchor = anchor;
         orientation = newOrientation;
+
+        EnsureGrid();
+        ApplyWorldFromPlacement();
+
         NotifyAdjacentMachinesOfConnection();
         ApplyTurnVisualRotation();
         RefreshChainLinks();
-        GameStateSync.TryAddOrUpdateBelt(this);
+    }
+
+    private void ApplyWorldFromPlacement()
+    {
+        EnsureGrid();
+        if (_grid == null) return;
+        float y = _grid.Origin.y; // ground Y
+        Vector2Int size = BaseSize; // 1x1
+        float wx = _grid.Origin.x + (Anchor.x + size.x * 0.5f) * _grid.CellSize;
+        float wz = _grid.Origin.z + (Anchor.y + size.y * 0.5f) * _grid.CellSize;
+        transform.position = new Vector3(wx, y, wz);
     }
 
     public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation newOrientation) =>

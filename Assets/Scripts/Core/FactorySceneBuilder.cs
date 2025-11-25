@@ -1,60 +1,177 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using System.Collections;
+using System.Collections.Generic;
 
 public class FactorySceneBuilder : MonoBehaviour
 {
-    [SerializeField] private MachineFactory machineFactory;
     [SerializeField] private PlacementManager placement;
     [SerializeField] private string factorySceneName = "Demo";
 
-    private Scene _factoryScene;
-
-    void Start()
+    private void Start()
     {
-        _factoryScene = SceneManager.GetSceneByName(factorySceneName);
-        if (!_factoryScene.IsValid() || !_factoryScene.isLoaded)
+        StartCoroutine(RebuildFromSaveAsync());
+    }
+
+    private IEnumerator RebuildFromSaveAsync()
+    {
+        var scene = SceneManager.GetSceneByName(factorySceneName);
+        if (!scene.IsValid() || !scene.isLoaded)
         {
             Debug.LogWarning("FactorySceneBuilder: factory scene not loaded yet.");
-            return;
+            yield break;
+        }
+
+        // Ensure PlacementManager reference
+        int wait = 0;
+        while (placement == null && PlacementManager.Instance == null && wait++ < 120)
+            yield return null;
+        if (placement == null) placement = PlacementManager.Instance;
+        if (placement == null)
+        {
+            Debug.LogError("FactorySceneBuilder: PlacementManager not available. Aborting rebuild.");
+            yield break;
+        }
+
+        // Wait for grid ready
+        var grid = placement.GridService;
+        wait = 0;
+        while ((grid == null || !grid.HasGrid) && wait++ < 240)
+        {
+            yield return null;
+            grid = placement.GridService;
+        }
+        if (grid == null || !grid.HasGrid)
+        {
+            Debug.LogError("FactorySceneBuilder: GridService not ready. Aborting rebuild.");
+            yield break;
         }
 
         var gs = GameStateService.Instance?.State;
-        if (gs == null) return;
+        if (gs == null) yield break;
 
-        foreach (var m in gs.machines)
+        // Clean existing runtime placed machines/belts in the factory scene to avoid duplicates.
+        // Only remove objects that belong to the factory scene (preserves DontDestroyOnLoad managers).
+        var existingMachines = FindObjectsOfType<Machine>();
+        foreach (var em in existingMachines)
         {
-            var data = LoadMachineData(m.machineDataPath);
-            if (data == null) continue;
-
-            var go = Instantiate(data.prefab);
-            SceneManager.MoveGameObjectToScene(go, _factoryScene);
-
-            var machine = go.GetComponent<Machine>();
-            if (machine != null)
+            if (em == null) continue;
+            if (em.gameObject.scene == scene)
             {
-                machine.Initialize(data);
-                machine.SetPlacement(m.anchor, m.orientation);
-                if (m.isBroken) machine.Break();
+                // clear occupancy if registered
+                var size = em.BaseSize.OrientedSize(em.Orientation);
+                grid.SetAreaOccupant(em.Anchor, size, null);
+                Destroy(em.gameObject);
+            }
+        }
+        var existingBelts = FindObjectsOfType<ConveyorBelt>();
+        foreach (var eb in existingBelts)
+        {
+            if (eb == null) continue;
+            if (eb.gameObject.scene == scene)
+            {
+                grid.SetAreaOccupant(eb.Anchor, Vector2Int.one, null);
+                Destroy(eb.gameObject);
             }
         }
 
-        foreach (var b in gs.belts)
+        var machinesSnapshot = new List<MachineState>(gs.machines);
+        var beltsSnapshot = new List<BeltState>(gs.belts);
+
+        // Machines first (use PlacementManager helper so all placement/occupancy logic stays centralized)
+        foreach (var m in machinesSnapshot)
+        {
+            if (string.IsNullOrEmpty(m.machineDataPath))
+            {
+                Debug.LogWarning($"Skipping machine at {m.anchor} due to empty machineDataPath. This means the type wasn't recorded when placed.");
+                continue;
+            }
+
+            // Try Addressables first, then Resources fallback
+            MachineData data = null;
+            var mh = Addressables.LoadAssetAsync<MachineData>(m.machineDataPath);
+            yield return mh;
+            if (mh.Status == AsyncOperationStatus.Succeeded)
+                data = mh.Result;
+            else
+                data = Resources.Load<MachineData>(m.machineDataPath);
+
+            if (data == null || data.prefab == null)
+            {
+                Debug.LogWarning($"MachineData load failed for key '{m.machineDataPath}' at {m.anchor}. Skipping.");
+                continue;
+            }
+
+            // Use placement API so MoveToFactoryScene, occupancy and GameState sync behave the same as interactive placement.
+            placement.PlaceMachineFromSave(data, m.anchor, m.orientation, m.isBroken);
+            yield return null; // allow one frame so object registers with grid if needed
+        }
+
+        // Then belts (use PlacementManager to keep behavior consistent)
+        foreach (var b in beltsSnapshot)
         {
             var prefab = placement.GetConveyorPrefab(isTurn: b.isTurn);
-            var go = Instantiate(prefab);
-            SceneManager.MoveGameObjectToScene(go, _factoryScene);
-
-            var belt = go.GetComponent<ConveyorBelt>();
-            if (belt != null)
+            if (prefab == null)
             {
-                belt.SetTurnKind((ConveyorBelt.BeltTurnKind)b.turnKind);
-                belt.SetPlacement(b.anchor, b.orientation);
+                Debug.LogWarning($"FactorySceneBuilder: missing conveyor prefab for belt at {b.anchor}.");
+                continue;
             }
-        }
-    }
 
-    private MachineData LoadMachineData(string path)
-    {
-        return !string.IsNullOrEmpty(path) ? Resources.Load<MachineData>(path) : null;
+            var belt = placement.PlaceBeltFromSave(prefab, b.anchor, b.orientation, b.isTurn, b.turnKind);
+            if (belt == null) continue;
+
+            // Restore item on belt if present
+            if (!string.IsNullOrEmpty(b.itemMaterialKey))
+            {
+                MaterialData mat = null;
+                var ah = Addressables.LoadAssetAsync<MaterialData>(b.itemMaterialKey);
+                yield return ah;
+                if (ah.Status == AsyncOperationStatus.Succeeded)
+                    mat = ah.Result;
+                else
+                    mat = Resources.Load<MaterialData>(b.itemMaterialKey);
+
+                if (mat != null)
+                {
+                    GameObject visualPrefab = MaterialVisualRegistry.Instance != null
+                        ? MaterialVisualRegistry.Instance.GetPrefab(mat.materialType)
+                        : null;
+                    GameObject visual = visualPrefab != null ? Instantiate(visualPrefab) : null;
+                    var item = new ConveyorItem(mat, visual);
+                    if (!belt.TrySetItem(item, snapVisual: true) && visual != null)
+                        Destroy(visual);
+
+                    // ensure GameState record for belt includes item info
+                    GameStateSync.TryAddOrUpdateBelt(belt);
+                }
+                else
+                {
+                    Debug.LogWarning($"FactorySceneBuilder: failed to restore belt item for key '{b.itemMaterialKey}' at {b.anchor}");
+                }
+            }
+            yield return null; // allow frame for occupancy registration
+        }
+
+        // Final pass: refresh links once occupancy and objects are in place
+        var allBelts = FindObjectsOfType<ConveyorBelt>();
+        foreach (var belt in allBelts)
+        {
+            belt.RefreshChainLinks();
+            belt.NotifyAdjacentMachinesOfConnection();
+        }
+
+        // Validation: report any anchors that are still unoccupied (helps debug)
+        foreach (var ms in gs.machines)
+        {
+            if (!grid.TryGetCell(ms.anchor, out var cell) || cell.occupant == null)
+                Debug.LogWarning($"Machine at {ms.anchor} has no occupant in GridService after load.");
+        }
+        foreach (var bs in gs.belts)
+        {
+            if (!grid.TryGetCell(bs.anchor, out var cell) || cell.occupant == null)
+                Debug.LogWarning($"Belt at {bs.anchor} has no occupant in GridService after load.");
+        }
     }
 }

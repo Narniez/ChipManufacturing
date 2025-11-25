@@ -27,12 +27,12 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private float _miniMimumChanceToBreak = 0;
     private bool _isBroken = false;
 
+    private bool _initialized; // NEW: set after Initialize completes
+
     public static event Action<Machine, Vector3> OnMachineBroken;
     public static event Action<Machine> OnMachineRepaired;
-
     public static event Action<MaterialType, Vector3> OnMaterialProduced;
 
-    // Expose minimal state
     public MachineData Data => data;
     public bool IsProducing => productionRoutine != null;
     public bool IsBroken => _isBroken;
@@ -44,12 +44,11 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         (data.inputMaterial == null || data.inputMaterial.materialType == MaterialType.None) &&
         data.outputMaterial != null && data.outputMaterial.materialType != MaterialType.None;
 
-    // Resume production after re-activation (e.g., when exiting minigame)
     private void OnEnable()
     {
         if (_grid == null) _grid = FindFirstObjectByType<GridService>();
-        // Defer one frame so belts re-link and GridService is ready
-        StartCoroutine(DeferredResume());
+        // Only resume if we were initialized (avoid running before Initialize())
+        if (_initialized) StartCoroutine(DeferredResume());
     }
 
     private IEnumerator DeferredResume()
@@ -63,7 +62,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     {
         if (productionRoutine != null)
         {
-            try { StopCoroutine(productionRoutine); } catch { /* ignored */ }
+            try { StopCoroutine(productionRoutine); } catch { }
             productionRoutine = null;
         }
     }
@@ -81,10 +80,14 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _isBroken = false;
         _grid = FindFirstObjectByType<GridService>();
 
+        _initialized = true;
+
+        // Ensure save has correct machineDataPath now that data is valid
+        GameStateSync.ForceUpdateMachineDataPath(this);
+
         StartProduction();
     }
 
-    // Allow external systems to start production 
     public void TryStartIfIdle()
     {
         if (!_isBroken && productionRoutine == null)
@@ -477,14 +480,21 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public GridOrientation Orientation { get; private set; } = GridOrientation.North;
     public Vector2Int Anchor { get; private set; }
 
+    private void EnsureGrid()
+    {
+        if (_grid == null) _grid = FindFirstObjectByType<GridService>();
+    }
+
     public void SetPlacement(Vector2Int anchor, GridOrientation orientation)
     {
         Anchor = anchor;
         Orientation = orientation;
         transform.rotation = orientation.ToRotation();
 
+        EnsureGrid();
+        ApplyWorldFromPlacement(_grid);
+
         ScanOutputsAndStartIfPossible();
-        GameStateSync.TryAddOrUpdateMachine(this);
     }
 
     public bool CanPlace(GridService grid, Vector2Int anchor, GridOrientation orientation)
