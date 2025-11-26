@@ -46,9 +46,6 @@ public class DraggingState : BasePlacementState
         {
             _hadOriginalArea = false;
         }
-
-        _heightOffset = PlaceMan.ComputePivotBottomOffset(_dragging.DragTransform);
-
         var snapped = ApplySnap(_startWorld);
         _lastValidWorld = snapped;
 
@@ -165,10 +162,19 @@ public class DraggingState : BasePlacementState
 
         Vector2Int anchor = grid.ClampAnchor(desiredAnchor, size);
         _currentAnchor = anchor;
+
+        Debug.Log($"ApplySnap: worldY={world.y:F3}, cell={cell}, anchor={anchor}, gridOriginY={grid.Origin.y:F3}");
+
         _dragging.SetPlacement(anchor, _currentOrientation);
 
-        Vector3 snappedWorld = PlaceMan.AnchorToWorldCenter(anchor, size, _heightOffset);
+        // After SetPlacement the component's ApplyWorldFromPlacement sets transform.position.y = grid.Origin.y.
+        Debug.Log($"ApplySnap: after SetPlacement transformY={_dragging.DragTransform.position.y:F3} (should equal grid origin)");
+
+        Vector3 snappedWorld = PlaceMan.AnchorToWorldCenter(anchor, size, 0);
         _lastValidWorld = snappedWorld;
+
+        Debug.Log($"ApplySnap: heightOffset={_heightOffset:F3}, snappedWorldY={snappedWorld.y:F3}");
+
         return snappedWorld;
     }
 

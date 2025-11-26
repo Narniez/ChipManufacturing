@@ -22,8 +22,4 @@ public class RepairMinigame : ScriptableObject
     [Header("Evaluation")]
     [Tooltip("Evaluator that decides if the minigame attempt repairs the machine.")]
      public MinigameEvaluator evaluator;
-
-    [Header("Optional UI overrides")]
-    public GameObject brokenIndicatorPrefab;
-    public GameObject repairUIPrefab;
 }

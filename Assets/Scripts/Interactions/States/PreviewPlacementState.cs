@@ -19,7 +19,6 @@ public class PreviewPlacementState : BasePlacementState
     // bottom-left cell of footprint
     private Vector2Int _anchor;              
     private GridOrientation _orientation;
-    private float _heightOffset;
 
     private bool _committed;
     private bool _isConveyor;
@@ -92,9 +91,7 @@ public class PreviewPlacementState : BasePlacementState
 
         // Ensure preview does not overlap existing occupants
         _anchor = FindNearestFreeArea(_anchor, size);
-
-        _heightOffset = PlaceMan.ComputePivotBottomOffset(_instance.transform);
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, 0);
         _instance.transform.position = snapped;
         _occ.SetPlacement(_anchor, _orientation);
 
@@ -140,7 +137,7 @@ public class PreviewPlacementState : BasePlacementState
         if (newAnchor == _anchor) return;
 
         _anchor = newAnchor;
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, 0);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
 
@@ -167,7 +164,7 @@ public class PreviewPlacementState : BasePlacementState
         if (newAnchor == _anchor) return;
 
         _anchor = newAnchor;
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, 0);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
 
@@ -204,7 +201,7 @@ public class PreviewPlacementState : BasePlacementState
 
         _anchor = newAnchor;
 
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, newSize, _heightOffset);
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, newSize, 0);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
 

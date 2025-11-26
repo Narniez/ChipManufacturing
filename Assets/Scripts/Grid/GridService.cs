@@ -65,6 +65,7 @@ public class GridService : MonoBehaviour
         Vector3 center = plane.position;
         originMin = center - Vector3.right * (targetWidth * 0.5f) - Vector3.forward * (targetDepth * 0.5f);
 
+        
         origin = originMin;
         cols = outCols;
         rows = outRows;
