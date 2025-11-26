@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -55,6 +56,9 @@ public class PreviewPlacementState : BasePlacementState
         Vector2Int desiredCell = _grid.WorldToCell(world);
 
         _instance = Object.Instantiate(_prefab);
+        // Ensure instance is in the current scene (PlacementManager helper)
+        PlaceMan?.NotifySpawned(_instance);
+
         _occ = _instance.GetComponent<IGridOccupant>();
         if (_occ == null)
         {
@@ -91,11 +95,30 @@ public class PreviewPlacementState : BasePlacementState
 
         // Ensure preview does not overlap existing occupants
         _anchor = FindNearestFreeArea(_anchor, size);
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, 0);
+
+        // Defer position/height/indicator work by one frame so renderer bounds, prefab child transforms
+        // and any scene move operations have settled. This fixes indicators being offset on first spawn.
+        PlaceMan?.StartCoroutine(DeferredPlacementInit(desiredCell));
+    }
+
+    private IEnumerator DeferredPlacementInit(Vector2Int desiredCell)
+    {
+        // Wait one frame for Unity to finish instantiation/layout and renderer bounds to be valid
+        yield return null;
+
+        var size = GetOrientedSize();
+
+        // Compute pivot offset using settled renderers
+        _heightOffset = PlaceMan.ComputePivotBottomOffset(_instance.transform);
+
+        // Snap to grid center based on anchor/size and computed offset
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
         _instance.transform.position = snapped;
+
+        // Let occupant know its logical placement (may set rotation)
         _occ.SetPlacement(_anchor, _orientation);
 
-        // Build port indicators for machines during preview
+        // Build port indicators now that transforms and bounds are stable
         RebuildPortIndicators();
 
         // Show rotation UI (left/right) for preview
@@ -221,7 +244,10 @@ public class PreviewPlacementState : BasePlacementState
         }
 
         var machine = _instance.GetComponent<Machine>();
-       
+        if (_machineData != null && machine != null)
+        {
+            machine.Initialize(_machineData);
+        }
 
         RestorePreviewMaterial(_instance);
 
@@ -421,6 +447,9 @@ public class PreviewPlacementState : BasePlacementState
 
         var size = GetOrientedSize();
         float y = _grid.Origin.y + 0.02f;
+
+        // DEBUG: report placement state
+        Debug.Log($"[Preview] anchor={_anchor} orientation={_orientation} orientedSize={size} instancePos={_instance.transform.position}");
 
         var ports = _machineData.ports != null && _machineData.ports.Count > 0
             ? _machineData.ports

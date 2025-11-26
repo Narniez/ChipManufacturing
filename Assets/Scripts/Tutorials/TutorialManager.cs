@@ -11,6 +11,7 @@ public class TutorialManager : MonoBehaviour
 
     private void OnEnable()
     {
+        //Debug.Log($"TutorialManager.OnEnable instanceID={this.GetInstanceID()}, gameObject={gameObject.name}");
         // Single subscription to generic tutorial stream — ensures all PublishSignal(...) calls are observed.
         TutorialEventBus.OnSignalPublished += OnSignalReceived;
 
@@ -86,18 +87,18 @@ public class TutorialManager : MonoBehaviour
 
         var step = sequence.steps[_index];
 
-        Debug.Log($"TutorialManager.TryAdvance: currentStep={_index}, waitingFor={step.waitForSignal}, incomingSig={sig}, payload={payload}");
+        //Debug.Log($"TutorialManager.TryAdvance: currentStep={_index}, waitingFor={step.waitForSignal}, incomingSig={sig}, payload={payload}");
 
         if (step.waitForSignal != sig) return;
 
-        Debug.Log($"TutorialManager.TryAdvance: step {_index} matched signal {sig} — advancing.");
+       // Debug.Log($"TutorialManager.TryAdvance: step {_index} matched signal {sig} — advancing.");
         Advance();
     }
 
     // Single generic handler for all tutorial signals (subscribed in OnEnable).
     private void OnSignalReceived(TutorialSignal signal, object payload)
     {
-        Debug.Log($"TutorialManager.OnSignalReceived: signal={signal}, payload={payload}");
+        //Debug.Log($"TutorialManager.OnSignalReceived: signal={signal}, payload={payload}");
         TryAdvance(signal, payload);
     }
 
@@ -105,8 +106,8 @@ public class TutorialManager : MonoBehaviour
     public void OnClickShop() => TutorialEventBus.PublishShopOpened();
     public void OnShopBuyButton()
     {
-        Debug.Log($"TutorialManager.OnShopBuyButton called (instance={this.GetInstanceID()})");
-        TutorialEventBus.PublishShopBuyClicked(null);
+        //Debug.Log($"TutorialManager.OnShopBuyButton called (instance={this.GetInstanceID()})");
+        TutorialEventBus.PublishShopBuyClicked();
     }
     public void OnConfirmButton() => TutorialEventBus.PublishPreviewConfirmed();
     
