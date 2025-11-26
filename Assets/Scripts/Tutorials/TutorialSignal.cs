@@ -10,6 +10,8 @@ public enum TutorialSignal
     PreviewConfirmed,
     MachinePlaced,
     
+    ConveyorConnectedToMachine,
+    MachineProducedMaterial,
     InventoryOpened,
     InventoryItemSelected,
     InventoryItemSold,

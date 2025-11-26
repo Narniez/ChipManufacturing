@@ -221,21 +221,7 @@ public class PreviewPlacementState : BasePlacementState
         }
 
         var machine = _instance.GetComponent<Machine>();
-        if (_machineData != null && machine != null)
-        {
-            machine.Initialize(_machineData);
-            var economyManager = EconomyManager.Instance;
-            if(economyManager.playerBalance < economyManager.GetMachineCost(_machineData))
-            {
-                Debug.LogWarning("Cannot confirm machine placement: not enough moni:(");
-                PlaceMan.CancelPreview();
-                return;
-            }
-            else
-            {
-                economyManager.PurchaseMachine(_machineData, ref EconomyManager.Instance.playerBalance);
-            }
-        }
+       
 
         RestorePreviewMaterial(_instance);
 
@@ -254,7 +240,7 @@ public class PreviewPlacementState : BasePlacementState
             var belt = _instance.GetComponent<ConveyorBelt>();
             if (belt != null)
             {
-                EconomyManager.Instance.PurchaseConveyor(belt, ref EconomyManager.Instance.playerBalance);
+                EconomyManager.Instance?.PurchaseConveyor(belt, ref EconomyManager.Instance.playerBalance);
                 belt.NotifyAdjacentMachinesOfConnection();
 
             }
@@ -267,6 +253,26 @@ public class PreviewPlacementState : BasePlacementState
 
         // Cleanup preview port indicators after placement
         DestroyPortIndicators();
+
+        if (_machineData != null && machine != null)
+        {
+            machine.Initialize(_machineData);
+            var economyManager = EconomyManager.Instance;
+            if (EconomyManager.Instance == null)
+            {
+                return;
+            }
+            if (economyManager.playerBalance < economyManager.GetMachineCost(_machineData))
+            {
+                Debug.LogWarning("Cannot confirm machine placement: not enough moni:(");
+                PlaceMan.CancelPreview();
+                return;
+            }
+            else
+            {
+                economyManager.PurchaseMachine(_machineData, ref EconomyManager.Instance.playerBalance);
+            }
+        }
     }
 
     // External cancel (called by PlacementManager.CancelPreview)
