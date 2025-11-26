@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: Start_Story 3
   m_EditorClassIdentifier: 
   text: 'Robud: Oh no, it is already here.'
+  textBackdropSprite: {fileID: 0}
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
-  anchor: 2
+  anchor: 7
   waitForSignal: 0
   highlightTargetPath: 
   gateInputOutsideHighlight: 1
@@ -24,4 +25,5 @@ MonoBehaviour:
   dragTargetPath: 
   dragDuration: 1.25
   dragLoop: 0
-  typewriterCharsPerSecond: 0
+  typewriterCharsPerSecond: 60
+  fullscreenSprite: {fileID: 0}

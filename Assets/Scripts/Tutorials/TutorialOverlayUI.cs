@@ -8,6 +8,10 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
     [Header("Overlay")]
     [SerializeField] private Canvas rootCanvas;
     [SerializeField] private Image dimmer;
+    [SerializeField, Tooltip("Optional: image stretched to fill the canvas for slideshow/fullscreen steps.")]
+    private Image fullscreenImage;
+    [SerializeField, Tooltip("Optional: image to use behind text as backdrop.")]
+    private Image textBackdropImage;
 
     [Header("Hint UI")]
     [SerializeField] private FingerHint finger;
@@ -33,6 +37,9 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
     private RectTransform _highlightTarget;
     private bool _gateOutside;
 
+    // store default TMP font so we can restore when a step doesn't override
+    private TMP_FontAsset _defaultBubbleFont;
+
     // Lifter state
     private RectTransform _liftedTarget;
     private Canvas _liftedCanvas;
@@ -53,6 +60,8 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
     void Awake()
     {
         if (rootCanvas == null) rootCanvas = GetComponentInParent<Canvas>();
+        // capture default font
+        if (bubbleText != null) _defaultBubbleFont = bubbleText.font;
         Show(false);
     }
 
@@ -73,33 +82,36 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
     {
         if (deactivateRootOnHide && !visible)
         {
-            // Restore any lifted target/finger before hiding
             RestoreLiftedTarget();
             RestoreFingerCanvas();
-            // Ensure typewriter ends cleanly
             SkipTypewriter();
+            if (fullscreenImage) fullscreenImage.gameObject.SetActive(false);
+            if (textBackdropImage) textBackdropImage.gameObject.SetActive(false);
             gameObject.SetActive(false);
             return;
         }
 
         if (!visible)
         {
-            // Restore any lifted target/finger before hiding
             RestoreLiftedTarget();
             RestoreFingerCanvas();
             SkipTypewriter();
+            if (fullscreenImage) fullscreenImage.gameObject.SetActive(false);
+            if (textBackdropImage) textBackdropImage.gameObject.SetActive(false);
         }
 
         if (dimmer) dimmer.gameObject.SetActive(visible);
         if (bubble) bubble.gameObject.SetActive(visible);
         if (bubbleSpeaker) bubbleSpeaker.gameObject.SetActive(visible);
         if (bubbleText) bubbleText.gameObject.SetActive(visible);
+        if (finger) finger.gameObject.SetActive(visible);
+        // NOTE: do not enable textBackdropImage here â€” ConfigureStep will set it appropriately
 
-        if (finger)
-        {
-            if (!visible) finger.Hide();
-            finger.gameObject.SetActive(visible);
-        }
+        if (fullscreenImage)
+            fullscreenImage.gameObject.SetActive(false); // Will be set in ConfigureStep
+
+        if (textBackdropImage)
+            textBackdropImage.gameObject.SetActive(false); // Will be set in ConfigureStep
 
         _highlightTarget = null;
         _gateOutside = false;
@@ -108,33 +120,104 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
 
     public void ConfigureStep(TutorialStep step, RectTransform highlightTarget)
     {
-        // Switching target: restore previous lifted state
         if (_liftedTarget != null && _liftedTarget != highlightTarget)
             RestoreLiftedTarget();
 
         _highlightTarget = highlightTarget;
         _gateOutside = step.gateInputOutsideHighlight;
 
+        // --- Fullscreen image logic (like bubbleSpeaker) ---
+        if (fullscreenImage)
+        {
+            if (step.fullscreenSprite != null)
+            {
+                fullscreenImage.sprite = step.fullscreenSprite;
+                fullscreenImage.preserveAspect = false;
+                fullscreenImage.enabled = true;
+                fullscreenImage.gameObject.SetActive(true);
+            }
+            else
+            {
+                fullscreenImage.sprite = null;
+                fullscreenImage.enabled = false;
+                fullscreenImage.gameObject.SetActive(false);
+            }
+        }
+
+        // --- Bubble text logic ---
         if (bubbleText)
         {
-            // Reset text and start typewriter
-            bubbleText.text = step.text ?? "";
-            float cps = step.typewriterCharsPerSecond == 0f
-                ? defaultTypewriterCharsPerSecond
-                : step.typewriterCharsPerSecond;
-            StartTypewriter(cps);
+            if (!string.IsNullOrEmpty(step.text))
+            {
+                // apply per-step font (or restore default)
+                bubbleText.font = step.textFont != null ? step.textFont : _defaultBubbleFont;
+
+                bubbleText.text = step.text;
+                bubbleText.enabled = true;
+                bubbleText.gameObject.SetActive(true);
+                float cps = step.typewriterCharsPerSecond == 0f
+                    ? defaultTypewriterCharsPerSecond
+                    : step.typewriterCharsPerSecond;
+                StartTypewriter(cps);
+
+                if (textBackdropImage)
+                {
+                    if (step.textBackdropSprite != null)
+                    {
+                        textBackdropImage.sprite = step.textBackdropSprite;
+                        textBackdropImage.preserveAspect = false;
+                        textBackdropImage.enabled = true;
+                        textBackdropImage.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        textBackdropImage.sprite = null;
+                        textBackdropImage.enabled = false;
+                        textBackdropImage.gameObject.SetActive(false);
+                    }
+                }
+            }
+            else
+            {
+                // restore font when hiding text
+                if (bubbleText != null && _defaultBubbleFont != null)
+                    bubbleText.font = _defaultBubbleFont;
+
+                bubbleText.text = "";
+                bubbleText.enabled = false;
+                bubbleText.gameObject.SetActive(false);
+                SkipTypewriter();
+
+                if (textBackdropImage)
+                {
+                    textBackdropImage.sprite = null;
+                    textBackdropImage.enabled = false;
+                    textBackdropImage.gameObject.SetActive(false);
+                }
+            }
         }
 
+        // --- Avatar logic ---
         if (bubbleSpeaker)
         {
-            bubbleSpeaker.sprite = step.speaker;
-            bubbleSpeaker.enabled = step.speaker != null;
-            bubbleSpeaker.gameObject.SetActive(step.speaker != null);
+            if (step.speaker != null)
+            {
+                bubbleSpeaker.sprite = step.speaker;
+                bubbleSpeaker.enabled = true;
+                bubbleSpeaker.gameObject.SetActive(true);
+            }
+            else
+            {
+                bubbleSpeaker.sprite = null;
+                bubbleSpeaker.enabled = false;
+                bubbleSpeaker.gameObject.SetActive(false);
+            }
         }
 
+        // --- Bubble placement ---
         PlaceBubble(step.anchor);
 
-        // Finger hint
+        // --- Finger hint logic ---
         finger?.Hide();
         if (step.showFinger && highlightTarget != null && finger != null)
         {
@@ -150,11 +233,9 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
             }
         }
 
-        // Lift the target above dimmer so it renders on top
         if (bringTargetAboveDimmer && highlightTarget != null)
             LiftTargetCanvas(highlightTarget);
 
-        // Ensure finger renders above the lifted target and overlay
         EnsureFingerOnTop();
     }
 
@@ -166,10 +247,14 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
         bubble.pivot = anchor switch
         {
             TutorialBubbleAnchor.TopLeft => new Vector2(0f, 1f),
+            TutorialBubbleAnchor.TopMiddle => new Vector2(0.5f, 1f),
             TutorialBubbleAnchor.TopRight => new Vector2(1f, 1f),
+            TutorialBubbleAnchor.MiddleLeft => new Vector2(0f, 0.5f),
+            TutorialBubbleAnchor.Centre => new Vector2(0.5f, 0.5f),
+            TutorialBubbleAnchor.MiddleRight => new Vector2(1f, 0.5f),
             TutorialBubbleAnchor.BottomLeft => new Vector2(0f, 0f),
+            TutorialBubbleAnchor.BottomMiddle => new Vector2(0.5f, 0f),
             TutorialBubbleAnchor.BottomRight => new Vector2(1f, 0f),
-            TutorialBubbleAnchor.Middle => new Vector2(0.5f, 0.5f), // Center pivot
             _ => bubble.pivot
         };
 
@@ -181,10 +266,14 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
         Vector2 offset = anchor switch
         {
             TutorialBubbleAnchor.TopLeft => new Vector2(bubbleEdgePadding.x, -bubbleEdgePadding.y),
+            TutorialBubbleAnchor.TopMiddle => new Vector2(0, -bubbleEdgePadding.y),
             TutorialBubbleAnchor.TopRight => new Vector2(-bubbleEdgePadding.x, -bubbleEdgePadding.y),
+            TutorialBubbleAnchor.MiddleLeft => new Vector2(bubbleEdgePadding.x, 0),
+            TutorialBubbleAnchor.Centre => Vector2.zero, // No offset for the middle
+            TutorialBubbleAnchor.MiddleRight => new Vector2(-bubbleEdgePadding.x, 0),
             TutorialBubbleAnchor.BottomLeft => new Vector2(bubbleEdgePadding.x, bubbleEdgePadding.y),
+            TutorialBubbleAnchor.BottomMiddle => new Vector2(0, bubbleEdgePadding.y),
             TutorialBubbleAnchor.BottomRight => new Vector2(-bubbleEdgePadding.x, bubbleEdgePadding.y),
-            TutorialBubbleAnchor.Middle => Vector2.zero, // No offset for the middle
             _ => Vector2.zero
         };
 
@@ -338,7 +427,7 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
         _fingerCanvasWasAdded = false;
     }
 
-    // ICanvasRaycastFilter — NOTE the inversion to pass clicks inside highlight
+    // ICanvasRaycastFilter ï¿½ NOTE the inversion to pass clicks inside highlight
     public bool IsRaycastLocationValid(Vector2 sp, Camera eventCamera)
     {
         if (!_gateOutside || _highlightTarget == null) return false;
