@@ -6,7 +6,6 @@ public class BrokenMachineManager : MonoBehaviour
     public static BrokenMachineManager Instance { get; private set; }
 
     [Header("Prefabs & UI")]
-    [SerializeField] private GameObject _brokenMachineIndicator;
     [SerializeField] private BrokenMachineUI _ui;
     [SerializeField] private float _indicatorYOffset = 1.5f;
 
@@ -34,7 +33,7 @@ public class BrokenMachineManager : MonoBehaviour
 
     private void HandleBrokenMachine(Machine machine, Vector3 position)
     {
-        if (machine == null || _brokenMachineIndicator == null) return;
+        if (machine == null) return;
         if (_indicators.ContainsKey(machine)) return;
 
         //Spawn particle effect
@@ -46,18 +45,16 @@ public class BrokenMachineManager : MonoBehaviour
         }
 
         // Choose indicator: minigame-specific prefab if provided, else fallback
-        GameObject indicatorPrefab = _brokenMachineIndicator;
-        if (machine.Data != null &&
-            machine.Data.repairMinigame != null &&
-            machine.Data.repairMinigame.brokenIndicatorPrefab != null)
+        GameObject indicatorPrefab = machine.Data.brokenMachineIndicator;
+
+        if (indicatorPrefab == null)
         {
-            indicatorPrefab = machine.Data.repairMinigame.brokenIndicatorPrefab;
+            Debug.LogError($"BrokenMachineManager: No broken machine indicator prefab assigned for machine {machine.Data.machineName}.");
+            return;
         }
 
-        if (indicatorPrefab == null) return;
-
         // Spawn and parent to machine so it follows it
-        var indicator = Instantiate(_brokenMachineIndicator);
+        var indicator = Instantiate(indicatorPrefab);
         indicator.name = $"BrokenIndicator_{machine.name}";
         indicator.transform.SetParent(machine.transform, worldPositionStays: false);
         indicator.transform.localPosition = Vector3.up * _indicatorYOffset;
@@ -100,6 +97,5 @@ public class BrokenMachineManager : MonoBehaviour
     {
         if (machine == null) return;
         machine.Repair();
-        // Indicator cleanup is handled by HandleMachineRepaired
     }
 }

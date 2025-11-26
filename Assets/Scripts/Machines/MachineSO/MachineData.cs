@@ -75,5 +75,6 @@ public class MachineData : ScriptableObject
     [Header("Machine breaking")]
     public float chanceIncreasePerOutput = 2f;
     public float minimunChanceToBreak = 20f;
+    public GameObject brokenMachineIndicator;
     public ParticleSystem brokenMachineParticleEffect;
 }
