@@ -1,9 +1,10 @@
 using NUnit.Framework;
 using System.Net.NetworkInformation;
 using UnityEngine;
+using TMPro;
 using static UnityEngine.UIElements.UxmlAttributeDescription;
 
-public enum TutorialBubbleAnchor { TopLeft, TopRight, BottomLeft, BottomRight, Middle }
+public enum TutorialBubbleAnchor { TopLeft, TopMiddle, TopRight, MiddleLeft, Centre, MiddleRight, BottomLeft, BottomMiddle, BottomRight}
 public enum FingerMode { None, Tap, Drag }
 
 [CreateAssetMenu(fileName = "TutorialStep", menuName = "Scriptable Objects/Tutorial/Step")]
@@ -11,6 +12,13 @@ public class TutorialStep : ScriptableObject
 {
     [Header("Dialogue")]
     [TextArea] public string text;
+    
+    [Tooltip("Sprite to display when fullscreen is enabled.")]
+    public Sprite textBackdropSprite;
+
+    [Tooltip("Optional TMP font to use for this step's text. Leave null to use the overlay default.")]
+    public TMP_FontAsset textFont;
+
     public Sprite speaker;
     public TutorialBubbleAnchor anchor = TutorialBubbleAnchor.BottomLeft;
 
@@ -37,4 +45,10 @@ public class TutorialStep : ScriptableObject
 
     [Tooltip("Characters per second for dialogue typing. < 0 shows all instantly. If 0, the overlay default is used.")]
     public float typewriterCharsPerSecond = 0f;
+
+    [Header("Slideshow")]
+    [Tooltip("Sprite to display when fullscreen is enabled.")]
+    public Sprite fullscreenSprite;
+
+    
 }

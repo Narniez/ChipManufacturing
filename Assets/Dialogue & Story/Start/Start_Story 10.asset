@@ -14,15 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   text: "Robud: Alright, let\u2019s start with getting your silicon material depot
     back."
+  textBackdropSprite: {fileID: 0}
+  textFont: {fileID: 0}
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
-  anchor: 2
+  anchor: 7
   waitForSignal: 1
   highlightTargetPath: Canvas/ShopButton
   gateInputOutsideHighlight: 1
   fingerMode: 1
-  showFinger: 0
+  showFinger: 1
   fingerOffset: {x: 0, y: -30}
   dragTargetPath: 
   dragDuration: 1.25
   dragLoop: 0
-  typewriterCharsPerSecond: 0
+  typewriterCharsPerSecond: 60
+  fullscreenSprite: {fileID: 0}

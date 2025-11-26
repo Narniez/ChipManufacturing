@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Start_Story 5
   m_EditorClassIdentifier: 
   text: 
+  textBackdropSprite: {fileID: 0}
   speaker: {fileID: 0}
   anchor: 4
   waitForSignal: 0
@@ -24,4 +25,5 @@ MonoBehaviour:
   dragTargetPath: 
   dragDuration: 1.25
   dragLoop: 0
-  typewriterCharsPerSecond: 0
+  typewriterCharsPerSecond: 60
+  fullscreenSprite: {fileID: 7482667652216324306, guid: 01899cd420dbcda46828c8e2441d8084, type: 3}
