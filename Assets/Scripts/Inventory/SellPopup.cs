@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Net.Mail;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -16,9 +17,6 @@ public class SellPopup : MonoBehaviour
     [SerializeField] private int LROfsset;
     [SerializeField] private int UDOffset;
 
-    [Header("Pricing (placeholder)")]
-    [SerializeField] private int pricePerUnit = 1;
-
     private InventoryItem _item;
     private InventorySlot _slot;
 
@@ -28,8 +26,12 @@ public class SellPopup : MonoBehaviour
     // Track open mode so we can avoid service/events in slot mode
     private bool _openedFromSlot;
 
+    private NewCameraControls mainCamera;
+
     void Awake()
     {
+        mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<NewCameraControls>();
+
         gameObject.SetActive(false);
 
         amountSlider.wholeNumbers = true;
@@ -94,6 +96,8 @@ public class SellPopup : MonoBehaviour
 
         if (InventoryService.Instance != null)
             InventoryService.Instance.OnChanged += OnInventoryChanged;
+
+        mainCamera.SetInputLocked(true);
     }
 
     // Open popup for a slot (no InventoryItem child required)
@@ -142,6 +146,8 @@ public class SellPopup : MonoBehaviour
             gameObject.SetActive(true);
         }
 
+        mainCamera.SetInputLocked(true);
+
         // Important: do NOT subscribe to InventoryService events in slot mode,
         // as slot mode does not use the service as the authority.
     }
@@ -157,6 +163,8 @@ public class SellPopup : MonoBehaviour
 
         if (_originalParent != null)
             transform.SetParent(_originalParent, worldPositionStays: false);
+
+        mainCamera.SetInputLocked(false);
     }
 
     public void RepositionToItem()
@@ -249,14 +257,17 @@ public class SellPopup : MonoBehaviour
         // Cache references to avoid race with callbacks that may Close() and null fields
         var slotRef = _slot;
         var itemRef = _item;
-        var svc = InventoryService.Instance;
+        var inventoryService = InventoryService.Instance;
+        var economyManager = EconomyManager.Instance;
 
         // Slot path: use the slot as source-of-truth; do not call the service
         if (slotRef != null && !slotRef.IsEmpty && slotRef.Item != null)
         {
             // Clamp to available
             amount = Mathf.Clamp(amount, 1, slotRef.Amount);
-            slotRef.AddAmount(-amount);
+            economyManager.playerBalance += amount * slotRef.Item.cost;      
+            slotRef.AddAmount(-amount);      
+            
             Close();
             return;
         }
@@ -265,10 +276,10 @@ public class SellPopup : MonoBehaviour
         if (itemRef == null || itemRef.SlotItem == null) { Close(); return; }
 
         // Unsubscribe to avoid re-entrancy closing us mid-call
-        if (svc != null) svc.OnChanged -= OnInventoryChanged;
+        if (inventoryService != null) inventoryService.OnChanged -= OnInventoryChanged;
 
-        if (svc != null)
-            svc.TryRemove(itemRef.SlotItem.id, amount);
+        if (inventoryService != null)
+            inventoryService.TryRemove(itemRef.SlotItem.id, amount);
 
         itemRef.RefreshFromService();
         Close();

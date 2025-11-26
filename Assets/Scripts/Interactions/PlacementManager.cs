@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 public class PlacementManager : MonoBehaviour
 {
@@ -173,6 +175,16 @@ public class PlacementManager : MonoBehaviour
     public void ConfirmPreview()
     {
         if (_state is PreviewPlacementState p) p.ConfirmPlacement();
+        // After confirm, ensure GameState record exists (PreviewPlacementState already called SetPlacement).
+        if (CurrentSelection is Machine m)
+        {
+            Debug.Log("Should save machine to game state.");
+            GameStateSync.TryAddOrUpdateMachine(m);
+        }
+        else if (CurrentSelection is ConveyorBelt b)
+        {
+            GameStateSync.TryAddOrUpdateBelt(b);
+        }
     }
 
     public void CancelPreview()
@@ -186,6 +198,9 @@ public class PlacementManager : MonoBehaviour
     public void ExecuteRotateCommand(IGridOccupant occ, bool clockwise)
     {
         History.Do(new RotateCommand(occ, gridService, clockwise));
+        // Rotation may change orientation; update state.
+        if (occ is Machine m) GameStateSync.TryUpdateMachineOrientation(m);
+        else if (occ is ConveyorBelt b) GameStateSync.TryUpdateBeltOrientation(b);
     }
 
     public void UndoLastCommand() => History.Undo();
@@ -212,7 +227,6 @@ public class PlacementManager : MonoBehaviour
         return pivotY - bottomY;
     }
 
-    // Delegate to camera controller
     public void EdgeScrollCamera(Vector2 screenPos)
     {
         _camCtrl?.EdgeScrollFromScreen(screenPos);
@@ -223,7 +237,134 @@ public class PlacementManager : MonoBehaviour
 
     internal void SetCurrentSelection(IGridOccupant occ) => CurrentSelection = occ;
 
-    public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefab, GridOrientation overrideOrientation, ConveyorBelt.BeltTurnKind turnKind = ConveyorBelt.BeltTurnKind.None)
+    // External call from PreviewPlacementState when it instantiates a machine/belt
+    internal void NotifySpawned(GameObject go)
+    {
+        MoveToFactoryScene(go);
+    }
+
+    private void MoveToFactoryScene(GameObject go)
+    {
+        if (go == null) return;
+        var active = SceneManager.GetActiveScene();
+        if (active.IsValid() && go.scene != active)
+            SceneManager.MoveGameObjectToScene(go, active);
+    }
+
+    // Helper used by loader to instantiate a prefab and move to factory scene
+    public GameObject InstantiateAndMove(GameObject prefab)
+    {
+        if (prefab == null) return null;
+        var go = Instantiate(prefab);
+        MoveToFactoryScene(go);
+        return go;
+    }
+
+  // Place a machine using MachineData (used by FactorySceneBuilder)
+// This one performs all placement responsibilities: initialize, set internal state on machine,
+// position, mark grid occupancy and persist GameState ï¿½ mirrors PreviewPlacementState.ConfirmPlacement.
+public GameObject PlaceMachineFromSave(MachineData machineData, Vector2Int anchor, GridOrientation orientation, bool isBroken = false)
+{
+    if (machineData == null || machineData.prefab == null)
+    {
+        Debug.LogWarning("PlaceMachineFromSave: invalid data.");
+        return null;
+    }
+
+    var go = InstantiateAndMove(machineData.prefab);
+    if (go == null) return null;
+
+    var machine = go.GetComponent<Machine>();
+    if (machine == null)
+    {
+        Debug.LogError("PlaceMachineFromSave: prefab missing Machine component.");
+        Destroy(go);
+        return null;
+    }
+
+    // Initialize machine internals
+    machine.Initialize(machineData);
+
+    // Set transform/orientation on the machine (component-local setter)
+    machine.SetPlacement(anchor, orientation); // assume it only sets fields + transform
+
+    // Ensure we have a valid GridService reference
+    var grid = gridService ?? FindFirstObjectByType<GridService>();
+    if (grid == null || !grid.HasGrid)
+    {
+        Debug.LogError("PlaceMachineFromSave: GridService not ready. Machine placed but grid occupancy NOT set.");
+    }
+    else
+    {
+        // Mark occupancy exactly like ConfirmPlacement()
+        var size = machine.BaseSize.OrientedSize(orientation);
+        grid.SetAreaOccupant(anchor, size, go);
+
+        // Persist to game state
+        GameStateSync.TryAddOrUpdateMachine(machine);
+
+        // Validate immediately (helpful during debugging)
+#if UNITY_EDITOR
+        if (!grid.TryGetCell(anchor, out var cd) || cd.occupant != go)
+            Debug.LogWarning($"PlaceMachineFromSave: occupancy write failed at {anchor} for {go.name}.");
+#endif
+    }
+
+    if (isBroken) machine.Break();
+    return go;
+}
+
+// Place a belt using prefab (used by FactorySceneBuilder)
+// Mirrors PreviewPlacementState Confirm flow for belts (occupancy + state).
+public ConveyorBelt PlaceBeltFromSave(GameObject prefab, Vector2Int anchor, GridOrientation orientation, bool isTurn, int turnKind, bool persist = true)
+{
+    if (prefab == null)
+    {
+        Debug.LogWarning("PlaceBeltFromSave: prefab null.");
+        return null;
+    }
+
+    var go = InstantiateAndMove(prefab);
+    if (go == null) return null;
+
+    var belt = go.GetComponent<ConveyorBelt>();
+    if (belt == null)
+    {
+        Debug.LogError("PlaceBeltFromSave: prefab missing ConveyorBelt component.");
+        Destroy(go);
+        return null;
+    }
+
+    belt.SetTurnKind((ConveyorBelt.BeltTurnKind)turnKind);
+
+    // Set transform/orientation
+    belt.SetPlacement(anchor, orientation); // lightweight setter on component
+
+    // Ensure we have a grid
+    var grid = gridService ?? FindFirstObjectByType<GridService>();
+    if (grid == null || !grid.HasGrid)
+    {
+        Debug.LogError("PlaceBeltFromSave: GridService not ready. Belt placed but grid occupancy NOT set.");
+    }
+    else
+    {
+        grid.SetAreaOccupant(anchor, Vector2Int.one, go);
+
+        if (persist)
+        {
+            GameStateSync.TryAddOrUpdateBelt(belt);
+        }
+
+#if UNITY_EDITOR
+        if (!grid.TryGetCell(anchor, out var cd) || cd.occupant != go)
+            Debug.LogWarning($"PlaceBeltFromSave: occupancy write failed at {anchor} for {go.name}.");
+#endif
+    }
+
+    return belt;
+}
+
+public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefab, GridOrientation overrideOrientation, ConveyorBelt.BeltTurnKind turnKind = ConveyorBelt.BeltTurnKind.None)
     {
         if (gridService == null || !gridService.HasGrid || source == null) return source;
 
@@ -242,31 +383,23 @@ public class PlacementManager : MonoBehaviour
                 return source;
             }
 
-            // Detect if 'source' sits on a Machine OUTPUT port cell (regardless of facing)
             GridOrientation? requiredWorldSide = GetRequiredMachineOutputSide(anchor);
             bool isOnMachineOutputPort = requiredWorldSide.HasValue;
 
-            // If this is the head on an output port and we’re branching sideways:
-            // set the new belt as a turn with forward = outgoing (overrideOrientation)
-            // and turn kind chosen by comparing requiredWorldSide -> outgoing.
             GridOrientation finalOrientation = overrideOrientation;
             ConveyorBelt.BeltTurnKind finalTurnKind = turnKind;
             bool forceTurnPrefab = false;
 
             if (isOnMachineOutputPort && overrideOrientation != requiredWorldSide.Value)
             {
-                // Choose Left/Right depending on port outward vs outgoing
                 var outSide = requiredWorldSide.Value;
                 finalTurnKind =
                     (overrideOrientation == outSide.RotatedCW()) ? ConveyorBelt.BeltTurnKind.Right :
                     (overrideOrientation == outSide.RotatedCCW()) ? ConveyorBelt.BeltTurnKind.Left :
                     ConveyorBelt.BeltTurnKind.None;
-
-                // If sideways branch, ensure we do place a turn prefab
                 forceTurnPrefab = true;
             }
 
-            // If we must force a turn, swap prefab accordingly
             bool willUseTurnPrefab = forceTurnPrefab || useTurnPrefab;
             prefab = GetConveyorPrefab(willUseTurnPrefab);
 
@@ -287,6 +420,8 @@ public class PlacementManager : MonoBehaviour
             gridService.SetAreaOccupant(anchor, size, null);
 
             var go = Instantiate(prefab, world, finalOrientation.ToRotation());
+            MoveToFactoryScene(go);
+
             var newBelt = go.GetComponent<ConveyorBelt>();
             if (newBelt == null)
             {
@@ -301,7 +436,6 @@ public class PlacementManager : MonoBehaviour
             newBelt.SetPlacement(anchor, finalOrientation);
             gridService.SetAreaOccupant(anchor, size, go);
 
-            // Preserve chain links
             newBelt.PreviousInChain = parent;
             newBelt.NextInChain = child;
             if (parent != null && parent.NextInChain == source)
@@ -312,10 +446,12 @@ public class PlacementManager : MonoBehaviour
             if (item != null)
                 newBelt.TrySetItem(item, snapVisual: true);
 
-            // Forward link auto-parent if missing
             AutoLinkForward(newBelt);
-
             newBelt.NotifyAdjacentMachinesOfConnection();
+
+            // Update state entry (replace existing)
+            GameStateSync.TryReplaceBelt(source, newBelt);
+
             Destroy(source.gameObject);
             return newBelt;
         }
@@ -341,18 +477,16 @@ public class PlacementManager : MonoBehaviour
         }
     }
 
-
-
     public void DestroyCurrentSelection()
     {
         var occ = CurrentSelection;
         if (occ == null) return;
 
         var beltToDestroy = (occ as Component)?.GetComponent<ConveyorBelt>();
+        var machineToDestroy = (occ as Component)?.GetComponent<Machine>();
 
         if (beltToDestroy != null)
         {
-            // Re-link chain around destroyed belt
             var parent = beltToDestroy.PreviousInChain;
             var child = beltToDestroy.NextInChain;
             if (parent != null && parent.NextInChain == beltToDestroy) parent.NextInChain = child;
@@ -379,6 +513,11 @@ public class PlacementManager : MonoBehaviour
                 var item = beltToDestroy.TakeItem();
                 if (item != null && item.Visual != null)
                     Destroy(item.Visual);
+                GameStateSync.TryRemoveBelt(beltToDestroy);
+            }
+            else if (machineToDestroy != null)
+            {
+                GameStateSync.TryRemoveMachine(machineToDestroy);
             }
             Destroy(go);
         }
@@ -401,7 +540,6 @@ public class PlacementManager : MonoBehaviour
             var mOri = machine.Orientation;
             var orientedSize = md.size.OrientedSize(mOri);
 
-            // With explicit ports
             if (md.ports != null && md.ports.Count > 0)
             {
                 for (int i = 0; i < md.ports.Count; i++)

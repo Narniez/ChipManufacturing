@@ -27,7 +27,7 @@ public struct MaterialStack
 }
 
 
-[CreateAssetMenu(fileName = "MachineData", menuName = "Scriptable Objects/MachineData")]
+[CreateAssetMenu(fileName = "MachineData", menuName = "Scriptable Objects/Machine/MachineData")]
 public class MachineData : ScriptableObject
 {
     [Header("Orientation")]
@@ -53,6 +53,9 @@ public class MachineData : ScriptableObject
 
     [Header("Size")]
     public Vector2Int size = new Vector2Int(1, 1);
+
+    [Header("Repair Minigame")]
+    public RepairMinigame repairMinigame;
 
     [Header("Upgrades")]
     public List<MachineUpgrade> upgrades;

@@ -1,16 +1,15 @@
 using UnityEngine;
 
-public class IEconomy : MonoBehaviour
+public interface IEconomy
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    int GetMachineCost(MachineData machineData);
+    int GetMaterialCost(MaterialData materialData);
+    bool PurchaseMachine(MachineData machineData, ref int playerBalance);
+    bool PurchaseConveyor(ConveyorBelt conveyorData, ref int playerBalance);
+    bool PurchaseMaterial(MaterialData materialData, int quantity, ref int playerBalance);
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    bool ReturnMachine(MachineData machineData, ref int playerBalance); 
+    bool ReturnConveyor(ConveyorBelt conveyorData, ref int playerBalance);
+
+    bool SellMaterial(MaterialData materialData, int quantity, ref int playerBalance);
 }

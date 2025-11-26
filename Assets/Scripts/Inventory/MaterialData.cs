@@ -15,6 +15,7 @@ public class MaterialData : ScriptableObject
 
     //public something something recipe
 
+    public int cost = 0;
     public string unit = "pcs";
     public int unitScale = 1; // 1 = piece
     public int maxStack = 9999; // soft limit for UI

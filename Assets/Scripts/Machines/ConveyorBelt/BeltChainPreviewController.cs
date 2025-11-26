@@ -37,13 +37,13 @@ public class BeltChainPreviewController
 
         var forward = tail.Orientation;
         // Forward always allowed
-        TrySpawnGhost(tail.Anchor + ToDelta(forward), forward, isTurn: false);
+        TrySpawnGhost(tail.Anchor + GridOrientationExtentions.OrientationToDelta(forward), forward, isTurn: false);
 
         // Lateral options only if tail is straight (not a corner)
         if (!tail.IsTurnPrefab)
         {
-            TrySpawnGhost(tail.Anchor + ToDelta(forward.RotatedCCW()), forward.RotatedCCW(), isTurn: true);
-            TrySpawnGhost(tail.Anchor + ToDelta(forward.RotatedCW()), forward.RotatedCW(), isTurn: true);
+            TrySpawnGhost(tail.Anchor + GridOrientationExtentions.OrientationToDelta(forward.RotatedCCW()), forward.RotatedCCW(), isTurn: true);
+            TrySpawnGhost(tail.Anchor + GridOrientationExtentions.OrientationToDelta(forward.RotatedCW()), forward.RotatedCW(), isTurn: true);
         }
     }
 
@@ -52,6 +52,24 @@ public class BeltChainPreviewController
         if (p == null || _grid == null || !_grid.HasGrid) return null;
         if (_currentTail == null) return null;
         if (!_grid.IsInside(p.Cell) || !_grid.IsAreaFree(p.Cell, Vector2Int.one)) return null;
+
+        //cannot place belt from preview if not enough money
+        var econ = EconomyManager.Instance;
+        if (econ != null)
+        {
+            // Get cost from the prefab's ConveyorBelt component
+            var beltTemplate = _straightPrefab != null ? _straightPrefab.GetComponent<ConveyorBelt>() : null;
+            int cost = beltTemplate != null ? beltTemplate.Cost : 0;
+
+            if (econ.playerBalance < cost)
+            {
+                Debug.LogWarning("Cannot confirm belt placement: not enough moni:(");
+                return null;
+            }
+
+            // charge now
+           econ.PurchaseConveyor(beltTemplate, ref econ.playerBalance);
+        }
 
         // Always straight child
         GameObject prefab = _straightPrefab;
@@ -79,12 +97,14 @@ public class BeltChainPreviewController
 
         PromoteTailIfBend(_currentTail, child);
 
-        // ALSO: assign child as parent of belt in front if that belt has no parent
+        //Assign child as parent of belt in front if that belt has no parent
         LinkForwardIfParentMissing(child);
 
         ShowOptionsFrom(child);
         return child;
     }
+
+
 
     private void PromoteTailIfBend(ConveyorBelt parent, ConveyorBelt child)
     {
@@ -95,7 +115,8 @@ public class BeltChainPreviewController
         var outgoing = DeltaToOrientation(delta);
         if (!outgoing.HasValue) return;
 
-        if (outgoing.Value == parent.Orientation) return; // straight
+        // straight
+        if (outgoing.Value == parent.Orientation) return; 
 
         PromoteCorner(parent, parent.Orientation, outgoing.Value);
     }
@@ -125,7 +146,7 @@ public class BeltChainPreviewController
     private void LinkForwardIfParentMissing(ConveyorBelt newParent)
     {
         if (newParent == null || _grid == null || !_grid.HasGrid) return;
-        var frontCell = newParent.Anchor + ToDelta(newParent.Orientation);
+        var frontCell = newParent.Anchor + GridOrientationExtentions.OrientationToDelta(newParent.Orientation);
         if (_grid.TryGetCell(frontCell, out var data) && data.occupant != null)
         {
             var go = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
@@ -188,15 +209,15 @@ public class BeltChainPreviewController
         cache.ApplyPreview(_previewMaterial);
     }
 
-    private static Vector2Int ToDelta(GridOrientation o)
-    {
-        switch (o)
-        {
-            case GridOrientation.North: return Vector2Int.up;
-            case GridOrientation.East:  return Vector2Int.right;
-            case GridOrientation.South: return Vector2Int.down;
-            case GridOrientation.West:  return Vector2Int.left;
-            default: return Vector2Int.up;
-        }
-    }
+    //private static Vector2Int ToDelta(GridOrientation o)
+    //{
+    //    switch (o)
+    //    {
+    //        case GridOrientation.North: return Vector2Int.up;
+    //        case GridOrientation.East:  return Vector2Int.right;
+    //        case GridOrientation.South: return Vector2Int.down;
+    //        case GridOrientation.West:  return Vector2Int.left;
+    //        default: return Vector2Int.up;
+    //    }
+    //}
 }
