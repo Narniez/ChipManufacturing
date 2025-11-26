@@ -6,7 +6,7 @@ public class TutorialEventBus : MonoBehaviour
 {
     public static event Action OnShopOpened;
     public static event Action<MachineData> OnShopItemSelected;
-    public static event Action<MachineData> OnShopBuyClicked;
+    public static event Action OnShopBuyClicked;
     public static event Action<GameObject> OnPreviewStarted;
     public static event Action OnPreviewConfirmed;
     public static event Action<IGridOccupant> OnOccupantPlaced;
@@ -27,6 +27,7 @@ public class TutorialEventBus : MonoBehaviour
 
     public static void PublishShopOpened()
     {
+        //Debug.Log($"TutorialEventBus.PublishShopOpened invoked\n{new System.Diagnostics.StackTrace()}");
         OnShopOpened?.Invoke();
         PublishSignal(TutorialSignal.ShopOpened, null);
     }
@@ -37,11 +38,11 @@ public class TutorialEventBus : MonoBehaviour
         PublishSignal(TutorialSignal.ShopItemSelected, data);
     }
 
-    public static void PublishShopBuyClicked(MachineData data)
+    public static void PublishShopBuyClicked()
     {
-        Debug.Log($"TutorialEventBus.PublishShopBuyClicked invoked (data={(data==null? "null": data.name)})");
-        OnShopBuyClicked?.Invoke(data);
-        PublishSignal(TutorialSignal.ShopBuyClicked, data);
+        //Debug.Log($"TutorialEventBus.PublishShopBuyClicked invoked)\n{new System.Diagnostics.StackTrace()}");
+        OnShopBuyClicked?.Invoke();
+        PublishSignal(TutorialSignal.ShopBuyClicked);
     }
 
     public static void PublishPreviewStarted(GameObject prefab)
@@ -115,7 +116,7 @@ public class TutorialEventBus : MonoBehaviour
 
     public static void PublishSignal(TutorialSignal sig, object payload = null)
     {
-        Debug.Log($"TutorialEventBus.PublishSignal: sig={sig}, payload={payload}");
+        //Debug.Log($"TutorialEventBus.PublishSignal: sig={sig}, payload={payload}");
         try
         {
             OnSignalPublished?.Invoke(sig, payload);
