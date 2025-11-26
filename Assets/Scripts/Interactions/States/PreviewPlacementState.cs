@@ -234,6 +234,12 @@ public class PreviewPlacementState : BasePlacementState
         _grid.SetAreaOccupant(_anchor, size, _instance);
         _committed = true;
 
+        // Persist machine placement immediately so save.json contains the new machine.
+        if (machine != null)
+        {
+            GameStateSync.TryAddOrUpdateMachine(machine);
+        }
+
         // Belt: notify adjacent machines (so generators can start immediately)
         if (_isConveyor)
         {

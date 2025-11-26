@@ -30,6 +30,9 @@ public class BeltSystemRuntime : MonoBehaviour
 
     private void Update()
     {
+        // Pause belt processing while loading to avoid items moving during restore
+        if (GameStateService.IsLoading) return;
+
         // Animate every frame
         AnimateItemVisuals(Time.deltaTime);
         // Continuous movement: attempt moves immediately when item not animating

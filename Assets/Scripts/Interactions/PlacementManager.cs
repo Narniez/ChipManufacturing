@@ -316,7 +316,7 @@ public GameObject PlaceMachineFromSave(MachineData machineData, Vector2Int ancho
 
 // Place a belt using prefab (used by FactorySceneBuilder)
 // Mirrors PreviewPlacementState Confirm flow for belts (occupancy + state).
-public ConveyorBelt PlaceBeltFromSave(GameObject prefab, Vector2Int anchor, GridOrientation orientation, bool isTurn, int turnKind)
+public ConveyorBelt PlaceBeltFromSave(GameObject prefab, Vector2Int anchor, GridOrientation orientation, bool isTurn, int turnKind, bool persist = true)
 {
     if (prefab == null)
     {
@@ -349,7 +349,11 @@ public ConveyorBelt PlaceBeltFromSave(GameObject prefab, Vector2Int anchor, Grid
     else
     {
         grid.SetAreaOccupant(anchor, Vector2Int.one, go);
-        GameStateSync.TryAddOrUpdateBelt(belt);
+
+        if (persist)
+        {
+            GameStateSync.TryAddOrUpdateBelt(belt);
+        }
 
 #if UNITY_EDITOR
         if (!grid.TryGetCell(anchor, out var cd) || cd.occupant != go)

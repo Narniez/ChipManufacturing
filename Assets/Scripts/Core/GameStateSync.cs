@@ -58,36 +58,6 @@ public static class GameStateSync
         GameStateService.MarkDirty();
     }
 
-    public static void ForceUpdateMachineDataPath(Machine m)
-    {
-        // Called after Initialize when machine.Data is guaranteed
-        var svc = GameStateService.Instance;
-        if (svc == null || m == null || m.Data == null) return;
-
-        var list = svc.State.machines;
-        var entry = list.Find(x => x.anchor == m.Anchor);
-        string key = ResolveAssetAddress(m.Data);
-
-        if (entry == null)
-        {
-            list.Add(new MachineState
-            {
-                machineDataPath = key,
-                anchor = m.Anchor,
-                orientation = m.Orientation,
-                isBroken = m.IsBroken
-            });
-        }
-        else
-        {
-            if (string.IsNullOrEmpty(entry.machineDataPath) || entry.machineDataPath != key)
-                entry.machineDataPath = key;
-            entry.orientation = m.Orientation;
-            entry.isBroken = m.IsBroken;
-        }
-        GameStateService.MarkDirty();
-    }
-
     public static void TryUpdateMachineOrientation(Machine m)
     {
         var svc = GameStateService.Instance;
@@ -125,10 +95,6 @@ public static class GameStateSync
         var svc = GameStateService.Instance;
         if (svc == null || b == null) return;
 
-        var list = svc.State.belts;
-        var entryIndex = list.FindIndex(x => x.anchor == b.Anchor);
-        int turnKind = (int)(b.IsCorner ? b.TurnKind : ConveyorBelt.BeltTurnKind.None);
-
         // if belt has an item, capture its material key + amount (amount = 1 for single item)
         string itemKey = string.Empty;
         int itemAmount = 0;
@@ -138,6 +104,49 @@ public static class GameStateSync
             itemKey = ResolveAssetAddress(item.materialData);
             itemAmount = 1;
         }
+
+        // Defensive check: avoid recording belt state before the belt is actually registered
+        // in the GridService at the expected anchor — but only skip when there's nothing to save.
+        var grid = Object.FindFirstObjectByType<GridService>();
+        if (grid != null && grid.HasGrid)
+        {
+            if (!grid.TryGetCell(b.Anchor, out var cell) || cell.occupant == null)
+            {
+                if (string.IsNullOrEmpty(itemKey))
+                {
+                    // No occupant and nothing to save -> skip to avoid orphan entries
+                    Debug.LogWarning($"GameStateSync: skipping belt save for anchor {b.Anchor} (GridService has no occupant and no item).");
+                    return;
+                }
+                else
+                {
+                    // No occupant but we *have* an item to persist: allow write but warn
+                    Debug.LogWarning($"GameStateSync: Grid missing occupant at {b.Anchor} but belt has item; persisting item state anyway.");
+                }
+            }
+            else
+            {
+                // Validate that the occupant actually points to the same belt gameobject
+                GameObject occGO = cell.occupant as GameObject ?? (cell.occupant as Component)?.gameObject;
+                if (occGO != b.gameObject)
+                {
+                    if (string.IsNullOrEmpty(itemKey))
+                    {
+                        Debug.LogWarning($"GameStateSync: skipping belt save for anchor {b.Anchor} (occupant mismatch and no item).");
+                        return;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"GameStateSync: occupant mismatch at {b.Anchor} but belt has item; persisting item state anyway.");
+                    }
+                }
+            }
+        }
+        // If GridService isn't available yet, allow the write — it may be added later.
+
+        var list = svc.State.belts;
+        var entryIndex = list.FindIndex(x => x.anchor == b.Anchor);
+        int turnKind = (int)(b.IsCorner ? b.TurnKind : ConveyorBelt.BeltTurnKind.None);
 
         if (entryIndex < 0)
         {
@@ -161,6 +170,12 @@ public static class GameStateSync
             e.itemAmount = itemAmount;
             list[entryIndex] = e;
         }
+
+#if UNITY_EDITOR
+        if (!string.IsNullOrEmpty(itemKey))
+            Debug.Log($"GameStateSync: saved belt[{b.Anchor}] itemKey='{itemKey}'");
+#endif
+
         GameStateService.MarkDirty();
     }
 
