@@ -10,4 +10,10 @@ public enum TutorialSignal
     PreviewConfirmed,
     MachinePlaced,
     
+    InventoryOpened,
+    InventoryItemSelected,
+    InventoryItemSold,
+    RecipeTreeOpened,
+    ClickFixMachineButton,
+    ClickBoostMachineButton
 }

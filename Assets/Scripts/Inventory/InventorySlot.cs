@@ -234,6 +234,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
                 sellPopup.Close();
             else
                 sellPopup.OpenForSlot(this);
+                TutorialEventBus.PublishInventoryItemSelected();
         }
     }
           
