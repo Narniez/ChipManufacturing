@@ -12,17 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7087c4abf7f59e44a712449f9d793f8, type: 3}
   m_Name: Start_Story 10
   m_EditorClassIdentifier: 
-  text: "Robud: Alright, let\u2019s start with getting your silicon material depot
-    back."
+  text: "You don\u2019t have to say anything. This is just so sad. Our factory\u2026
+    it\u2019s gone\u2026 But we cannot stop after a single defeat. Let\u2019s build
+    back what we lost."
   textBackdropSprite: {fileID: 0}
   textFont: {fileID: 0}
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
   anchor: 7
-  waitForSignal: 1
-  highlightTargetPath: Canvas/ShopButton
+  waitForSignal: 0
+  highlightTargetPath: 
   gateInputOutsideHighlight: 1
-  fingerMode: 1
-  showFinger: 1
+  fingerMode: 0
+  showFinger: 0
   fingerOffset: {x: 0, y: -30}
   dragTargetPath: 
   dragDuration: 1.25
