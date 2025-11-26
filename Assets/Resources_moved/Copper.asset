@@ -17,6 +17,7 @@ MonoBehaviour:
   materialType: 2
   materialCategory: 0
   icon: {fileID: 21300000, guid: 168389624bfc5234ba1b644fb3214d18, type: 3}
+  cost: 10
   unit: pcs
   unitScale: 1
   maxStack: 9999

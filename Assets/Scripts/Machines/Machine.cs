@@ -2,14 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using UnityEngine.VFX;
-using Unity.VisualScripting;
 
 public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 {
-    private MachineData data;   // Factory sets this via Initialize
+    // Factory sets this via Initialize
+    private MachineData data;   
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
+    private GridService _grid;
 
     private InventoryItem inventoryItem;
 
@@ -27,12 +27,12 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private float _miniMimumChanceToBreak = 0;
     private bool _isBroken = false;
 
+    private bool _initialized; 
+
     public static event Action<Machine, Vector3> OnMachineBroken;
     public static event Action<Machine> OnMachineRepaired;
-
     public static event Action<MaterialType, Vector3> OnMaterialProduced;
 
-    // Expose minimal state
     public MachineData Data => data;
     public bool IsProducing => productionRoutine != null;
     public bool IsBroken => _isBroken;
@@ -43,6 +43,29 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         !data.HasRecipes &&
         (data.inputMaterial == null || data.inputMaterial.materialType == MaterialType.None) &&
         data.outputMaterial != null && data.outputMaterial.materialType != MaterialType.None;
+
+    private void OnEnable()
+    {
+        if (_grid == null) _grid = FindFirstObjectByType<GridService>();
+        // Only resume if machine was initialized (avoid running before Initialize())
+        if (_initialized) StartCoroutine(DeferredResume());
+    }
+
+    private IEnumerator DeferredResume()
+    {
+        yield return null;
+        TryStartIfIdle();
+    }
+
+    // Clear stale coroutine handle when disabled
+    private void OnDisable()
+    {
+        if (productionRoutine != null)
+        {
+            try { StopCoroutine(productionRoutine); } catch { }
+            productionRoutine = null;
+        }
+    }
 
     public void Initialize(MachineData machineData)
     {
@@ -55,11 +78,14 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _chanceToBreakIncrement = data.chanceIncreasePerOutput;
         _miniMimumChanceToBreak = data.minimunChanceToBreak;
         _isBroken = false;
+        _grid = FindFirstObjectByType<GridService>();
+
+        _initialized = true;
+;
 
         StartProduction();
     }
 
-    // Allow external systems to start production 
     public void TryStartIfIdle()
     {
         if (!_isBroken && productionRoutine == null)
@@ -69,7 +95,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // Try to start one cycle if inputs are ready
     private void StartProduction()
     {
-        if (data == null) { Debug.LogError("Machine.StartProduction: MachineData not set."); return; }
+        //if (data == null) { Debug.LogError("Machine.StartProduction: MachineData not set."); return; }
         if (productionRoutine != null) return;
         if (_isBroken) return;
 
@@ -254,6 +280,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             productionRoutine = null;
         }
 
+        // Persist broken state
+        GameStateSync.TrySetMachineBroken(this, true);
+
         OnMachineBroken?.Invoke(this, transform.position);
     }
 
@@ -263,9 +292,14 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _isBroken = false;
         _chanceToBreak = 0f;
 
+        // Persist repaired state
+        GameStateSync.TrySetMachineBroken(this, false);
+
         OnMachineRepaired?.Invoke(this);
         StartProduction();
     }
+
+    #region Belt Output Logic
 
     // --- Output belt acceptance logic ---
     // Straight belt: must face outward (worldSide).
@@ -277,6 +311,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         if (!belt.IsCorner && !belt.IsTurnPrefab) // plain straight
             return belt.Orientation == worldSide;
 
+        
+
         // Corner visual: outward side can be belt forward or its CW/CCW rotation
         var fwd = belt.Orientation;
         if (fwd == worldSide) return true;
@@ -287,8 +323,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     private void TryPushOutputToBelt(MaterialData mat)
     {
-        var grid = FindFirstObjectByType<GridService>();
-        if (grid == null || !grid.HasGrid) return;
+        if (_grid == null || !_grid.HasGrid) return;
 
         var orientedSize = BaseSize.OrientedSize(Orientation);
         var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
@@ -319,7 +354,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         foreach (var (cell, worldSide) in outputs)
         {
-            if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
+            if (!_grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
             GameObject occGO = cd.occupant as GameObject ?? (cd.occupant as Component)?.gameObject;
             if (occGO == null) continue;
             var belt = occGO.GetComponent<ConveyorBelt>();
@@ -344,8 +379,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private List<ConveyorBelt> GetConnectedOutputBelts()
     {
         var belts = new List<ConveyorBelt>();
-        var grid = FindFirstObjectByType<GridService>();
-        if (grid == null || !grid.HasGrid) return belts;
+        if (_grid == null || !_grid.HasGrid) return belts;
 
         var orientedSize = BaseSize.OrientedSize(Orientation);
         var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
@@ -369,7 +403,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         foreach (var (cell, worldSide) in outputs)
         {
-            if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
+            if (!_grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
             GameObject occGO = cd.occupant as GameObject ?? (cd.occupant as Component)?.gameObject;
             if (occGO == null) continue;
             var belt = occGO.GetComponent<ConveyorBelt>();
@@ -388,6 +422,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         if (svc == null) return;
         svc.AddOrStack(mat, amount);
     }
+    #endregion
 
     public void Upgrade()
     {
@@ -406,6 +441,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         return random < _chanceToBreak;
     }
 
+    #region Interaction
     // --- Interaction (IInteractable) ---
     public void OnTap()
     {
@@ -424,6 +460,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     }
     public void OnHold() { }
 
+    #endregion
+
+    #region Drag
     // --- Drag (IDraggable) ---
     public bool CanDrag => true;
     public Transform DragTransform => transform;
@@ -431,20 +470,27 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public void OnDrag(Vector3 worldPosition) { DragTransform.position = worldPosition; }
     public void OnDragEnd()
     {
-        // When drag finishes, re-scan for output belts at new position/orientation.
         ScanOutputsAndStartIfPossible();
+        GameStateSync.TryUpdateMachineOrientation(this); // If orientation changed during drag+rotate workflow.
     }
 
-    // --- Grid Footprint & Placement (IGridOccupant) ---
     public Vector2Int BaseSize => data != null ? data.size : Vector2Int.one;
     public GridOrientation Orientation { get; private set; } = GridOrientation.North;
     public Vector2Int Anchor { get; private set; }
+
+    private void EnsureGrid()
+    {
+        if (_grid == null) _grid = FindFirstObjectByType<GridService>();
+    }
 
     public void SetPlacement(Vector2Int anchor, GridOrientation orientation)
     {
         Anchor = anchor;
         Orientation = orientation;
         transform.rotation = orientation.ToRotation();
+
+        EnsureGrid();
+        ApplyWorldFromPlacement(_grid);
 
         ScanOutputsAndStartIfPossible();
     }
@@ -465,7 +511,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         float wz = grid.Origin.z + (Anchor.y + size.y * 0.5f) * grid.CellSize;
         transform.position = new Vector3(wx, y, wz);
     }
+    #endregion
 
+
+    #region Conveyor I/O & Inventory
     // --- Conveyor I/O & Inventory bridge ---
     private void ScanOutputsAndStartIfPossible()
     {
@@ -549,8 +598,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // True if at least one acceptable belt is connected to any output
     private bool HasConnectedOutputBelt()
     {
-        var grid = FindFirstObjectByType<GridService>();
-        if (grid == null || !grid.HasGrid) return false;
+        if (_grid == null || !_grid.HasGrid) return false;
 
         var orientedSize = BaseSize.OrientedSize(Orientation);
         var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
@@ -574,7 +622,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         foreach (var (cell, worldSide) in outputs)
         {
-            if (!grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
+            if (!_grid.TryGetCell(cell, out var cd) || cd.occupant == null) continue;
             GameObject occGO = cd.occupant as GameObject ?? (cd.occupant as Component)?.gameObject;
             if (occGO == null) continue;
             var belt = occGO.GetComponent<ConveyorBelt>();
@@ -646,6 +694,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             default: return Anchor;
         }
     }
+    #endregion
 
     private static GridOrientation RotateSide(GridOrientation local, GridOrientation by)
         => (GridOrientation)(((int)local + (int)by) & 3);

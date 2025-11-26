@@ -45,6 +45,17 @@ public class BrokenMachineManager : MonoBehaviour
             _brokenEffect.Play();
         }
 
+        // Choose indicator: minigame-specific prefab if provided, else fallback
+        GameObject indicatorPrefab = _brokenMachineIndicator;
+        if (machine.Data != null &&
+            machine.Data.repairMinigame != null &&
+            machine.Data.repairMinigame.brokenIndicatorPrefab != null)
+        {
+            indicatorPrefab = machine.Data.repairMinigame.brokenIndicatorPrefab;
+        }
+
+        if (indicatorPrefab == null) return;
+
         // Spawn and parent to machine so it follows it
         var indicator = Instantiate(_brokenMachineIndicator);
         indicator.name = $"BrokenIndicator_{machine.name}";

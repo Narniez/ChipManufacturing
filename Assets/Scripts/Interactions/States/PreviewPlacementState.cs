@@ -227,6 +227,17 @@ public class PreviewPlacementState : BasePlacementState
         if (_machineData != null && machine != null)
         {
             machine.Initialize(_machineData);
+            var economyManager = EconomyManager.Instance;
+            if(economyManager.playerBalance < economyManager.GetMachineCost(_machineData))
+            {
+                Debug.LogWarning("Cannot confirm machine placement: not enough moni:(");
+                PlaceMan.CancelPreview();
+                return;
+            }
+            else
+            {
+                economyManager.PurchaseMachine(_machineData, ref EconomyManager.Instance.playerBalance);
+            }
         }
 
         RestorePreviewMaterial(_instance);
@@ -234,13 +245,21 @@ public class PreviewPlacementState : BasePlacementState
         _grid.SetAreaOccupant(_anchor, size, _instance);
         _committed = true;
 
+        // Persist machine placement immediately so save.json contains the new machine.
+        if (machine != null)
+        {
+            GameStateSync.TryAddOrUpdateMachine(machine);
+        }
+
         // Belt: notify adjacent machines (so generators can start immediately)
         if (_isConveyor)
         {
             var belt = _instance.GetComponent<ConveyorBelt>();
             if (belt != null)
             {
+                EconomyManager.Instance.PurchaseConveyor(belt, ref EconomyManager.Instance.playerBalance);
                 belt.NotifyAdjacentMachinesOfConnection();
+
             }
             PlaceMan.SetState(new SelectingState(PlaceMan, _occ));
         }
