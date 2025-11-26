@@ -57,7 +57,19 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
 
         NotifyAdjacentMachinesOfConnection();
         RefreshChainLinks();
-        GameStateSync.TryAddOrUpdateBelt(this); // Do NOT remove on isolation
+
+        // Avoid overwriting an existing saved belt entry during load.
+        // If GameState already contains an entry for this anchor, assume loader
+        // will restore item state and skip writing here.
+        var svc = GameStateService.Instance;
+        bool hasSavedEntry = false;
+        if (svc?.State != null)
+        {
+            hasSavedEntry = svc.State.belts.Exists(x => x.anchor == Anchor);
+        }
+
+        if (!hasSavedEntry)
+            GameStateSync.TryAddOrUpdateBelt(this); // write only if no pre-existing save entry
     }
 
     private void OnDisable()
@@ -81,6 +93,7 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     public bool HasItem => _item != null;
     public ConveyorItem PeekItem() => _item;
 
+    // Called during normal runtime placement/movement
     public bool TrySetItem(ConveyorItem item, bool snapVisual = true)
     {
         // Do not accept items while this belt is being dragged
@@ -97,6 +110,33 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
         // Update persisted belt item state
         GameStateSync.TryAddOrUpdateBelt(this);
         return true;
+    }
+
+    // Loader-only helper: force-attach an item (bypasses drag/state checks)
+    public void RestoreItem(ConveyorItem item)
+    {
+        if (item == null) return;
+
+        // Clean up any existing visual attached to current item
+        if (_item != null && _item.Visual != null)
+            Destroy(_item.Visual);
+
+        _item = item;
+
+        // Snap visual to belt if available and grid ready
+        if (_item.Visual != null)
+        {
+            EnsureGrid();
+            if (_grid != null)
+            {
+                _item.Visual.transform.position = GetWorldCenter();
+                _item.smoothTime = 1f;
+                _item.Duration = 0f;
+            }
+        }
+
+        // Persist restored state (now that item is attached)
+        GameStateSync.TryAddOrUpdateBelt(this);
     }
 
     public ConveyorItem TakeItem()
@@ -143,7 +183,6 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     {
         _turnKind = kind;
         ApplyTurnVisualRotation();
-        GameStateSync.TryAddOrUpdateBelt(this);
     }
 
     private void ApplyTurnVisualRotation()

@@ -6916,8 +6916,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b09ccdeed181e984bb3e552bfc20ebdb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FactorySceneBuilder
-  machineFactory: {fileID: 45226635}
   placement: {fileID: 682233058}
+  factorySceneName: Demo
 --- !u!4 &1062132405
 Transform:
   m_ObjectHideFlags: 0
@@ -9800,6 +9800,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InventoryService
   debug: 1
   slotRootGO: {fileID: 469765789}
+  materialRegistry: {fileID: 11400000, guid: f22d5e290a7b4974d918d9667d1bcf31, type: 2}
 --- !u!1001 &1561134888
 PrefabInstance:
   m_ObjectHideFlags: 0

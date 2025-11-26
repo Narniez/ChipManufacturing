@@ -27,7 +27,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private float _miniMimumChanceToBreak = 0;
     private bool _isBroken = false;
 
-    private bool _initialized; // NEW: set after Initialize completes
+    private bool _initialized; 
 
     public static event Action<Machine, Vector3> OnMachineBroken;
     public static event Action<Machine> OnMachineRepaired;
@@ -47,7 +47,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private void OnEnable()
     {
         if (_grid == null) _grid = FindFirstObjectByType<GridService>();
-        // Only resume if we were initialized (avoid running before Initialize())
+        // Only resume if machine was initialized (avoid running before Initialize())
         if (_initialized) StartCoroutine(DeferredResume());
     }
 
@@ -57,7 +57,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         TryStartIfIdle();
     }
 
-    // Clear stale coroutine handle when disabled (Unity stops coroutines on inactive GameObjects)
+    // Clear stale coroutine handle when disabled
     private void OnDisable()
     {
         if (productionRoutine != null)
@@ -81,9 +81,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _grid = FindFirstObjectByType<GridService>();
 
         _initialized = true;
-
-        // Ensure save has correct machineDataPath now that data is valid
-        GameStateSync.ForceUpdateMachineDataPath(this);
+;
 
         StartProduction();
     }
