@@ -124,7 +124,9 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
             RestoreLiftedTarget();
 
         _highlightTarget = highlightTarget;
-        _gateOutside = step.gateInputOutsideHighlight;
+        _gateOutside = step.gateInputOutsideHighlight; 
+         dimmer.gameObject.GetComponent<Image>().enabled = step.showDimmerImage;
+       
 
         // --- Fullscreen image logic (like bubbleSpeaker) ---
         if (fullscreenImage)
@@ -469,4 +471,6 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
         var go = GameObject.Find(pathOrName);
         return go != null ? go.GetComponent<RectTransform>() : null;
     }
+
+
 }
