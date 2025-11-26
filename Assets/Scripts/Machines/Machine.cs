@@ -33,6 +33,11 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public static event Action<Machine> OnMachineRepaired;
     public static event Action<MaterialType, Vector3> OnMaterialProduced;
 
+    //Progress tracking for UI
+    private float _productionProgress = 0f; // 0..1
+    public float ProductionProgress => Mathf.Clamp01(_productionProgress);
+    public event Action<float> ProductionProgressChanged;
+
     public MachineData Data => data;
     public bool IsProducing => productionRoutine != null;
     public bool IsBroken => _isBroken;
@@ -65,6 +70,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             try { StopCoroutine(productionRoutine); } catch { }
             productionRoutine = null;
         }
+
+        // Reset progress when disabled so UI does not show stale value
+        _productionProgress = 0f;
+        ProductionProgressChanged?.Invoke(_productionProgress);
     }
 
     public void Initialize(MachineData machineData)
@@ -110,6 +119,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             _currentRecipe = recipe;
 
             float dur = recipe.processingTimeOverride > 0f ? recipe.processingTimeOverride : data.processingTime;
+            // Reset progress and notify
+            _productionProgress = 0f;
+            ProductionProgressChanged?.Invoke(_productionProgress);
             productionRoutine = StartCoroutine(ProcessOneRecipe(dur));
         }
         else
@@ -117,6 +129,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             // Legacy behavior with input queue
             if (_inputQueue.Count > 0)
             {
+                _productionProgress = 0f;
+                ProductionProgressChanged?.Invoke(_productionProgress);
                 productionRoutine = StartCoroutine(ProcessOneLegacy());
                 return;
             }
@@ -124,6 +138,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             // Legacy generator: no inputs, only output; run only if at least one output belt is connected
             if (IsLegacyGenerator && HasConnectedOutputBelt())
             {
+                _productionProgress = 0f;
+                ProductionProgressChanged?.Invoke(_productionProgress);
                 productionRoutine = StartCoroutine(ProcessLegacyGenerator());
             }
         }
@@ -164,7 +180,27 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private IEnumerator ProcessOneRecipe(float duration)
     {
         Debug.Log("M: start recipe");
-        yield return new WaitForSeconds(duration);
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            yield return null;
+            elapsed += Time.deltaTime;
+            _productionProgress = duration > 0f ? Mathf.Clamp01(elapsed / duration) : 1f;
+            ProductionProgressChanged?.Invoke(_productionProgress);
+
+            // If machine got broken mid-process, abort
+            if (_isBroken)
+            {
+                _productionProgress = 0f;
+                ProductionProgressChanged?.Invoke(_productionProgress);
+                productionRoutine = null;
+                yield break;
+            }
+        }
+
+        _productionProgress = 1f;
+        ProductionProgressChanged?.Invoke(_productionProgress);
 
         // Produce all outputs of current recipe
         if (_currentRecipe != null)
@@ -179,7 +215,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         }
 
         productionRoutine = null;
-        _currentRecipe = null;
+        _productionProgress = 0f;
+        ProductionProgressChanged?.Invoke(_productionProgress);
 
         // Attempt next recipe if inputs are available
         StartProduction();
@@ -190,12 +227,33 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         // Consume one and process
         var consumed = _inputQueue.Dequeue();
 
-        yield return new WaitForSeconds(data.processingTime);
+        float duration = data.processingTime;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            yield return null;
+            elapsed += Time.deltaTime;
+            _productionProgress = duration > 0f ? Mathf.Clamp01(elapsed / duration) : 1f;
+            ProductionProgressChanged?.Invoke(_productionProgress);
+
+            if (_isBroken)
+            {
+                _productionProgress = 0f;
+                ProductionProgressChanged?.Invoke(_productionProgress);
+                productionRoutine = null;
+                yield break;
+            }
+        }
+
+        _productionProgress = 1f;
+        ProductionProgressChanged?.Invoke(_productionProgress);
 
         // Produce legacy single output (data.outputMaterial)
         ProduceOneOutput(data.outputMaterial);
 
         productionRoutine = null;
+        _productionProgress = 0f;
+        ProductionProgressChanged?.Invoke(_productionProgress);
         StartProduction();
     }
 
@@ -210,7 +268,26 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     private IEnumerator ProcessLegacyGenerator()
     {
-        yield return new WaitForSeconds(data.processingTime);
+        float duration = data.processingTime;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            yield return null;
+            elapsed += Time.deltaTime;
+            _productionProgress = duration > 0f ? Mathf.Clamp01(elapsed / duration) : 1f;
+            ProductionProgressChanged?.Invoke(_productionProgress);
+
+            if (_isBroken)
+            {
+                _productionProgress = 0f;
+                ProductionProgressChanged?.Invoke(_productionProgress);
+                productionRoutine = null;
+                yield break;
+            }
+        }
+
+        _productionProgress = 1f;
+        ProductionProgressChanged?.Invoke(_productionProgress);
 
         var belts = GetConnectedOutputBelts();
         if (belts.Count == 0)
@@ -219,6 +296,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             productionRoutine = null;
             // Small delay lets belt movement finish after chain extension
             StartCoroutine(DelayedGeneratorRetry(0.15f));
+            _productionProgress = 0f;
+            ProductionProgressChanged?.Invoke(_productionProgress);
             yield break;
         }
 
@@ -245,6 +324,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         }
 
         productionRoutine = null;
+        _productionProgress = 0f;
+        ProductionProgressChanged?.Invoke(_productionProgress);
         StartProduction();
     }
 
@@ -279,6 +360,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             StopCoroutine(productionRoutine);
             productionRoutine = null;
         }
+
+        // Reset progress and notify UI immediately
+        _productionProgress = 0f;
+        ProductionProgressChanged?.Invoke(_productionProgress);
 
         // Persist broken state
         GameStateSync.TrySetMachineBroken(this, true);
