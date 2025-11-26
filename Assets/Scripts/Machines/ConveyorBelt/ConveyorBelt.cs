@@ -194,7 +194,6 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     {
         _turnKind = kind;
         ApplyTurnVisualRotation();
-        GameStateSync.TryAddOrUpdateBelt(this);
     }
 
     private void ApplyTurnVisualRotation()

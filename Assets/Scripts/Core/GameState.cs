@@ -26,14 +26,21 @@ public class BeltState
 [Serializable]
 public class InventoryState
 {
+    // Each entry represents a single inventory slot 
     public List<InventoryEntry> items = new();
-    public int currency; // money
+    public int currency;
 }
 
 [Serializable]
 public struct InventoryEntry
 {
     public MaterialType type;
+
+    // id of MaterialData (preferred). If > 0, will use this to find the MaterialData asset.
+    public int materialId;
+
+    public int slotIndex;
+
     public int amount;
 }
 
@@ -44,5 +51,4 @@ public class GameState
     public List<MachineState> machines = new();
     public List<BeltState> belts = new();
     public InventoryState inventory = new();
-    // Add other systems (research, upgrades) as needed
 }
