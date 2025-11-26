@@ -156,19 +156,18 @@ public class InventoryService : MonoBehaviour, IInventory
     {
         var state = new InventoryState();
         state.items = new List<InventoryEntry>();
-        state.currency = GameStateService.Instance?.State?.inventory?.currency ?? 0;
 
         for (int i = 0; i < _inventorySlots.Count; i++)
         {
-            var s = _inventorySlots[i];
-            if (s != null && !s.IsEmpty && s.Item != null && s.Amount > 0)
+            var slot = _inventorySlots[i];
+            if (slot != null && !slot.IsEmpty && slot.Item != null && slot.Amount > 0)
             {
                 var entry = new InventoryEntry
                 {
                     slotIndex = i,
-                    materialId = s.Item.id,
-                    type = s.Item.materialType,
-                    amount = s.Amount
+                    materialId = slot.Item.id,
+                    type = slot.Item.materialType,
+                    amount = slot.Amount
                 };
                 state.items.Add(entry);
             }
@@ -208,18 +207,18 @@ public class InventoryService : MonoBehaviour, IInventory
         var pending = new List<InventoryEntry>();
 
         // First pass: entries with valid slotIndex override that slot
-        foreach (var e in state.items)
+        foreach (var entry in state.items)
         {
             MaterialData mat = null;
-            if (e.materialId != 0) mat = FindMaterialById(e.materialId);
-            if (mat == null && e.type != 0) mat = FindMaterialByType(e.type);
+            if (entry.materialId != 0) mat = FindMaterialById(entry.materialId);
+            if (mat == null && entry.type != 0) mat = FindMaterialByType(entry.type);
             if (mat == null)
             {
-                if (debug) Debug.LogWarning($"InventoryService.LoadState: missing material for entry (id={e.materialId}, type={e.type}).");
+                if (debug) Debug.LogWarning($"InventoryService.LoadState: missing material for entry (id={entry.materialId}, type={entry.type}).");
                 continue;
             }
 
-            int idx = e.slotIndex;
+            int idx = entry.slotIndex;
             if (idx >= 0 && idx < slotCount)
             {
                 // subtract previous content of this slot (if any)
@@ -235,14 +234,14 @@ public class InventoryService : MonoBehaviour, IInventory
                 }
 
                 var slot = _inventorySlots[idx];
-                slot.SetItem(mat, Math.Max(0, e.amount));
-                _counts[mat.id] = _counts.TryGetValue(mat.id, out var cur) ? cur + e.amount : e.amount;
+                slot.SetItem(mat, Math.Max(0, entry.amount));
+                _counts[mat.id] = _counts.TryGetValue(mat.id, out var cur) ? cur + entry.amount : entry.amount;
 
-                prev[idx] = (mat.id, Math.Max(0, e.amount));
+                prev[idx] = (mat.id, Math.Max(0, entry.amount));
             }
             else
             {
-                pending.Add(e);
+                pending.Add(entry);
             }
         }
 
@@ -294,7 +293,7 @@ public class InventoryService : MonoBehaviour, IInventory
         _suppressSave = false;
     }
 
-    // Use the inspector-assigned registry first (recommended).
+    // Use the inspector-assigned registry first
     private void EnsureMaterialLookup()
     {
         if (_materialById != null && _materialById.Count > 0) return;
@@ -313,7 +312,7 @@ public class InventoryService : MonoBehaviour, IInventory
             if (_materialById.Count > 0) return;
         }
 
-        // Editor-only fallback to find assets (won't run in builds)
+        // Editor-only fallback to find assets
 #if UNITY_EDITOR
         var guids = UnityEditor.AssetDatabase.FindAssets("t:MaterialData");
         foreach (var g in guids)
@@ -330,12 +329,12 @@ public class InventoryService : MonoBehaviour, IInventory
     private MaterialData FindMaterialById(int id)
     {
         EnsureMaterialLookup();
-        return (_materialById != null && _materialById.TryGetValue(id, out var m)) ? m : null;
+        return (_materialById != null && _materialById.TryGetValue(id, out var material)) ? material : null;
     }
 
-    private MaterialData FindMaterialByType(MaterialType t)
+    private MaterialData FindMaterialByType(MaterialType type)
     {
         EnsureMaterialLookup();
-        return (_materialByType != null && _materialByType.TryGetValue(t, out var m)) ? m : null;
+        return (_materialByType != null && _materialByType.TryGetValue(type, out var m)) ? m : null;    
     }
 }

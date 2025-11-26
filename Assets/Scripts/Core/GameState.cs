@@ -28,7 +28,6 @@ public class InventoryState
 {
     // Each entry represents a single inventory slot 
     public List<InventoryEntry> items = new();
-    public int currency;
 }
 
 [Serializable]
