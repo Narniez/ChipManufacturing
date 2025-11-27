@@ -445,7 +445,7 @@ public class PreviewPlacementState : BasePlacementState
         float y = _grid.Origin.y + 0.02f;
 
         // DEBUG: report placement state
-        Debug.Log($"[Preview] anchor={_anchor} orientation={_orientation} orientedSize={size} instancePos={_instance.transform.position}");
+       // Debug.Log($"[Preview] anchor={_anchor} orientation={_orientation} orientedSize={size} instancePos={_instance.transform.position}");
 
         var ports = _machineData.ports != null && _machineData.ports.Count > 0
             ? _machineData.ports

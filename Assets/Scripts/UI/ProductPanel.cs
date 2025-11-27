@@ -61,12 +61,6 @@ public class ProductPanel : MonoBehaviour
             mainButton.onClick.AddListener(OnMainButtonClicked);
         }
 
-        if (buyButton != null)
-        {
-            buyButton.onClick.RemoveListener(OnBuyClicked);
-            buyButton.onClick.AddListener(OnBuyClicked);
-        }
-
         if (detailsPanel != null)
         {
             if (detailsPanelRect == null)
@@ -114,6 +108,14 @@ public class ProductPanel : MonoBehaviour
                 RectTransform buttonRT = mainButton != null ? mainButton.GetComponent<RectTransform>() : GetComponent<RectTransform>();
                 if (buttonRT != null)
                     PositionPanelOverButton(buttonRT);
+
+                // Assign buy button listener for THIS product only (captures current machineData).
+                SetupBuyButtonFor(machineData);
+            }
+            else if (!next)
+            {
+                // closing: cleanup listeners to avoid stale handlers
+                CleanupBuyButton();
             }
 
             detailsPanel.SetActive(next);
@@ -122,26 +124,27 @@ public class ProductPanel : MonoBehaviour
 
     /// <summary>
     /// Called when the buy button is pressed in the details panel.
-    /// Starts placement for the currently assigned MachineData (via PlacementManager.Instance)
-    /// and then closes the shop.
+    /// Starts placement for the specified MachineData and then closes the shop.
+    /// This method is NOT used as a permanent listener; we attach lambdas that capture target data.
     /// </summary>
-    void OnBuyClicked()
+    void OnBuyClicked_Internal(MachineData target)
     {
-        if (machineData == null)
+        if (target == null)
         {
-            Debug.LogWarning("ProductPanel.OnBuyClicked: no MachineData assigned.");
+            Debug.LogWarning("ProductPanel.OnBuyClicked_Internal: target MachineData is null.");
             return;
         }
 
         if (PlacementManager.Instance == null)
         {
-            Debug.LogWarning("ProductPanel.OnBuyClicked: PlacementManager.Instance is null.");
+            Debug.LogWarning("ProductPanel.OnBuyClicked_Internal: PlacementManager.Instance is null.");
         }
         else
         {
-            PlacementManager.Instance.StartPlacement(machineData);
+            PlacementManager.Instance.StartPlacement(target);
         }
-        // Hide details panel
+
+        // Hide details panel after starting placement
         Hide();
     }
 
@@ -157,6 +160,10 @@ public class ProductPanel : MonoBehaviour
 
         SetMachine(data);
         PositionPanelOverWorldPoint(worldPosition, worldCamera);
+
+        // If details panel is shared, set buy button to this machine (captures data)
+        SetupBuyButtonFor(data);
+
         detailsPanel.SetActive(true);
     }
 
@@ -167,6 +174,34 @@ public class ProductPanel : MonoBehaviour
     {
         if (detailsPanel != null)
             detailsPanel.SetActive(false);
+
+        // cleanup listeners so shared button doesn't keep stale handlers
+        CleanupBuyButton();
+    }
+
+    /// <summary>
+    /// Assign the buy button so it triggers placement for the provided MachineData only.
+    /// Removes previous listeners to avoid multiple invocations from earlier ProductPanel instances.
+    /// </summary>
+    private void SetupBuyButtonFor(MachineData data)
+    {
+        if (buyButton == null) return;
+
+        // Remove all previous listeners on the shared buy button (intent: this UI is single-purpose)
+        buyButton.onClick.RemoveAllListeners();
+
+        // Capture the data in a local variable to avoid closure capturing mutable field
+        MachineData captured = data;
+
+        // Add a listener that calls the internal handler with the captured MachineData
+        buyButton.onClick.AddListener(() => OnBuyClicked_Internal(captured));
+    }
+
+    // Remove listeners to avoid stale references when panel is closed or another item opens it.
+    private void CleanupBuyButton()
+    {
+        if (buyButton == null) return;
+        buyButton.onClick.RemoveAllListeners();
     }
 
     /// <summary>
