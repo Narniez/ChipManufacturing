@@ -18,8 +18,9 @@ public class PreviewPlacementState : BasePlacementState
     private IGridOccupant _occ;
 
     // bottom-left cell of footprint
-    private Vector2Int _anchor;              
+    private Vector2Int _anchor;
     private GridOrientation _orientation;
+    private float _heightOffset;
 
     private bool _committed;
     private bool _isConveyor;
@@ -155,7 +156,7 @@ public class PreviewPlacementState : BasePlacementState
         if (newAnchor == _anchor) return;
 
         _anchor = newAnchor;
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, 0);
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
 
@@ -182,7 +183,7 @@ public class PreviewPlacementState : BasePlacementState
         if (newAnchor == _anchor) return;
 
         _anchor = newAnchor;
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, 0);
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
 
@@ -219,7 +220,7 @@ public class PreviewPlacementState : BasePlacementState
 
         _anchor = newAnchor;
 
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, newSize, 0);
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, newSize, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
 
@@ -517,8 +518,8 @@ public class PreviewPlacementState : BasePlacementState
         {
             case GridOrientation.North: return new Vector2Int(_anchor.x + idx, _anchor.y + orientedSize.y);
             case GridOrientation.South: return new Vector2Int(_anchor.x + idx, _anchor.y - 1);
-            case GridOrientation.East:  return new Vector2Int(_anchor.x + orientedSize.x, _anchor.y + idx);
-            case GridOrientation.West:  return new Vector2Int(_anchor.x - 1, _anchor.y + idx);
+            case GridOrientation.East: return new Vector2Int(_anchor.x + orientedSize.x, _anchor.y + idx);
+            case GridOrientation.West: return new Vector2Int(_anchor.x - 1, _anchor.y + idx);
             default: return _anchor;
         }
     }

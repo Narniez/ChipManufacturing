@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static UnityEngine.UIElements.UxmlAttributeDescription;
@@ -273,7 +273,7 @@ public class PlacementManager : MonoBehaviour
 
     // Place a machine using MachineData (used by FactorySceneBuilder)
     // This one performs all placement responsibilities: initialize, set internal state on machine,
-    // position, mark grid occupancy and persist GameState mirrors PreviewPlacementState.ConfirmPlacement.
+    // position, mark grid occupancy and persist GameState � mirrors PreviewPlacementState.ConfirmPlacement.
     public GameObject PlaceMachineFromSave(MachineData machineData, Vector2Int anchor, GridOrientation orientation, bool isBroken = false)
     {
         if (machineData == null || machineData.prefab == null)
@@ -375,126 +375,123 @@ public class PlacementManager : MonoBehaviour
         return belt;
     }
 
-    return belt;
-}
-
-public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefab, GridOrientation overrideOrientation, ConveyorBelt.BeltTurnKind turnKind = ConveyorBelt.BeltTurnKind.None)
-{
-    if (gridService == null || !gridService.HasGrid || source == null) return source;
-
-    var anchor = source.Anchor;
-    var size = Vector2Int.one;
-
-    if (!_beltSwapInProgress.Add(anchor))
-        return source;
-
-    try
+    public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefab, GridOrientation overrideOrientation, ConveyorBelt.BeltTurnKind turnKind = ConveyorBelt.BeltTurnKind.None)
     {
-        var prefab = GetConveyorPrefab(useTurnPrefab);
-        if (prefab == null)
-        {
-            Debug.LogWarning("ReplaceConveyorPrefab: missing conveyor prefab.");
+        if (gridService == null || !gridService.HasGrid || source == null) return source;
+
+        var anchor = source.Anchor;
+        var size = Vector2Int.one;
+
+        if (!_beltSwapInProgress.Add(anchor))
             return source;
-        }
 
-        // Detect if 'source' sits on a Machine OUTPUT port cell (regardless of facing)
-        GridOrientation? requiredWorldSide = GetRequiredMachineOutputSide(anchor);
-        bool isOnMachineOutputPort = requiredWorldSide.HasValue;
-
-        // Default final orientation & turn kind
-        GridOrientation finalOrientation = overrideOrientation;
-        ConveyorBelt.BeltTurnKind finalTurnKind = turnKind;
-        bool forceTurnPrefab = false;
-
-        if (isOnMachineOutputPort && overrideOrientation != requiredWorldSide.Value)
+        try
         {
-            // Choose Left/Right depending on port outward vs outgoing
-            var outSide = requiredWorldSide.Value;
-            finalTurnKind =
-                (overrideOrientation == outSide.RotatedCW()) ? ConveyorBelt.BeltTurnKind.Right :
-                (overrideOrientation == outSide.RotatedCCW()) ? ConveyorBelt.BeltTurnKind.Left :
-                ConveyorBelt.BeltTurnKind.None;
-
-            // If sideways branch, ensure we do place a turn prefab
-            forceTurnPrefab = true;
-        }
-
-        // If we must force a turn, swap prefab accordingly
-        bool willUseTurnPrefab = forceTurnPrefab || useTurnPrefab;
-
-        // Special case: if this belt sits on a machine's output cell and the final orientation
-        // after extension equals the machine's required output side, prefer a straight prefab.
-        // This makes the belt look like a straight extension right at the machine output
-        // instead of a corner, which improves visual in this scenario.
-        if (isOnMachineOutputPort && requiredWorldSide.HasValue)
-        {
-            if (finalOrientation == requiredWorldSide.Value)
+            var prefab = GetConveyorPrefab(useTurnPrefab);
+            if (prefab == null)
             {
-                // prefer straight even if earlier logic set forceTurnPrefab
-                willUseTurnPrefab = false;
-                finalTurnKind = ConveyorBelt.BeltTurnKind.None;
+                Debug.LogWarning("ReplaceConveyorPrefab: missing conveyor prefab.");
+                return source;
             }
+
+            // Detect if 'source' sits on a Machine OUTPUT port cell (regardless of facing)
+            GridOrientation? requiredWorldSide = GetRequiredMachineOutputSide(anchor);
+            bool isOnMachineOutputPort = requiredWorldSide.HasValue;
+
+            // Default final orientation & turn kind
+            GridOrientation finalOrientation = overrideOrientation;
+            ConveyorBelt.BeltTurnKind finalTurnKind = turnKind;
+            bool forceTurnPrefab = false;
+
+            if (isOnMachineOutputPort && overrideOrientation != requiredWorldSide.Value)
+            {
+                // Choose Left/Right depending on port outward vs outgoing
+                var outSide = requiredWorldSide.Value;
+                finalTurnKind =
+                    (overrideOrientation == outSide.RotatedCW()) ? ConveyorBelt.BeltTurnKind.Right :
+                    (overrideOrientation == outSide.RotatedCCW()) ? ConveyorBelt.BeltTurnKind.Left :
+                    ConveyorBelt.BeltTurnKind.None;
+
+                // If sideways branch, ensure we do place a turn prefab
+                forceTurnPrefab = true;
+            }
+
+            // If we must force a turn, swap prefab accordingly
+            bool willUseTurnPrefab = forceTurnPrefab || useTurnPrefab;
+
+            // Special case: if this belt sits on a machine's output cell and the final orientation
+            // after extension equals the machine's required output side, prefer a straight prefab.
+            // This makes the belt look like a straight extension right at the machine output
+            // instead of a corner, which improves visual in this scenario.
+            if (isOnMachineOutputPort && requiredWorldSide.HasValue)
+            {
+                if (finalOrientation == requiredWorldSide.Value)
+                {
+                    // prefer straight even if earlier logic set forceTurnPrefab
+                    willUseTurnPrefab = false;
+                    finalTurnKind = ConveyorBelt.BeltTurnKind.None;
+                }
+            }
+
+            prefab = GetConveyorPrefab(willUseTurnPrefab);
+
+            var world = AnchorToWorldCenter(anchor, size, 0f);
+
+            ConveyorItem item = null;
+            if (source.HasItem)
+            {
+                item = source.TakeItem();
+                if (item != null && item.Visual != null)
+                    item.Visual.transform.position = world;
+            }
+
+            var parent = source.PreviousInChain;
+            var child = source.NextInChain;
+
+            source.gameObject.SetActive(false);
+            gridService.SetAreaOccupant(anchor, size, null);
+
+            var go = Instantiate(prefab, world, finalOrientation.ToRotation());
+            MoveToFactoryScene(go);
+
+            var newBelt = go.GetComponent<ConveyorBelt>();
+            if (newBelt == null)
+            {
+                Destroy(go);
+                source.gameObject.SetActive(true);
+                gridService.SetAreaOccupant(anchor, size, source.gameObject);
+                Debug.LogError("ReplaceConveyorPrefab: new prefab missing ConveyorBelt.");
+                return source;
+            }
+
+            newBelt.SetTurnKind(finalTurnKind);
+            newBelt.SetPlacement(anchor, finalOrientation);
+            gridService.SetAreaOccupant(anchor, size, go);
+
+            newBelt.PreviousInChain = parent;
+            newBelt.NextInChain = child;
+            if (parent != null && parent.NextInChain == source)
+                parent.NextInChain = newBelt;
+            if (child != null && child.PreviousInChain == source)
+                child.PreviousInChain = newBelt;
+
+            if (item != null)
+                newBelt.TrySetItem(item, snapVisual: true);
+
+            AutoLinkForward(newBelt);
+            newBelt.NotifyAdjacentMachinesOfConnection();
+
+            // Update state entry (replace existing)
+            GameStateSync.TryReplaceBelt(source, newBelt);
+
+            Destroy(source.gameObject);
+            return newBelt;
         }
-
-        prefab = GetConveyorPrefab(willUseTurnPrefab);
-
-        var world = AnchorToWorldCenter(anchor, size, 0f);
-
-        ConveyorItem item = null;
-        if (source.HasItem)
+        finally
         {
-            item = source.TakeItem();
-            if (item != null && item.Visual != null)
-                item.Visual.transform.position = world;
+            _beltSwapInProgress.Remove(anchor);
         }
-
-        var parent = source.PreviousInChain;
-        var child = source.NextInChain;
-
-        source.gameObject.SetActive(false);
-        gridService.SetAreaOccupant(anchor, size, null);
-
-        var go = Instantiate(prefab, world, finalOrientation.ToRotation());
-        MoveToFactoryScene(go);
-
-        var newBelt = go.GetComponent<ConveyorBelt>();
-        if (newBelt == null)
-        {
-            Destroy(go);
-            source.gameObject.SetActive(true);
-            gridService.SetAreaOccupant(anchor, size, source.gameObject);
-            Debug.LogError("ReplaceConveyorPrefab: new prefab missing ConveyorBelt.");
-            return source;
-        }
-
-        newBelt.SetTurnKind(finalTurnKind);
-        newBelt.SetPlacement(anchor, finalOrientation);
-        gridService.SetAreaOccupant(anchor, size, go);
-
-        newBelt.PreviousInChain = parent;
-        newBelt.NextInChain = child;
-        if (parent != null && parent.NextInChain == source)
-            parent.NextInChain = newBelt;
-        if (child != null && child.PreviousInChain == source)
-            child.PreviousInChain = newBelt;
-
-        if (item != null)
-            newBelt.TrySetItem(item, snapVisual: true);
-
-        AutoLinkForward(newBelt);
-        newBelt.NotifyAdjacentMachinesOfConnection();
-
-        // Update state entry (replace existing)
-        GameStateSync.TryReplaceBelt(source, newBelt);
-
-        Destroy(source.gameObject);
-        return newBelt;
     }
-    finally
-    {
-        _beltSwapInProgress.Remove(anchor);
-    }
-}
 
     private void AutoLinkForward(ConveyorBelt belt)
     {
@@ -573,7 +570,7 @@ public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefa
         SetState(new IdleState(this));
     }
 
- 
+
     // Inspect physical neighbors on the grid (not only chain links), collects "straight" neighbor
     // orientations (including machines that output into the cell) and if all candidates agree it replaces
     // the turn prefab with a straight prefab oriented accordingly.
