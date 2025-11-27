@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7087c4abf7f59e44a712449f9d793f8, type: 3}
   m_Name: Start_Story 14
   m_EditorClassIdentifier: 
-  text: 'Robud: Now we need to place a conveyer belt going out of this, material
-    will start flowing again.'
+  text: Now we need to place a conveyer belt going out of this, material will start
+    flowing again.
   textBackdropSprite: {fileID: 0}
   textFont: {fileID: 0}
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
-  anchor: 5
-  waitForSignal: 3
-  highlightTargetPath: Canvas/TestShopPannel/TestConveyorBuyButton
+  anchor: 7
+  waitForSignal: 1
+  highlightTargetPath: Canvas/ShopButton
   gateInputOutsideHighlight: 1
   fingerMode: 1
   showFinger: 0
@@ -27,5 +27,5 @@ MonoBehaviour:
   dragTargetPath: 
   dragDuration: 1.25
   dragLoop: 0
-  typewriterCharsPerSecond: -1
+  typewriterCharsPerSecond: 60
   fullscreenSprite: {fileID: 0}

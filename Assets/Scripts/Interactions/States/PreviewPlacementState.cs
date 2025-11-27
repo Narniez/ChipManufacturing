@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,8 +18,9 @@ public class PreviewPlacementState : BasePlacementState
     private IGridOccupant _occ;
 
     // bottom-left cell of footprint
-    private Vector2Int _anchor;              
+    private Vector2Int _anchor;
     private GridOrientation _orientation;
+    private float _heightOffset;
 
     private bool _committed;
     private bool _isConveyor;
@@ -55,6 +57,9 @@ public class PreviewPlacementState : BasePlacementState
         Vector2Int desiredCell = _grid.WorldToCell(world);
 
         _instance = Object.Instantiate(_prefab);
+        // Ensure instance is in the current scene (PlacementManager helper)
+        PlaceMan?.NotifySpawned(_instance);
+
         _occ = _instance.GetComponent<IGridOccupant>();
         if (_occ == null)
         {
@@ -91,11 +96,25 @@ public class PreviewPlacementState : BasePlacementState
 
         // Ensure preview does not overlap existing occupants
         _anchor = FindNearestFreeArea(_anchor, size);
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, 0);
-        _instance.transform.position = snapped;
-        _occ.SetPlacement(_anchor, _orientation);
 
-        // Build port indicators for machines during preview
+        PlacementInitalize(desiredCell);
+    }
+
+    private void PlacementInitalize(Vector2Int desiredCell)
+    {
+
+        // Let the occupant apply its placement logic first
+        _occ.SetPlacement(_anchor, _orientation);
+        var size = GetOrientedSize();
+
+        // Compute pivot offset using settled renderers
+        _heightOffset = PlaceMan.ComputePivotBottomOffset(_instance.transform);
+
+        // Snap to grid center based on anchor/size and computed offset
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
+        _instance.transform.position = snapped;
+
+        // Build port indicators now that transforms and bounds are stable
         RebuildPortIndicators();
 
         // Show rotation UI (left/right) for preview
@@ -137,7 +156,7 @@ public class PreviewPlacementState : BasePlacementState
         if (newAnchor == _anchor) return;
 
         _anchor = newAnchor;
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, 0);
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
 
@@ -164,7 +183,7 @@ public class PreviewPlacementState : BasePlacementState
         if (newAnchor == _anchor) return;
 
         _anchor = newAnchor;
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, 0);
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
 
@@ -201,7 +220,7 @@ public class PreviewPlacementState : BasePlacementState
 
         _anchor = newAnchor;
 
-        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, newSize, 0);
+        Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, newSize, _heightOffset);
         _occ.SetPlacement(_anchor, _orientation);
         _instance.transform.position = snapped;
 
@@ -224,17 +243,6 @@ public class PreviewPlacementState : BasePlacementState
         if (_machineData != null && machine != null)
         {
             machine.Initialize(_machineData);
-            var economyManager = EconomyManager.Instance;
-            if(economyManager.playerBalance < economyManager.GetMachineCost(_machineData))
-            {
-                Debug.LogWarning("Cannot confirm machine placement: not enough moni:(");
-                PlaceMan.CancelPreview();
-                return;
-            }
-            else
-            {
-                economyManager.PurchaseMachine(_machineData, ref EconomyManager.Instance.playerBalance);
-            }
         }
 
         RestorePreviewMaterial(_instance);
@@ -254,7 +262,7 @@ public class PreviewPlacementState : BasePlacementState
             var belt = _instance.GetComponent<ConveyorBelt>();
             if (belt != null)
             {
-                EconomyManager.Instance.PurchaseConveyor(belt, ref EconomyManager.Instance.playerBalance);
+                EconomyManager.Instance?.PurchaseConveyor(belt, ref EconomyManager.Instance.playerBalance);
                 belt.NotifyAdjacentMachinesOfConnection();
 
             }
@@ -267,6 +275,26 @@ public class PreviewPlacementState : BasePlacementState
 
         // Cleanup preview port indicators after placement
         DestroyPortIndicators();
+
+        if (_machineData != null && machine != null)
+        {
+            machine.Initialize(_machineData);
+            var economyManager = EconomyManager.Instance;
+            if (EconomyManager.Instance == null)
+            {
+                return;
+            }
+            if (economyManager.playerBalance < economyManager.GetMachineCost(_machineData))
+            {
+                Debug.LogWarning("Cannot confirm machine placement: not enough moni:(");
+                PlaceMan.CancelPreview();
+                return;
+            }
+            else
+            {
+                economyManager.PurchaseMachine(_machineData, ref EconomyManager.Instance.playerBalance);
+            }
+        }
     }
 
     // External cancel (called by PlacementManager.CancelPreview)
@@ -416,6 +444,9 @@ public class PreviewPlacementState : BasePlacementState
         var size = GetOrientedSize();
         float y = _grid.Origin.y + 0.02f;
 
+        // DEBUG: report placement state
+        Debug.Log($"[Preview] anchor={_anchor} orientation={_orientation} orientedSize={size} instancePos={_instance.transform.position}");
+
         var ports = _machineData.ports != null && _machineData.ports.Count > 0
             ? _machineData.ports
             : null;
@@ -487,8 +518,8 @@ public class PreviewPlacementState : BasePlacementState
         {
             case GridOrientation.North: return new Vector2Int(_anchor.x + idx, _anchor.y + orientedSize.y);
             case GridOrientation.South: return new Vector2Int(_anchor.x + idx, _anchor.y - 1);
-            case GridOrientation.East:  return new Vector2Int(_anchor.x + orientedSize.x, _anchor.y + idx);
-            case GridOrientation.West:  return new Vector2Int(_anchor.x - 1, _anchor.y + idx);
+            case GridOrientation.East: return new Vector2Int(_anchor.x + orientedSize.x, _anchor.y + idx);
+            case GridOrientation.West: return new Vector2Int(_anchor.x - 1, _anchor.y + idx);
             default: return _anchor;
         }
     }

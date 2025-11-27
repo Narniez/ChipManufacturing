@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class TutorialManager : MonoBehaviour
 {
@@ -11,24 +11,16 @@ public class TutorialManager : MonoBehaviour
 
     private void OnEnable()
     {
-        TutorialEventBus.OnShopOpened += Bus_ShopOpened;
-        TutorialEventBus.OnShopItemSelected += Bus_ShopItemSelected;
-        TutorialEventBus.OnShopBuyClicked += Bus_ShopBuyClicked;
-        TutorialEventBus.OnPreviewStarted += Bus_PreviewStarted;
-        TutorialEventBus.OnPreviewConfirmed += Bus_PreviewConfirmed;
-        TutorialEventBus.OnOccupantPlaced += Bus_OccupantPlaced;
+        //Debug.Log($"TutorialManager.OnEnable instanceID={this.GetInstanceID()}, gameObject={gameObject.name}");
+        // Single subscription to generic tutorial stream — ensures all PublishSignal(...) calls are observed.
+        TutorialEventBus.OnSignalPublished += OnSignalReceived;
 
         if (autoStart) StartSequence();
     }
 
     private void OnDisable()
     {
-        TutorialEventBus.OnShopOpened -= Bus_ShopOpened;
-        TutorialEventBus.OnShopItemSelected -= Bus_ShopItemSelected;
-        TutorialEventBus.OnShopBuyClicked -= Bus_ShopBuyClicked;
-        TutorialEventBus.OnPreviewStarted -= Bus_PreviewStarted;
-        TutorialEventBus.OnPreviewConfirmed -= Bus_PreviewConfirmed;
-        TutorialEventBus.OnOccupantPlaced -= Bus_OccupantPlaced;
+        TutorialEventBus.OnSignalPublished -= OnSignalReceived;
     }
 
     private void Update()
@@ -94,21 +86,35 @@ public class TutorialManager : MonoBehaviour
         if (!HasActiveStep) return;
 
         var step = sequence.steps[_index];
+
+        //Debug.Log($"TutorialManager.TryAdvance: currentStep={_index}, waitingFor={step.waitForSignal}, incomingSig={sig}, payload={payload}");
+
         if (step.waitForSignal != sig) return;
 
+       // Debug.Log($"TutorialManager.TryAdvance: step {_index} matched signal {sig} — advancing.");
         Advance();
     }
 
+    // Single generic handler for all tutorial signals (subscribed in OnEnable).
+    private void OnSignalReceived(TutorialSignal signal, object payload)
+    {
+        //Debug.Log($"TutorialManager.OnSignalReceived: signal={signal}, payload={payload}");
+        TryAdvance(signal, payload);
+    }
+
+    // Keep these helper methods for UI wiring (they still call the bus helpers)
     public void OnClickShop() => TutorialEventBus.PublishShopOpened();
-
-    public void OnShopBuyButton() => TutorialEventBus.PublishShopBuyClicked(null);
-
+    public void OnShopBuyButton()
+    {
+        //Debug.Log($"TutorialManager.OnShopBuyButton called (instance={this.GetInstanceID()})");
+        TutorialEventBus.PublishShopBuyClicked();
+    }
     public void OnConfirmButton() => TutorialEventBus.PublishPreviewConfirmed();
-
-    private void Bus_ShopOpened() => TryAdvance(TutorialSignal.ShopOpened, null);
-    private void Bus_ShopItemSelected(MachineData data) => TryAdvance(TutorialSignal.ShopItemSelected, data);
-    private void Bus_ShopBuyClicked(MachineData data) => TryAdvance(TutorialSignal.ShopBuyClicked, data);
-    private void Bus_PreviewStarted(GameObject prefab) => TryAdvance(TutorialSignal.PreviewStarted, prefab);
-    private void Bus_PreviewConfirmed() => TryAdvance(TutorialSignal.PreviewConfirmed, null);
-    private void Bus_OccupantPlaced(IGridOccupant occ) => TryAdvance(TutorialSignal.MachinePlaced, occ);
+    
+    public void OnClickInventory() => TutorialEventBus.PublishInventoryOpened();
+    public void OnClickRecipeTree() => TutorialEventBus.PublishRecipeTreeOpened();
+    public void OnClickInventoryItem() => TutorialEventBus.PublishInventoryItemSelected();
+    public void OnClickInventoryItemSell() => TutorialEventBus.PublishInventoryItemSold();
+    public void OnClickFixMachineButton() => TutorialEventBus.PublishMachineFixButtonClicked();
+    public void OnClickBoostMachineButton() => TutorialEventBus.PublishMachineBoostButtonClicked();
 }

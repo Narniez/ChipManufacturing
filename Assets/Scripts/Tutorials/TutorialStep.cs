@@ -43,6 +43,8 @@ public class TutorialStep : ScriptableObject
     [Tooltip("For Drag mode, repeat drag loop.")]
     public bool dragLoop = true;
 
+    public bool showDimmerImage = true;
+
     [Tooltip("Characters per second for dialogue typing. < 0 shows all instantly. If 0, the overlay default is used.")]
     public float typewriterCharsPerSecond = 0f;
 
