@@ -69,11 +69,17 @@ public class InventoryService : MonoBehaviour, IInventory
         // Build material caches from registry if provided
         EnsureMaterialLookup();
 
-        // Restore saved inventory
+        // Restore saved inventory - DEFER until next frame so other Start() calls can subscribe
         if (GameStateService.Instance != null && GameStateService.Instance.State != null && GameStateService.Instance.State.inventory != null)
         {
-            LoadState(GameStateService.Instance.State.inventory);
+            StartCoroutine(DeferredLoadState());
         }
+    }
+
+    private System.Collections.IEnumerator DeferredLoadState()
+    {
+        yield return null; // Wait one frame for all OnEnable() subscriptions
+        LoadState(GameStateService.Instance.State.inventory);
     }
 
     public int GetCount(int itemId) =>

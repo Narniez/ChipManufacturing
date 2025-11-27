@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8967eb2bc9f92e94cb009538a9497d84, type: 3}
-  m_Name: TestMachine
+  m_Name: TestRecipeTree
   m_EditorClassIdentifier: 
   defaultOrientation: 0
-  machineName: BestMachine
-  prefab: {fileID: 495015138674993689, guid: ac07a5391b3638e4a89e9f3e766851eb, type: 3}
+  machineName: RecipeTree
+  prefab: {fileID: 919132149155446097, guid: cbf900dd541e33e41917a9e728b6d37d, type: 3}
   icon: {fileID: 0}
   cost: 50
   inputMaterial: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
-  outputMaterial: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
+  outputMaterial: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
   processingTime: 4
   recipes:
-  - {fileID: 11400000, guid: 882bdd72bb6ee694b99d9c7726f44fe8, type: 2}
+  - {fileID: 11400000, guid: c3835561a1409554b8e63d396ce3a5da, type: 2}
   size: {x: 1, y: 1}
   repairMinigame: {fileID: 11400000, guid: ad326928abe06da44a98c86800b3612b, type: 2}
   upgrades:

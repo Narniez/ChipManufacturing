@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 936aea6a974b1f04ea73d6de1dfd0a82, type: 3}
+  m_Name: Copper
+  m_EditorClassIdentifier: Assembly-CSharp::RecipeItemSO
+  product: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
+  unlockedIcon: {fileID: 21300000, guid: 168389624bfc5234ba1b644fb3214d18, type: 3}
+  treeSteps:
+  - {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
+  globalLockedSprite: {fileID: 0}
+  startingUnlockedMaterials:
+  - {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
