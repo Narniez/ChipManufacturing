@@ -218,9 +218,20 @@ public class PlacementManager : MonoBehaviour
         var rends = root.GetComponentsInChildren<Renderer>();
         if (rends.Length == 0) return 0f;
 
-        Bounds b = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++)
-            b.Encapsulate(rends[i].bounds);
+        Bounds b = new Bounds();
+        bool initialized = false;
+
+        for (int i = 0; i < rends.Length; i++)
+        {
+            var r = rends[i];
+            if (r == null || r.gameObject == null) continue;
+            else
+            {
+                b.Encapsulate(r.bounds);
+            }
+        }
+
+        if (!initialized) return 0f;
 
         float pivotY = root.position.y;
         float bottomY = b.min.y;
@@ -365,101 +376,122 @@ public ConveyorBelt PlaceBeltFromSave(GameObject prefab, Vector2Int anchor, Grid
 }
 
 public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefab, GridOrientation overrideOrientation, ConveyorBelt.BeltTurnKind turnKind = ConveyorBelt.BeltTurnKind.None)
+{
+    if (gridService == null || !gridService.HasGrid || source == null) return source;
+
+    var anchor = source.Anchor;
+    var size = Vector2Int.one;
+
+    if (!_beltSwapInProgress.Add(anchor))
+        return source;
+
+    try
     {
-        if (gridService == null || !gridService.HasGrid || source == null) return source;
-
-        var anchor = source.Anchor;
-        var size = Vector2Int.one;
-
-        if (!_beltSwapInProgress.Add(anchor))
+        var prefab = GetConveyorPrefab(useTurnPrefab);
+        if (prefab == null)
+        {
+            Debug.LogWarning("ReplaceConveyorPrefab: missing conveyor prefab.");
             return source;
-
-        try
-        {
-            var prefab = GetConveyorPrefab(useTurnPrefab);
-            if (prefab == null)
-            {
-                Debug.LogWarning("ReplaceConveyorPrefab: missing conveyor prefab.");
-                return source;
-            }
-
-            GridOrientation? requiredWorldSide = GetRequiredMachineOutputSide(anchor);
-            bool isOnMachineOutputPort = requiredWorldSide.HasValue;
-
-            GridOrientation finalOrientation = overrideOrientation;
-            ConveyorBelt.BeltTurnKind finalTurnKind = turnKind;
-            bool forceTurnPrefab = false;
-
-            if (isOnMachineOutputPort && overrideOrientation != requiredWorldSide.Value)
-            {
-                var outSide = requiredWorldSide.Value;
-                finalTurnKind =
-                    (overrideOrientation == outSide.RotatedCW()) ? ConveyorBelt.BeltTurnKind.Right :
-                    (overrideOrientation == outSide.RotatedCCW()) ? ConveyorBelt.BeltTurnKind.Left :
-                    ConveyorBelt.BeltTurnKind.None;
-                forceTurnPrefab = true;
-            }
-
-            bool willUseTurnPrefab = forceTurnPrefab || useTurnPrefab;
-            prefab = GetConveyorPrefab(willUseTurnPrefab);
-
-            var world = AnchorToWorldCenter(anchor, size, 0f);
-
-            ConveyorItem item = null;
-            if (source.HasItem)
-            {
-                item = source.TakeItem();
-                if (item != null && item.Visual != null)
-                    item.Visual.transform.position = world;
-            }
-
-            var parent = source.PreviousInChain;
-            var child = source.NextInChain;
-
-            source.gameObject.SetActive(false);
-            gridService.SetAreaOccupant(anchor, size, null);
-
-            var go = Instantiate(prefab, world, finalOrientation.ToRotation());
-            MoveToFactoryScene(go);
-
-            var newBelt = go.GetComponent<ConveyorBelt>();
-            if (newBelt == null)
-            {
-                Destroy(go);
-                source.gameObject.SetActive(true);
-                gridService.SetAreaOccupant(anchor, size, source.gameObject);
-                Debug.LogError("ReplaceConveyorPrefab: new prefab missing ConveyorBelt.");
-                return source;
-            }
-
-            newBelt.SetTurnKind(finalTurnKind);
-            newBelt.SetPlacement(anchor, finalOrientation);
-            gridService.SetAreaOccupant(anchor, size, go);
-
-            newBelt.PreviousInChain = parent;
-            newBelt.NextInChain = child;
-            if (parent != null && parent.NextInChain == source)
-                parent.NextInChain = newBelt;
-            if (child != null && child.PreviousInChain == source)
-                child.PreviousInChain = newBelt;
-
-            if (item != null)
-                newBelt.TrySetItem(item, snapVisual: true);
-
-            AutoLinkForward(newBelt);
-            newBelt.NotifyAdjacentMachinesOfConnection();
-
-            // Update state entry (replace existing)
-            GameStateSync.TryReplaceBelt(source, newBelt);
-
-            Destroy(source.gameObject);
-            return newBelt;
         }
-        finally
+
+        // Detect if 'source' sits on a Machine OUTPUT port cell (regardless of facing)
+        GridOrientation? requiredWorldSide = GetRequiredMachineOutputSide(anchor);
+        bool isOnMachineOutputPort = requiredWorldSide.HasValue;
+
+        // Default final orientation & turn kind
+        GridOrientation finalOrientation = overrideOrientation;
+        ConveyorBelt.BeltTurnKind finalTurnKind = turnKind;
+        bool forceTurnPrefab = false;
+
+        if (isOnMachineOutputPort && overrideOrientation != requiredWorldSide.Value)
         {
-            _beltSwapInProgress.Remove(anchor);
+            // Choose Left/Right depending on port outward vs outgoing
+            var outSide = requiredWorldSide.Value;
+            finalTurnKind =
+                (overrideOrientation == outSide.RotatedCW()) ? ConveyorBelt.BeltTurnKind.Right :
+                (overrideOrientation == outSide.RotatedCCW()) ? ConveyorBelt.BeltTurnKind.Left :
+                ConveyorBelt.BeltTurnKind.None;
+
+            // If sideways branch, ensure we do place a turn prefab
+            forceTurnPrefab = true;
         }
+
+        // If we must force a turn, swap prefab accordingly
+        bool willUseTurnPrefab = forceTurnPrefab || useTurnPrefab;
+
+        // Special case: if this belt sits on a machine's output cell and the final orientation
+        // after extension equals the machine's required output side, prefer a straight prefab.
+        // This makes the belt look like a straight extension right at the machine output
+        // instead of a corner, which improves visual in this scenario.
+        if (isOnMachineOutputPort && requiredWorldSide.HasValue)
+        {
+            if (finalOrientation == requiredWorldSide.Value)
+            {
+                // prefer straight even if earlier logic set forceTurnPrefab
+                willUseTurnPrefab = false;
+                finalTurnKind = ConveyorBelt.BeltTurnKind.None;
+            }
+        }
+
+        prefab = GetConveyorPrefab(willUseTurnPrefab);
+
+        var world = AnchorToWorldCenter(anchor, size, 0f);
+
+        ConveyorItem item = null;
+        if (source.HasItem)
+        {
+            item = source.TakeItem();
+            if (item != null && item.Visual != null)
+                item.Visual.transform.position = world;
+        }
+
+        var parent = source.PreviousInChain;
+        var child = source.NextInChain;
+
+        source.gameObject.SetActive(false);
+        gridService.SetAreaOccupant(anchor, size, null);
+
+        var go = Instantiate(prefab, world, finalOrientation.ToRotation());
+        MoveToFactoryScene(go);
+
+        var newBelt = go.GetComponent<ConveyorBelt>();
+        if (newBelt == null)
+        {
+            Destroy(go);
+            source.gameObject.SetActive(true);
+            gridService.SetAreaOccupant(anchor, size, source.gameObject);
+            Debug.LogError("ReplaceConveyorPrefab: new prefab missing ConveyorBelt.");
+            return source;
+        }
+
+        newBelt.SetTurnKind(finalTurnKind);
+        newBelt.SetPlacement(anchor, finalOrientation);
+        gridService.SetAreaOccupant(anchor, size, go);
+
+        newBelt.PreviousInChain = parent;
+        newBelt.NextInChain = child;
+        if (parent != null && parent.NextInChain == source)
+            parent.NextInChain = newBelt;
+        if (child != null && child.PreviousInChain == source)
+            child.PreviousInChain = newBelt;
+
+        if (item != null)
+            newBelt.TrySetItem(item, snapVisual: true);
+
+        AutoLinkForward(newBelt);
+        newBelt.NotifyAdjacentMachinesOfConnection();
+
+        // Update state entry (replace existing)
+        GameStateSync.TryReplaceBelt(source, newBelt);
+
+        Destroy(source.gameObject);
+        return newBelt;
     }
+    finally
+    {
+        _beltSwapInProgress.Remove(anchor);
+    }
+}
 
     private void AutoLinkForward(ConveyorBelt belt)
     {
@@ -484,6 +516,9 @@ public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefa
 
         var beltToDestroy = (occ as Component)?.GetComponent<ConveyorBelt>();
         var machineToDestroy = (occ as Component)?.GetComponent<Machine>();
+
+        // capture anchor of the thing being destroyed so we can normalize neighbours afterwards
+        Vector2Int destroyedAnchor = occ.Anchor;
 
         if (beltToDestroy != null)
         {
@@ -519,43 +554,132 @@ public ConveyorBelt ReplaceConveyorPrefab(ConveyorBelt source, bool useTurnPrefa
             {
                 GameStateSync.TryRemoveMachine(machineToDestroy);
             }
+
+            // Actually destroy the object
             Destroy(go);
+
+            // After destroying a belt, normalize neighboring belt prefabs:
+            // convert nearby turn-prefabs back to straight when their only connected neighbors
+            // are straight and aligned.
+            if (beltToDestroy != null && gridService != null && gridService.HasGrid)
+            {
+                NormalizeAdjacentBelts(destroyedAnchor);
+            }
         }
 
         SetState(new IdleState(this));
     }
 
+ 
+    // Inspect physical neighbors on the grid (not only chain links), collects "straight" neighbor
+    // orientations (including machines that output into the cell) and if all candidates agree it replaces
+    // the turn prefab with a straight prefab oriented accordingly.
+    private void NormalizeAdjacentBelts(Vector2Int anchor)
+    {
+        foreach (var neighbor in gridService.GetNeighbors(anchor))
+        {
+            if (!gridService.TryGetCell(neighbor.coord, out var data) || data.occupant == null) continue;
+            var go = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
+            if (go == null) continue;
+            var belt = go.GetComponent<ConveyorBelt>();
+            if (belt == null) continue;
+
+            TryPromoteToStraight(belt);
+        }
+    }
+
+    // If belt is a turn prefab, examine physical neighbors (4-way).
+    // Collect candidate orientations from straight neighboring belts and from machines that output into this belt cell.
+    // If all collected candidates agree on the same orientation, replace the current turn prefab with a straight
+    // prefab oriented to that direction.
+    private void TryPromoteToStraight(ConveyorBelt belt)
+    {
+        if (belt == null) return;
+        if (!belt.IsTurnPrefab) return;
+
+        var candidates = new List<GridOrientation>();
+
+        // Check four cardinal neighbors
+        for (int i = 0; i < 4; i++)
+        {
+            GridOrientation dir = (GridOrientation)i;
+            var neighborCell = belt.Anchor + GridOrientationExtentions.OrientationToDelta(dir);
+            if (!gridService.TryGetCell(neighborCell, out var neighborData) || neighborData.occupant == null) continue;
+
+            var neighborGo = neighborData.occupant as GameObject ?? (neighborData.occupant as Component)?.gameObject;
+            if (neighborGo == null) continue;
+
+            // If neighbor is a straight conveyor, use its orientation as a candidate
+            var nbBelt = neighborGo.GetComponent<ConveyorBelt>();
+            if (nbBelt != null && !nbBelt.IsTurnPrefab)
+            {
+                candidates.Add(nbBelt.Orientation);
+                continue;
+            }
+
+            // If neighbor is a machine that outputs into the belt cell, include that machine output side
+            var nbMachine = neighborGo.GetComponent<Machine>();
+            if (nbMachine != null && nbMachine.Data != null)
+            {
+                // Use helper to see if any machine adjacent to this belt claims this cell as an output.
+                // GetRequiredMachineOutputSide returns the world-side for a machine that has an output on the given beltAnchor.
+                var required = GetRequiredMachineOutputSide(belt.Anchor);
+                if (required.HasValue)
+                {
+                    candidates.Add(required.Value);
+                    continue;
+                }
+            }
+
+            // Also consider the case neighbor is a conveyor turn that visually still implies a direction:
+            // if neighbor is a turn but oriented straight relative to this cell (rare), we could consider it,
+            // but to be conservative we only use explicit straight prefabs and machine outputs as candidates.
+        }
+
+        if (candidates.Count == 0) return;
+
+        // Check if all candidates agree
+        var first = candidates[0];
+        foreach (var candidate in candidates)
+        {
+            if (candidate != first) return; // conflict -> do not promote
+        }
+
+        // All candidates agree -> replace this turn with a straight oriented to 'first'
+        ReplaceConveyorPrefab(belt, useTurnPrefab: false, overrideOrientation: first, turnKind: ConveyorBelt.BeltTurnKind.None);
+    }
+
     private GridOrientation? GetRequiredMachineOutputSide(Vector2Int beltAnchor)
     {
-        foreach (var nb in gridService.GetNeighbors(beltAnchor))
+        foreach (var neighbor in gridService.GetNeighbors(beltAnchor))
         {
-            if (!gridService.TryGetCell(nb.coord, out var data) || data.occupant == null) continue;
-            var mgo = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
-            if (mgo == null) continue;
+            if (!gridService.TryGetCell(neighbor.coord, out var data) || data.occupant == null) continue;
+            var machineGo = data.occupant as GameObject ?? (data.occupant as Component)?.gameObject;
+            if (machineGo == null) continue;
 
-            var machine = mgo.GetComponent<Machine>();
+            var machine = machineGo.GetComponent<Machine>();
             if (machine == null || machine.Data == null) continue;
 
-            var md = machine.Data;
-            var mOri = machine.Orientation;
-            var orientedSize = md.size.OrientedSize(mOri);
+            var machineData = machine.Data;
+            var machineOrientation = machine.Orientation;
+            var orientedSize = machineData.size.OrientedSize(machineOrientation);
 
-            if (md.ports != null && md.ports.Count > 0)
+            if (machineData.ports != null && machineData.ports.Count > 0)
             {
-                for (int i = 0; i < md.ports.Count; i++)
+                for (int i = 0; i < machineData.ports.Count; i++)
                 {
-                    var p = md.ports[i];
-                    if (p.kind != MachinePortType.Output) continue;
-                    var worldSide = RotateSideLocalToWorld(p.side, mOri);
-                    var portCell = ComputePortCellForMachine(machine.Anchor, mOri, orientedSize, p.side, p.offset);
+                    var port = machineData.ports[i];
+                    if (port.kind != MachinePortType.Output) continue;
+                    var worldSide = RotateSideLocalToWorld(port.side, machineOrientation);
+                    var portCell = ComputePortCellForMachine(machine.Anchor, machineOrientation, orientedSize, port.side, port.offset);
                     if (portCell == beltAnchor)
                         return worldSide;
                 }
             }
             else
             {
-                var worldSide = mOri;
-                var portCell = ComputePortCellForMachine(machine.Anchor, mOri, orientedSize, mOri, -1);
+                var worldSide = machineOrientation;
+                var portCell = ComputePortCellForMachine(machine.Anchor, machineOrientation, orientedSize, machineOrientation, -1);
                 if (portCell == beltAnchor)
                     return worldSide;
             }

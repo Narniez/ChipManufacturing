@@ -16,7 +16,7 @@ public class DraggingState : BasePlacementState
     private Vector2Int _originalSize;
     private Vector3 _originalWorld;
 
-    private float _heightOffset;
+    //private float _heightOffset;
 
     public DraggingState(PlacementManager ctx, IGridOccupant dragging, Vector3 startWorld) : base(ctx)
     {
@@ -47,7 +47,7 @@ public class DraggingState : BasePlacementState
             _hadOriginalArea = false;
         }
 
-        _heightOffset = PlaceMan.ComputePivotBottomOffset(_dragging.DragTransform);
+        //_heightOffset = PlaceMan.ComputePivotBottomOffset(_dragging.DragTransform);
 
         var snapped = ApplySnap(_startWorld);
         _lastValidWorld = snapped;
@@ -138,7 +138,7 @@ public class DraggingState : BasePlacementState
 
         _currentAnchor = PlaceMan.GridService.ClampAnchor(desiredAnchor, newSize);
 
-        Vector3 world = PlaceMan.AnchorToWorldCenter(_currentAnchor, newSize, _heightOffset);
+        Vector3 world = PlaceMan.AnchorToWorldCenter(_currentAnchor, newSize, 0);
         _lastValidWorld = world;
 
         _dragging.SetPlacement(_currentAnchor, _currentOrientation);
@@ -167,7 +167,7 @@ public class DraggingState : BasePlacementState
         _currentAnchor = anchor;
         _dragging.SetPlacement(anchor, _currentOrientation);
 
-        Vector3 snappedWorld = PlaceMan.AnchorToWorldCenter(anchor, size, _heightOffset);
+        Vector3 snappedWorld = PlaceMan.AnchorToWorldCenter(anchor, size, 0);
         _lastValidWorld = snappedWorld;
         return snappedWorld;
     }
