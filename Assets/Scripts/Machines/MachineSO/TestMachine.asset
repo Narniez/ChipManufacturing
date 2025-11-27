@@ -15,7 +15,7 @@ MonoBehaviour:
   defaultOrientation: 0
   machineName: BestMachine
   prefab: {fileID: 495015138674993689, guid: ac07a5391b3638e4a89e9f3e766851eb, type: 3}
-  icon: {fileID: 0}
+  icon: {fileID: -9095717837082945937, guid: ba9e883793fe0424f95847dcde257b85, type: 3}
   cost: 50
   inputMaterial: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
   outputMaterial: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}

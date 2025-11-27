@@ -2,6 +2,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using System.Collections.Generic;
 
 public class NewCameraControls : MonoBehaviour
 {
@@ -210,6 +212,49 @@ public class NewCameraControls : MonoBehaviour
         }
 
         bool allowUserInput = !inputLocked && !blockUntilNoPointerUp;
+
+        // NEW: If the user is touching/clicking over UI, prevent camera movement.
+        // This uses an EventSystem raycast similar to InteractionManager.IsPointerOverUI.
+        if (allowUserInput && EventSystem.current != null)
+        {
+            bool anyPointerOverUI = false;
+
+            // Touch checks: if a touch is pressed and its screen position hits UI -> block
+            if (Touchscreen.current != null)
+            {
+                bool primaryDown = Touchscreen.current.primaryTouch.press.isPressed;
+                if (primaryDown)
+                {
+                    Vector2 p = primaryTouchPosition.ReadValue<Vector2>();
+                    if (IsScreenPointOverUI(p)) anyPointerOverUI = true;
+                }
+
+                // secondary touch (if present)
+                if (!anyPointerOverUI)
+                {
+                    float sec = secondaryTouchContact != null ? secondaryTouchContact.ReadValue<float>() : 0f;
+                    if (sec > 0.1f)
+                    {
+                        Vector2 s = secondaryTouchPosition.ReadValue<Vector2>();
+                        if (IsScreenPointOverUI(s)) anyPointerOverUI = true;
+                    }
+                }
+            }
+
+            // Mouse checks: only block if a mouse button is down while over UI
+            if (!anyPointerOverUI && Mouse.current != null)
+            {
+                bool anyMouseDown = (Mouse.current.leftButton.isPressed || Mouse.current.rightButton.isPressed || Mouse.current.middleButton.isPressed);
+                if (anyMouseDown)
+                {
+                    Vector2 mp = pointerPosition.ReadValue<Vector2>();
+                    if (IsScreenPointOverUI(mp)) anyPointerOverUI = true;
+                }
+            }
+
+            if (anyPointerOverUI)
+                allowUserInput = false;
+        }
 
         if (allowUserInput)
         {
@@ -760,4 +805,17 @@ public class NewCameraControls : MonoBehaviour
         }
     }
 #endif
+
+    // Reusable UI raycast list
+    private static readonly List<RaycastResult> _uiRaycastResultsCam = new List<RaycastResult>();
+
+    // Returns true if the given screen point hits any UI element under the EventSystem.
+    private static bool IsScreenPointOverUI(Vector2 screenPos)
+    {
+        if (EventSystem.current == null) return false;
+        var ped = new PointerEventData(EventSystem.current) { position = screenPos };
+        _uiRaycastResultsCam.Clear();
+        EventSystem.current.RaycastAll(ped, _uiRaycastResultsCam);
+        return _uiRaycastResultsCam.Count > 0;
+    }
 }

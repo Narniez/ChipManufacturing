@@ -16,7 +16,8 @@ MonoBehaviour:
   materialName: Raw Sillicon
   materialType: 1
   materialCategory: 0
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  icon: {fileID: 21300000, guid: f85df22483ed4e9449ae758069165f80, type: 3}
+  cost: 0
   unit: pcs
   unitScale: 1
   maxStack: 9999
