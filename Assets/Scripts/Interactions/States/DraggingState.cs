@@ -173,8 +173,6 @@ public class DraggingState : BasePlacementState
         Vector3 snappedWorld = PlaceMan.AnchorToWorldCenter(anchor, size, 0);
         _lastValidWorld = snappedWorld;
 
-        Debug.Log($"ApplySnap: heightOffset={_heightOffset:F3}, snappedWorldY={snappedWorld.y:F3}");
-
         return snappedWorld;
     }
 
