@@ -96,16 +96,14 @@ public class PreviewPlacementState : BasePlacementState
         // Ensure preview does not overlap existing occupants
         _anchor = FindNearestFreeArea(_anchor, size);
 
-        // Defer position/height/indicator work by one frame so renderer bounds, prefab child transforms
-        // and any scene move operations have settled. This fixes indicators being offset on first spawn.
-        PlaceMan?.StartCoroutine(DeferredPlacementInit(desiredCell));
+        PlacementInitalize(desiredCell);
     }
 
-    private IEnumerator DeferredPlacementInit(Vector2Int desiredCell)
+    private void PlacementInitalize(Vector2Int desiredCell)
     {
-        // Wait one frame for Unity to finish instantiation/layout and renderer bounds to be valid
-        yield return null;
 
+        // Let the occupant apply its placement logic first
+        _occ.SetPlacement(_anchor, _orientation);
         var size = GetOrientedSize();
 
         // Compute pivot offset using settled renderers
@@ -114,9 +112,6 @@ public class PreviewPlacementState : BasePlacementState
         // Snap to grid center based on anchor/size and computed offset
         Vector3 snapped = PlaceMan.AnchorToWorldCenter(_anchor, size, _heightOffset);
         _instance.transform.position = snapped;
-
-        // Let occupant know its logical placement (may set rotation)
-        _occ.SetPlacement(_anchor, _orientation);
 
         // Build port indicators now that transforms and bounds are stable
         RebuildPortIndicators();
