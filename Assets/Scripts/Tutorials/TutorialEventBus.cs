@@ -72,12 +72,6 @@ public class TutorialEventBus : MonoBehaviour
     public static void PublishSelectionChanged(IGridOccupant occ)
     {
         OnSelectionChanged?.Invoke(occ);
-<<<<<<< HEAD
-        // No dedicated TutorialSignal for selection change ï¿½ send None so manager ignores it,
-=======
-        // No dedicated TutorialSignal for selection change — send None so manager ignores it,
->>>>>>> origin/TutorialEventBust
-        // or extend TutorialSignal if you want steps to wait for selection changed.
         PublishSignal(TutorialSignal.None, occ);
     }
 
