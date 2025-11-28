@@ -1,7 +1,5 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,20 +20,6 @@ public class FactorySceneBuilder : MonoBehaviour
         GameStateService.IsLoading = true;
         try
         {
-            // Initialize Addressables once (important on device)
-            var initHandle = Addressables.InitializeAsync();
-            yield return initHandle;
-
-            // Guard against invalid handle before accessing its properties
-            if (!initHandle.IsValid())
-            {
-                Debug.LogWarning("FactorySceneBuilder: Addressables.InitializeAsync returned an invalid handle.");
-            }
-            else if (initHandle.Status != AsyncOperationStatus.Succeeded)
-            {
-                Debug.LogWarning($"FactorySceneBuilder: Addressables.InitializeAsync failed: {initHandle.OperationException?.Message}");
-            }
-
             var scene = SceneManager.GetSceneByName(factorySceneName);
             if (!scene.IsValid() || !scene.isLoaded)
             {
@@ -109,8 +93,8 @@ public class FactorySceneBuilder : MonoBehaviour
                 }
 
                 MachineData data = null;
-                // Try Resources first, then Addressables (safe)
-                yield return StartCoroutine(LoadAssetResourceOrAddressable<MachineData>(m.machineDataPath, d => data = d));
+                // Try Resources first, then DataRegistry (runtime-safe)
+                yield return StartCoroutine(LoadAssetResourceOrRegistry<MachineData>(m.machineDataPath, d => data = d));
 
                 if (data == null || data.prefab == null)
                 {
@@ -151,7 +135,7 @@ public class FactorySceneBuilder : MonoBehaviour
                 if (!string.IsNullOrEmpty(b.itemMaterialKey))
                 {
                     MaterialData mat = null;
-                    yield return StartCoroutine(LoadAssetResourceOrAddressable<MaterialData>(b.itemMaterialKey, d => mat = d));
+                    yield return StartCoroutine(LoadAssetResourceOrRegistry<MaterialData>(b.itemMaterialKey, d => mat = d));
 
                     if (mat != null)
                     {
@@ -236,8 +220,8 @@ public class FactorySceneBuilder : MonoBehaviour
         return p;
     }
 
-    // Coroutine helper: try Resources.Load first, then Addressables (safe: check locations first).
-    private static IEnumerator LoadAssetResourceOrAddressable<T>(string key, Action<T> callback) where T : UnityEngine.Object
+    // Coroutine helper: try Resources.Load first, then DataRegistry lookup (no Addressables).
+    private static IEnumerator LoadAssetResourceOrRegistry<T>(string key, Action<T> callback) where T : UnityEngine.Object
     {
         T result = null;
 
@@ -253,46 +237,20 @@ public class FactorySceneBuilder : MonoBehaviour
             }
         }
 
-        // If Resources didn't work, try Addressables but only if locations exist
-        var locHandle = Addressables.LoadResourceLocationsAsync(key, typeof(T));
-        yield return locHandle;
-
-        bool hasLocations = locHandle.IsValid() && locHandle.Status == AsyncOperationStatus.Succeeded &&
-                            locHandle.Result != null && locHandle.Result.Count > 0;
-
-        if (hasLocations)
-        {
-            var loadHandle = Addressables.LoadAssetAsync<T>(key);
-            yield return loadHandle;
-            if (loadHandle.IsValid() && loadHandle.Status == AsyncOperationStatus.Succeeded)
-                result = loadHandle.Result;
-            else
-                Debug.LogWarning($"FactorySceneBuilder: Addressables.LoadAssetAsync failed for key '{key}' status={loadHandle.Status} exc={loadHandle.OperationException?.Message}");
-        }
-        else
-        {
-            Debug.Log($"FactorySceneBuilder: no Addressable locations for key '{key}' and Resources.Load failed (path '{resPath}').");
-        }
-
-        if (locHandle.IsValid())
-            Addressables.Release(locHandle);
-
-        // Registry lookup (registry id matches 'key' or asset name). Be flexible:
-        // - first try id lookup (registry id)
-        // - then try to match by asset name
+        // Registry lookup (id match or asset.name)
         var registry = Resources.Load<DataRegistry>("DataRegistry");
         if (registry != null)
         {
             if (typeof(T) == typeof(MachineData))
             {
-                // direct id match
                 var md = registry.GetMachine(key);
                 if (md != null) { callback(md as T); yield break; }
 
-                // match by registry entries (id or asset name)
+                // match by id or asset.name among entries
                 foreach (var e in registry.machines)
                 {
-                    if (e.data != null && (e.id == key || e.data.name == key))
+                    if (e.data == null) continue;
+                    if (e.id == key || e.data.name == key)
                     {
                         callback(e.data as T);
                         yield break;
@@ -306,13 +264,20 @@ public class FactorySceneBuilder : MonoBehaviour
 
                 foreach (var e in registry.materials)
                 {
-                    if (e.data != null && (e.id == key || e.data.name == key))
+                    if (e.data == null) continue;
+                    if (e.id == key || e.data.name == key)
                     {
                         callback(e.data as T);
                         yield break;
                     }
                 }
             }
+        }
+
+        // Final fallback: try Resources.Load by the raw key (in case key == Resources path)
+        if (!string.IsNullOrEmpty(key))
+        {
+            result = Resources.Load<T>(key);
         }
 
         callback(result);

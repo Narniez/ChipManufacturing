@@ -80,27 +80,69 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     // Directly assign material + amount
     public void SetItem(MaterialData mat, int amount)
     {
+        // Compute previous values to derive inventory delta
+        MaterialData prevItem = Item;
+        int prevAmount = Amount;
+
+        // Apply new values
         Item = mat;
         Amount = Mathf.Max(0, amount);
         if (Amount == 0) Item = null;
 
         UpdateUI();
+
+        // Update InventoryService totals (unless we're loading/restoring state)
+        if (InventoryService.Instance != null && !InventoryService.Instance.IsLoading)
+        {
+            var delta = new Dictionary<int, int>();
+
+            if (prevItem != null)
+                delta[prevItem.id] = delta.TryGetValue(prevItem.id, out var v1) ? v1 - prevAmount : -prevAmount;
+
+            if (mat != null)
+                delta[mat.id] = delta.TryGetValue(mat.id, out var v2) ? v2 + Amount : Amount;
+
+            // Clean zero deltas
+            var clean = new Dictionary<int, int>();
+            foreach (var kv in delta) if (kv.Value != 0) clean[kv.Key] = kv.Value;
+
+            if (clean.Count > 0)
+                InventoryService.Instance.TryApply(clean);
+        }
     }
 
     public void AddAmount(int delta)
     {
         if (IsEmpty && delta <= 0) return;
+        MaterialData prevItem = Item;
+        int prevAmount = Amount;
+
         Amount += delta;
         if (Amount <= 0) Clear();
-        else UpdateUI();        
+        else UpdateUI();
+
+        if (InventoryService.Instance != null && !InventoryService.Instance.IsLoading && prevItem != null && delta != 0)
+        {
+            InventoryService.Instance.TryApply(new Dictionary<int, int> { { prevItem.id, delta } });
+        }
     }
 
     public void Clear()
     {
+        if (Item == null && Amount == 0) return;
+
+        MaterialData prevItem = Item;
+        int prevAmount = Amount;
+
         icon.sprite = emptySlotSprite;
         Item = null;
         Amount = 0;
         UpdateUI();
+
+        if (InventoryService.Instance != null && !InventoryService.Instance.IsLoading && prevItem != null && prevAmount > 0)
+        {
+            InventoryService.Instance.TryApply(new Dictionary<int, int> { { prevItem.id, -prevAmount } });
+        }
     }
 
     private static string GetDisplayName(MaterialData mat)

@@ -16,6 +16,9 @@ public class DraggingState : BasePlacementState
     private Vector2Int _originalSize;
     private Vector3 _originalWorld;
 
+    // Port indicator helper (created for the duration of a drag)
+    private MachinePortIndicatorController _portController;
+
     //private float _heightOffset;
 
     public DraggingState(PlacementManager ctx, IGridOccupant dragging, Vector3 startWorld) : base(ctx)
@@ -41,11 +44,20 @@ public class DraggingState : BasePlacementState
             _originalSize = placedSize;
             _originalWorld = _dragging.DragTransform.position;
             grid.SetAreaOccupant(_originalAnchor, _originalSize, null);
+
+            // Remove the previous save entry for this occupant so moving it doesn't leave an orphan entry.
+            if (_dragging is Machine machine)
+                GameStateSync.TryRemoveMachine(machine);
+            else if (_dragging is ConveyorBelt belt)
+                GameStateSync.TryRemoveBelt(belt);
         }
         else
         {
             _hadOriginalArea = false;
         }
+
+        // Create indicator controller (will no-op if grid missing)
+        _portController = new MachinePortIndicatorController(PlaceMan);
 
         //_heightOffset = PlaceMan.ComputePivotBottomOffset(_dragging.DragTransform);
 
@@ -54,6 +66,10 @@ public class DraggingState : BasePlacementState
 
         _dragging.OnDragStart();
         _dragging.OnDrag(snapped);
+
+        // Show port indicators immediately for machines
+        if (_portController != null && _dragging is Machine initialMachine)
+            _portController.ShowFor(initialMachine);
     }
 
     public override void Update()
@@ -83,6 +99,10 @@ public class DraggingState : BasePlacementState
         PlaceMan.EdgeScrollCamera(screen);
         var snapped = ApplySnap(world);
         _dragging.OnDrag(snapped);
+
+        // Update indicators while dragging (orientation/anchor may have changed)
+        if (_portController != null && _dragging is Machine m)
+            _portController.ShowFor(m);
     }
 
     public override void OnHoldEnd(IInteractable target, Vector2 screen, Vector3 world)
@@ -97,6 +117,12 @@ public class DraggingState : BasePlacementState
         {
             grid.SetAreaOccupant(_currentAnchor, size, (_dragging as Component).gameObject);
             _dragging.SetPlacement(_currentAnchor, _currentOrientation);
+
+            // Persist new placement/state
+            if (_dragging is Machine placedMachine)
+                GameStateSync.TryAddOrUpdateMachine(placedMachine);
+            else if (_dragging is ConveyorBelt placedBelt)
+                GameStateSync.TryAddOrUpdateBelt(placedBelt);
         }
         else
         {
@@ -105,6 +131,12 @@ public class DraggingState : BasePlacementState
                 grid.SetAreaOccupant(_originalAnchor, _originalSize, (_dragging as Component).gameObject);
                 _dragging.SetPlacement(_originalAnchor, _originalOrientation);
                 snapped = _originalWorld;
+
+                // Restore previous save entry
+                if (_dragging is Machine origMachine)
+                    GameStateSync.TryAddOrUpdateMachine(origMachine);
+                else if (_dragging is ConveyorBelt origBelt)
+                    GameStateSync.TryAddOrUpdateBelt(origBelt);
             }
             else
             {
@@ -114,6 +146,13 @@ public class DraggingState : BasePlacementState
 
         _dragging.OnDrag(snapped);
         _dragging.OnDragEnd();
+
+        // Cleanup indicators when drag completes
+        if (_portController != null)
+        {
+            _portController.Cleanup();
+            _portController = null;
+        }
 
         if (PlaceMan.CameraCtrl != null) PlaceMan.CameraCtrl.SetInputLocked(false);
         PlaceMan.SetState(new IdleState(PlaceMan));
@@ -143,6 +182,10 @@ public class DraggingState : BasePlacementState
 
         _dragging.SetPlacement(_currentAnchor, _currentOrientation);
         _dragging.OnDrag(world);
+
+        // Update indicators after rotate
+        if (_portController != null && _dragging is Machine m)
+            _portController.ShowFor(m);
     }
 
     private Vector3 ApplySnap(Vector3 world)

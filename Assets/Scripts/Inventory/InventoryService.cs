@@ -29,6 +29,9 @@ public class InventoryService : MonoBehaviour, IInventory
     // while loading we don't want to mark dirty or re-save repeatedly
     private bool _suppressSave;
 
+    // Expose loading/suppress flag so UI slots can avoid double-applying deltas
+    public bool IsLoading => _suppressSave;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
