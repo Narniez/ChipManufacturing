@@ -1,9 +1,4 @@
 ﻿using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-using UnityEditor.AddressableAssets;
-using UnityEditor.AddressableAssets.Settings;
-#endif
 
 public static class GameStateSync
 {
@@ -16,8 +11,7 @@ public static class GameStateSync
         var registry = Resources.Load<DataRegistry>("DataRegistry");
         if (registry != null)
         {
-            // Prefer returning the registry id for the exact data object (stable in builds).
-            // This matches the DataRegistry entry that holds the ScriptableObject reference.
+            // Match by exact ScriptableObject reference first (preferred stable id).
             foreach (var me in registry.machines)
             {
                 if (me.data == asset)
@@ -29,8 +23,7 @@ public static class GameStateSync
                     return ma.id;
             }
 
-            // Fallback: if the registry contains an entry whose id == asset.name or whose data asset name == asset.name,
-            // allow the asset.name to be used as an id (preserves older behavior).
+            // Fallback: if registry contains an entry whose id or data.name matches the asset name, use that id/name.
             var byName = registry.GetMachine(asset.name);
             if (byName != null) return asset.name;
 
@@ -38,24 +31,8 @@ public static class GameStateSync
             if (matByName != null) return asset.name;
         }
 
-#if UNITY_EDITOR
-        // Editor fallback: try Addressables entry address or guid
-        string path = AssetDatabase.GetAssetPath(asset);
-        if (string.IsNullOrEmpty(path)) return string.Empty;
-        string guid = AssetDatabase.AssetPathToGUID(path);
-        var settings = AddressableAssetSettingsDefaultObject.Settings;
-        if (settings != null)
-        {
-            var entry = settings.FindAssetEntry(guid);
-            if (entry != null && !string.IsNullOrEmpty(entry.address))
-                return entry.address;
-        }
-        // fallback to guid or asset name
-        return guid;
-#else
-        // Runtime fallback: use asset name (registry lookup above prefers registry id)
+        // Runtime fallback: use asset name (ScriptableObject name) so builds remain deterministic.
         return (asset as ScriptableObject)?.name ?? string.Empty;
-#endif
     }
 
     public static void TryAddOrUpdateMachine(Machine m)
@@ -133,7 +110,7 @@ public static class GameStateSync
         }
 
         // Defensive check: avoid recording belt state before the belt is actually registered
-        // in the GridService at the expected anchor � but only skip when there's nothing to save.
+        // in the GridService at the expected anchor — but only skip when there's nothing to save.
         var grid = Object.FindFirstObjectByType<GridService>();
         if (grid != null && grid.HasGrid)
         {
@@ -169,8 +146,7 @@ public static class GameStateSync
                 }
             }
         }
-        // If GridService isn't available yet, allow the write � it may be added later.
-
+        // If GridService isn't available yet, allow the write — it may be added later.
         var list = svc.State.belts;
         var entryIndex = list.FindIndex(x => x.anchor == b.Anchor);
         int turnKind = (int)(b.IsCorner ? b.TurnKind : ConveyorBelt.BeltTurnKind.None);
