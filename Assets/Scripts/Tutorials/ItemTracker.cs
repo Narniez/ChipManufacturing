@@ -4,7 +4,7 @@ using Unity.VisualScripting;
 
 public class ItemTracker : MonoBehaviour
 {
-    public MaterialType itemToTrack;
+    public MaterialData itemToTrack;
 
     [SerializeField] private TextMeshProUGUI _itemCountText;
     [SerializeField] private int targetCount = 5;
@@ -38,7 +38,7 @@ public class ItemTracker : MonoBehaviour
         Machine.OnMaterialProduced -= UpdateCount;
     }
 
-    private void UpdateCount(MaterialType material, Vector3 machinePosition)
+    private void UpdateCount(MaterialData material, Vector3 machinePosition)
     {
         if (_completed)
             return;

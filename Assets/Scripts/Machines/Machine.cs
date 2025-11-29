@@ -31,7 +31,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     public static event Action<Machine, Vector3> OnMachineBroken;
     public static event Action<Machine> OnMachineRepaired;
-    public static event Action<MaterialType, Vector3> OnMaterialProduced;
+    public static event Action<MaterialData, Vector3> OnMaterialProduced;
 
     //Progress tracking for UI
     private float _productionProgress = 0f; // 0..1
@@ -304,7 +304,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         foreach (var belt in belts)
         {
             if (_isBroken) break;
-            OnMaterialProduced?.Invoke(data.outputMaterial.materialType, transform.position);
+            OnMaterialProduced?.Invoke(data.outputMaterial, transform.position);
             _chanceToBreak += _chanceToBreakIncrement;
             if (BreakCheck())
             {
@@ -333,8 +333,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     {
         if (_isBroken) return;
 
-        Debug.Log("M: produce one");
-        OnMaterialProduced?.Invoke(mat.materialType, transform.position);
+        Debug.Log($"[Machine] {name} produced one '{mat.materialName}'");
+        OnMaterialProduced?.Invoke(mat, transform.position);
 
         // Increase break chance per produced output
         _chanceToBreak += _chanceToBreakIncrement;

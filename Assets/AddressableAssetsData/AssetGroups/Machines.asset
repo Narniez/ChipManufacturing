@@ -15,6 +15,12 @@ MonoBehaviour:
   m_GroupName: Machines
   m_GUID: 3e09c86d3a9dee841a440afdaa2d538d
   m_SerializeEntries:
+  - m_GUID: 09aee7dd75bdc7449b745e6b73649ab7
+    m_Address: Assets/Scripts/Machines/MachineSO/TestSiliconRecipeTree.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - MachineData
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 359bfaff1d4a369438e7b1bbd8153f49
     m_Address: 359bfaff1d4a369438e7b1bbd8153f49
     m_ReadOnly: 0

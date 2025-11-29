@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8967eb2bc9f92e94cb009538a9497d84, type: 3}
+  m_Name: TestRecipeTree
+  m_EditorClassIdentifier: 
+  defaultOrientation: 0
+  machineName: RecipeTree
+  prefab: {fileID: 495015138674993689, guid: ac07a5391b3638e4a89e9f3e766851eb, type: 3}
+  icon: {fileID: 0}
+  cost: 50
+  inputMaterial: {fileID: 0}
+  outputMaterial: {fileID: 0}
+  processingTime: 4
+  recipes:
+  - {fileID: 11400000, guid: c3835561a1409554b8e63d396ce3a5da, type: 2}
+  size: {x: 1, y: 1}
+  repairMinigame: {fileID: 11400000, guid: ad326928abe06da44a98c86800b3612b, type: 2}
+  upgrades:
+  - {fileID: 11400000, guid: 1e54abd3b0b52ee42b43195bb15e517a, type: 2}
+  ports:
+  - kind: 1
+    side: 0
+    offset: -1
+  - kind: 2
+    side: 2
+    offset: -1
+  - kind: 1
+    side: 1
+    offset: -1
+  inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
+  outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
+  chanceIncreasePerOutput: 1
+  minimunChanceToBreak: 20
+  brokenMachineParticleEffect: {fileID: 6957141498569091356, guid: b7191a096fb3fc74fb80033db4ccaa7d, type: 3}
