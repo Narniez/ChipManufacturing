@@ -10,13 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 936aea6a974b1f04ea73d6de1dfd0a82, type: 3}
-  m_Name: Silicon
+  m_Name: Steel
   m_EditorClassIdentifier: Assembly-CSharp::RecipeItemSO
-  product: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
-  unlockedIcon: {fileID: 21300000, guid: f85df22483ed4e9449ae758069165f80, type: 3}
+  product: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
+  unlockedIcon: {fileID: 21300000, guid: 03f51453292d00c4c94cec748ac4deb5, type: 3}
   treeSteps:
-  - {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
+  - {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
   - {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
-  globalLockedSprite: {fileID: 0}
   startingUnlockedMaterials:
-  - {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
+  - {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}

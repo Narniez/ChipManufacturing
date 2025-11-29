@@ -112,90 +112,70 @@ public class RecipeTreeManager : MonoBehaviour
             Debug.Log($"[RecipeTreeManager] Built material cache: {materialCache.Count} by ID, {materialByTypeCache.Count} by type");
     }
 
-    /// <summary>
-    /// Called when a Machine produces a material (regardless of where it goes - belt or inventory)
-    /// This is the PRIMARY unlock trigger
-    /// </summary>
-    private void OnMachineProducedMaterial(MaterialType materialType, Vector3 position)
+    private void OnMachineProducedMaterial(MaterialData material, Vector3 position)
     {
-        if (debugLogging)
-            Debug.Log($"[RecipeTreeManager] ========== Machine produced MaterialType: {materialType} ==========");
-
-        // Get the actual MaterialData for this production
-        var material = FindMaterialByType(materialType);
         if (material == null)
         {
             if (debugLogging)
-                Debug.LogWarning($"[RecipeTreeManager] Could not find MaterialData for type {materialType}");
-            if (debugLogging) Debug.Log($"[RecipeTreeManager] ========== End Machine Production (no MaterialData) ==========");
+                Debug.LogWarning("[RecipeTreeManager] OnMachineProducedMaterial called with NULL MaterialData");
             return;
         }
 
-        // FIRST: try to unlock as a final product by its MaterialData.id
-        bool isProductNode = CheckAndUnlockProductById(material.id);
+        if (debugLogging)
+            Debug.Log($"[RecipeTreeManager] ========== Machine produced '{material.materialName}' (ID {material.id}) ==========");
 
-        // If it's NOT a product (it's a recipe node), unlock it as a material
-        if (!isProductNode)
-        {
-            if (!unlockedMaterials.Contains(material))
-            {
-                if (debugLogging) Debug.Log($"[RecipeTreeManager] >>> UNLOCKING '{material.materialName}' (recipe node) from machine production!");
-                UnlockMaterial(material, raiseEvent: true);
-            }
-            else
-            {
-                if (debugLogging) Debug.Log($"[RecipeTreeManager] Material '{material.materialName}' already unlocked");
-            }
-        }
+        // 1) Unlock the material itself (for node icons)
+        UnlockMaterial(material, raiseEvent: true);
 
-        if (debugLogging) Debug.Log($"[RecipeTreeManager] ========== End Machine Production ==========");
+        // 2) Unlock any products whose product is this material
+        CheckAndUnlockProductByMaterial(material);
+
+        if (debugLogging)
+            Debug.Log($"[RecipeTreeManager] ========== End Machine Production ==========");
     }
 
-    /// <summary>
-    /// Check if a produced material (by ID) is a final product and unlock it.
-    /// Returns true if it was a product, false otherwise.
-    /// </summary>
-    private bool CheckAndUnlockProductById(int producedMaterialId)
+
+
+    private bool CheckAndUnlockProductByMaterial(MaterialData producedMaterial)
     {
+        if (producedMaterial == null)
+            return false;
+
         if (debugLogging)
-            Debug.Log($"[RecipeTreeManager] CheckAndUnlockProductById called for Material ID: {producedMaterialId}");
+            Debug.Log($"[RecipeTreeManager] CheckAndUnlockProductByMaterial for '{producedMaterial.materialName}' (ID {producedMaterial.id})");
+
+        bool anyUnlocked = false;
 
         foreach (var recipe in recipeTrees)
         {
-            if (recipe == null)
-            {
-                if (debugLogging) Debug.Log("[RecipeTreeManager]   Skipping null recipe");
+            if (recipe == null || recipe.product == null)
                 continue;
-            }
-
-            if (recipe.product == null)
-            {
-                if (debugLogging) Debug.Log("[RecipeTreeManager]   Recipe has null product, skipping");
-                continue;
-            }
 
             if (unlockedProducts.Contains(recipe))
-            {
-                if (debugLogging) Debug.Log($"[RecipeTreeManager]   Recipe '{recipe.product.materialName}' already unlocked");
                 continue;
-            }
+
+            // Match only by reference or ID (SAFE)
+            bool matches =
+                recipe.product == producedMaterial ||
+                recipe.product.id == producedMaterial.id;
 
             if (debugLogging)
             {
-                Debug.Log($"[RecipeTreeManager]   Checking recipe '{recipe.product.materialName}' (ID: {recipe.product.id}) vs produced ID: {producedMaterialId}");
+                Debug.Log($"[RecipeTreeManager]   Checking recipe '{recipe.product.materialName}' " +
+                          $"(ID: {recipe.product.id}) vs produced '{producedMaterial.materialName}' -> match? {matches}");
             }
 
-            // Compare by MaterialData.id
-            if (recipe.product.id == producedMaterialId)
+            if (matches)
             {
-                if (debugLogging) Debug.Log($"[RecipeTreeManager] >>> MATCH! Material ID {producedMaterialId} is final product!");
                 UnlockProduct(recipe, raiseEvent: true);
-                return true; // it WAS a product
+                anyUnlocked = true;
             }
         }
 
-        return false; // not a product
+        return anyUnlocked;
     }
+
+
 
     /// <summary>
     /// Initialize only the starting materials. Actual unlocks will happen via production events.
@@ -244,8 +224,6 @@ public class RecipeTreeManager : MonoBehaviour
 
         if (debugLogging) Debug.Log($"[RecipeTreeManager] OnInventoryChanged: {delta.Count} items changed (fallback trigger)");
 
-        bool anyUnlocked = false;
-
         foreach (var change in delta)
         {
             int materialId = change.Key;
@@ -261,7 +239,6 @@ public class RecipeTreeManager : MonoBehaviour
             {
                 if (debugLogging) Debug.Log($"[RecipeTreeManager] Unlocking '{material.materialName}' from inventory (fallback)");
                 UnlockMaterial(material, raiseEvent: true);
-                anyUnlocked = true;
             }
         }
     }
@@ -289,34 +266,6 @@ public class RecipeTreeManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Check if any final products can now be unlocked (all tree steps unlocked)
-    /// </summary>
-    private void CheckForUnlockedProducts()
-    {
-        foreach (var recipe in recipeTrees)
-        {
-            if (recipe == null || unlockedProducts.Contains(recipe))
-                continue;
-
-            if (recipe.treeSteps != null && recipe.treeSteps.Count > 0)
-            {
-                bool allStepsUnlocked = recipe.treeSteps.All(step => step != null && unlockedMaterials.Contains(step));
-
-                if (debugLogging)
-                {
-                    var productName = recipe.product?.materialName ?? "Unknown";
-                    var unlockedSteps = recipe.treeSteps.Count(step => step != null && unlockedMaterials.Contains(step));
-                    Debug.Log($"[RecipeTreeManager] Product '{productName}': {unlockedSteps}/{recipe.treeSteps.Count} steps unlocked. Ready? {allStepsUnlocked}");
-                }
-
-                if (allStepsUnlocked)
-                {
-                    UnlockProduct(recipe, raiseEvent: true);
-                }
-            }
-        }
-    }
 
     /// <summary>
     /// Unlock a final product

@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 83a17a861bb8b1b44a879f8ea9223cf7, type: 3}
-  m_Name: SiliconRecipe
+  m_Name: SteelRecipe
   m_EditorClassIdentifier: Assembly-CSharp::MachineRecipe
-  name: Silicon
+  name: Steel
   inputs:
-  - material: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
+  - material: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
     amount: 1
   - material: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
     amount: 1
   outputs:
-  - material: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
+  - material: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
     amount: 1
   processingTimeOverride: 2
