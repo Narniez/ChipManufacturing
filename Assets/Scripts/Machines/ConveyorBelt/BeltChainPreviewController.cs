@@ -101,10 +101,39 @@ public class BeltChainPreviewController
         LinkForwardIfParentMissing(child);
 
         ShowOptionsFrom(child);
+
+        //compute contiguous chain length and publish if threshold met
+        int chainLength = ComputeContiguousChainLength(child);
+        const int defaultPublishThreshold = 4;
+        if (chainLength >= defaultPublishThreshold)
+        {
+            TutorialEventBus.PublishConveyorChainLengthReached(chainLength);
+        }
+
         return child;
     }
 
-
+    // Count contiguous belts by following PreviousInChain and NextInChain from `start`
+    private int ComputeContiguousChainLength(ConveyorBelt start)
+    {
+        if (start == null) return 0;
+        var visited = new HashSet<ConveyorBelt>();
+        // walk backward
+        var cur = start;
+        while (cur != null && !visited.Contains(cur))
+        {
+            visited.Add(cur);
+            cur = cur.PreviousInChain;
+        }
+        // walk forward from start's NextInChain
+        cur = start.NextInChain;
+        while (cur != null && !visited.Contains(cur))
+        {
+            visited.Add(cur);
+            cur = cur.NextInChain;
+        }
+        return visited.Count;
+    }
 
     private void PromoteTailIfBend(ConveyorBelt parent, ConveyorBelt child)
     {

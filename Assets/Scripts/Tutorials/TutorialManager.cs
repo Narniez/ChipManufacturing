@@ -65,11 +65,20 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
+        PlacementManager.Instance?.HidePortIndicators();
         var step = sequence.steps[_index];
         overlay?.Show(true);
 
         RectTransform target = ResolveRect(step.highlightTargetPath);
         overlay?.ConfigureStep(step, target);
+
+        if (step.waitForSignal == TutorialSignal.ConveyorConnectedToMachine && !string.IsNullOrEmpty(step.highlightTargetPath))
+        {
+            var go = GameObject.Find(step.highlightTargetPath);
+            var machine = go != null ? go.GetComponent<Machine>() : null;
+            if (machine != null)
+                PlacementManager.Instance?.ShowPortIndicatorsFor(machine);
+        }
     }
 
     private bool HasActiveStep => sequence != null && sequence.steps != null && _index >= 0 && _index < sequence.steps.Count;
@@ -87,11 +96,8 @@ public class TutorialManager : MonoBehaviour
 
         var step = sequence.steps[_index];
 
-        //Debug.Log($"TutorialManager.TryAdvance: currentStep={_index}, waitingFor={step.waitForSignal}, incomingSig={sig}, payload={payload}");
-
         if (step.waitForSignal != sig) return;
 
-       // Debug.Log($"TutorialManager.TryAdvance: step {_index} matched signal {sig} — advancing.");
         Advance();
     }
 
@@ -110,7 +116,7 @@ public class TutorialManager : MonoBehaviour
         TutorialEventBus.PublishShopBuyClicked();
     }
     public void OnConfirmButton() => TutorialEventBus.PublishPreviewConfirmed();
-    
+
     public void OnClickInventory() => TutorialEventBus.PublishInventoryOpened();
     public void OnClickRecipeTree() => TutorialEventBus.PublishRecipeTreeOpened();
     public void OnClickInventoryItem() => TutorialEventBus.PublishInventoryItemSelected();
