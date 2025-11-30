@@ -209,7 +209,7 @@ public class DraggingState : BasePlacementState
         Vector2Int anchor = grid.ClampAnchor(desiredAnchor, size);
         _currentAnchor = anchor;
 
-        Debug.Log($"ApplySnap: worldY={world.y:F3}, cell={cell}, anchor={anchor}, gridOriginY={grid.Origin.y:F3}");
+       // Debug.Log($"ApplySnap: worldY={world.y:F3}, cell={cell}, anchor={anchor}, gridOriginY={grid.Origin.y:F3}");
 
         _dragging.SetPlacement(anchor, _currentOrientation);
 

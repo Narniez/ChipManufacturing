@@ -17,5 +17,6 @@ public enum TutorialSignal
     InventoryItemSold,
     RecipeTreeOpened,
     ClickFixMachineButton,
-    ClickBoostMachineButton
+    ClickBoostMachineButton,
+    ConveyorChainLengthReached
 }

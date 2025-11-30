@@ -424,6 +424,8 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
                 _isConnectedToMachine = true;
                 machine.TryStartIfIdle();
 
+                TutorialEventBus.PublishConveyorConnectedToMachine(machine);
+
             }
         }
     }

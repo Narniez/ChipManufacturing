@@ -38,6 +38,7 @@ public class PlacementManager : MonoBehaviour
     [SerializeField] private GameObject conveyorItemPrefab;
     [SerializeField, Tooltip("Default machine to use when spawning a test item without arguments.")]
     private MaterialData testMaterialData;
+    private MachinePortIndicatorController _portIndicatorController;
 
     private NewCameraControls _camCtrl;
     private IPlacementState _state;
@@ -67,6 +68,8 @@ public class PlacementManager : MonoBehaviour
 
         History = new CommandHistory();
         SetState(new IdleState(this));
+
+        _portIndicatorController = new MachinePortIndicatorController(this);
     }
 
     void Update() => _state?.Update();
@@ -685,6 +688,16 @@ public class PlacementManager : MonoBehaviour
             }
         }
         return null;
+    }
+
+    public void ShowPortIndicatorsFor(Machine machine)
+    {
+        _portIndicatorController?.ShowFor(machine);
+    }
+
+    public void HidePortIndicators()
+    {
+        _portIndicatorController?.Cleanup();
     }
 
     private static Vector2Int ComputePortCellForMachine(Vector2Int machineAnchor, GridOrientation machineOrientation,
