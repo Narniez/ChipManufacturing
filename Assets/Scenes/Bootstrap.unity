@@ -178,7 +178,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 928284412886f4f44926b93b0f162ef8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameBootstrapper
-  factorySceneName: RecipeTree
+  factorySceneName: Demo
 --- !u!114 &778964627
 MonoBehaviour:
   m_ObjectHideFlags: 0

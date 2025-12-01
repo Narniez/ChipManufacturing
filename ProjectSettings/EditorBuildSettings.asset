@@ -8,15 +8,15 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Testing/TouchControlls.unity
     guid: 52d0c5c1cae9234439a4df691f5767bc
-  - enabled: 0
-    path: Assets/Scenes/Testing/Demo.unity
-    guid: dcf7bed7022a13449a7843acb789b28c
   - enabled: 1
     path: Assets/Scenes/Bootstrap.unity
     guid: 85cd5c754e6a1c045bac1cc760262ef8
   - enabled: 1
+    path: Assets/Scenes/Testing/Demo.unity
+    guid: dcf7bed7022a13449a7843acb789b28c
+  - enabled: 1
     path: Assets/Scenes/Testing/RecipeTree.unity
-    guid: d884d852f01118442be919167f68cf94
+    guid: 6448e6a9febe37d44a72ee2513692c57
   - enabled: 1
     path: Assets/Scenes/Testing/BandsawMinigameTest.unity
     guid: 60fcf30b9261cce4787848849abae1b6
