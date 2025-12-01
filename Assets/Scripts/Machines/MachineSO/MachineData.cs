@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum MaterialType { None, Silicon, Copper, Plastic, Chip, Circuit }
+public enum MaterialType { None, Silicon, Copper, Plastic, Chip, Circuit, Wafer }
 
 public enum MachinePortType { None, Input, Output }
 

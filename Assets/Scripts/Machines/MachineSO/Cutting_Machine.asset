@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8967eb2bc9f92e94cb009538a9497d84, type: 3}
-  m_Name: TestMachine
+  m_Name: Cutting_Machine
   m_EditorClassIdentifier: 
   defaultOrientation: 0
-  machineName: BestMachine
+  machineName: 'Cutting Machine '
   prefab: {fileID: 495015138674993689, guid: ac07a5391b3638e4a89e9f3e766851eb, type: 3}
-  icon: {fileID: -9095717837082945937, guid: ba9e883793fe0424f95847dcde257b85, type: 3}
+  icon: {fileID: 21300000, guid: 3e91a43a2e5109d4d98e00c308deb6a2, type: 3}
   cost: 50
-  inputMaterial: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
-  outputMaterial: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
+  inputMaterial: {fileID: 0}
+  outputMaterial: {fileID: 0}
   processingTime: 4
   recipes:
   - {fileID: 11400000, guid: 882bdd72bb6ee694b99d9c7726f44fe8, type: 2}
