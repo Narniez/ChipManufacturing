@@ -115,6 +115,7 @@ public class TutorialManager : MonoBehaviour
         //Debug.Log($"TutorialManager.OnShopBuyButton called (instance={this.GetInstanceID()})");
         TutorialEventBus.PublishShopBuyClicked();
     }
+    public void OnClickShopItem() => TutorialEventBus.PublishShopItemSelected(null);
     public void OnConfirmButton() => TutorialEventBus.PublishPreviewConfirmed();
 
     public void OnClickInventory() => TutorialEventBus.PublishInventoryOpened();
