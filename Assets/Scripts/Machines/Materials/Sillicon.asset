@@ -17,8 +17,11 @@ MonoBehaviour:
   materialType: 1
   materialCategory: 0
   icon: {fileID: 21300000, guid: 37c6baea742b8fc4ab0947dc578c19ed, type: 3}
+  prefab: {fileID: 5807963405714090220, guid: 27dcac24c7e7ff045974278f432386cc, type: 3}
   cost: 0
   unit: pcs
   unitScale: 1
   maxStack: 9999
   tags: []
+  upgradeMaterials: []
+  requiredMachines: []

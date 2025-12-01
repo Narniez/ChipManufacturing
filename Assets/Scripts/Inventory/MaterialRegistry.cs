@@ -31,7 +31,6 @@ public class MaterialRegistry : ScriptableObject
         {
             if (m == null) continue;
             if (!_byId.ContainsKey(m.id)) _byId[m.id] = m;
-            if (!_byType.ContainsKey(m.materialType)) _byType[m.materialType] = m;
         }
     }
 }

@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8967eb2bc9f92e94cb009538a9497d84, type: 3}
+  m_Name: MetalWiringMachine
+  m_EditorClassIdentifier: Assembly-CSharp::MachineData
+  defaultOrientation: 0
+  machineName: 'Metal Wiring Deposition '
+  prefab: {fileID: 7889884535009700644, guid: 9ab7a3a187f80ea4c84fed37c1da6297, type: 3}
+  icon: {fileID: 0}
+  cost: 100
+  inputMaterial: {fileID: 11400000, guid: ae6f80625a8c53c43986d6bdee75e9c2, type: 2}
+  outputMaterial: {fileID: 0}
+  processingTime: 2
+  recipes: []
+  size: {x: 1, y: 1}
+  repairMinigame: {fileID: 0}
+  upgrades: []
+  ports: []
+  inputPortIndicatorPrefab: {fileID: 0}
+  outputPortIndicatorPrefab: {fileID: 0}
+  chanceIncreasePerOutput: 2
+  minimunChanceToBreak: 20
+  brokenMachineIndicator: {fileID: 0}
+  brokenMachineParticleEffect: {fileID: 0}

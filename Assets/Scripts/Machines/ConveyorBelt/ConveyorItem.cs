@@ -3,7 +3,6 @@ using UnityEngine;
 public class ConveyorItem 
 {
     public MaterialData materialData;
-    public MaterialType materialType;
     public GameObject Visual;
 
     // Smooth hop animation state
@@ -15,7 +14,6 @@ public class ConveyorItem
     public ConveyorItem(MaterialData mat, GameObject visual = null)
     {
         materialData = mat;
-        materialType = mat.materialType;
         Visual = visual;
         smoothTime = 0.5f;
         Duration = 0f;

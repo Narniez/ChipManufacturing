@@ -87,9 +87,6 @@ public class RecipeTreeManager : MonoBehaviour
                     {
                         if (!materialCache.ContainsKey(material.id))
                             materialCache[material.id] = material;
-
-                        if (!materialByTypeCache.ContainsKey(material.materialType))
-                            materialByTypeCache[material.materialType] = material;
                     }
                 }
             }
@@ -102,9 +99,6 @@ public class RecipeTreeManager : MonoBehaviour
             {
                 if (!materialCache.ContainsKey(tree.product.id))
                     materialCache[tree.product.id] = tree.product;
-
-                if (!materialByTypeCache.ContainsKey(tree.product.materialType))
-                    materialByTypeCache[tree.product.materialType] = tree.product;
             }
         }
 
