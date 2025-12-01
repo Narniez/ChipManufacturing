@@ -10,19 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a7087c4abf7f59e44a712449f9d793f8, type: 3}
-  m_Name: Start_Story 17
+  m_Name: Start_Tutorial_Depot 1
   m_EditorClassIdentifier: 
-  text: Look at it go! But where to? Lets start the real chip making process, you
-    remember how right?
+  text: "Alright, let\u2019s start with getting your silicon material depot back."
   textBackdropSprite: {fileID: 0}
   textFont: {fileID: 0}
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
   anchor: 7
-  waitForSignal: 0
-  highlightTargetPath: 
-  gateInputOutsideHighlight: 0
-  fingerMode: 0
-  showFinger: 0
+  waitForSignal: 1
+  highlightTargetPath: Canvas/ShopButton
+  gateInputOutsideHighlight: 1
+  fingerMode: 1
+  showFinger: 1
   fingerOffset: {x: 0, y: -30}
   dragTargetPath: 
   dragDuration: 1.25
