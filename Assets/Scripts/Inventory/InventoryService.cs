@@ -13,9 +13,6 @@ public class InventoryService : MonoBehaviour, IInventory
     [Header("Inventory Settings")]
     [SerializeField] private GameObject slotRootGO;
 
-    [Header("Material lookup (assign in Editor)")]
-    [SerializeField] private MaterialRegistry materialRegistry;
-
     private readonly Dictionary<int, int> _counts = new();
     public event Action<IDictionary<int, int>, IReadOnlyDictionary<int, int>> OnChanged;
     public IReadOnlyDictionary<int, int> GetInventoryItems() => _counts;
@@ -24,7 +21,6 @@ public class InventoryService : MonoBehaviour, IInventory
 
     // runtime cache
     private Dictionary<int, MaterialData> _materialById;
-    private Dictionary<MaterialType, MaterialData> _materialByType;
 
     // while loading we don't want to mark dirty or re-save repeatedly
     private bool _suppressSave;
@@ -69,7 +65,7 @@ public class InventoryService : MonoBehaviour, IInventory
     {
         try { GameServices.Init(this); } catch { /* ignore */ }
 
-        // Build material caches from registry if provided
+        // Build material caches by id
         EnsureMaterialLookup();
 
         // Restore saved inventory - DEFER until next frame so other Start() calls can subscribe
@@ -170,7 +166,6 @@ public class InventoryService : MonoBehaviour, IInventory
                 {
                     slotIndex = i,
                     materialId = slot.Item.id,
-                    type = slot.Item.materialType,
                     amount = slot.Amount
                 };
                 state.items.Add(entry);
@@ -215,10 +210,9 @@ public class InventoryService : MonoBehaviour, IInventory
         {
             MaterialData mat = null;
             if (entry.materialId != 0) mat = FindMaterialById(entry.materialId);
-            if (mat == null && entry.type != 0) mat = FindMaterialByType(entry.type);
             if (mat == null)
             {
-                if (debug) Debug.LogWarning($"InventoryService.LoadState: missing material for entry (id={entry.materialId}, type={entry.type}).");
+                if (debug) Debug.LogWarning($"InventoryService.LoadState: missing material for entry (id={entry.materialId}).");
                 continue;
             }
 
@@ -254,7 +248,6 @@ public class InventoryService : MonoBehaviour, IInventory
         {
             MaterialData mat = null;
             if (e.materialId != 0) mat = FindMaterialById(e.materialId);
-            if (mat == null && e.type != 0) mat = FindMaterialByType(e.type);
             if (mat == null) continue;
             int amt = Math.Max(0, e.amount);
             if (amt <= 0) continue;
@@ -297,26 +290,24 @@ public class InventoryService : MonoBehaviour, IInventory
         _suppressSave = false;
     }
 
-    // Use the inspector-assigned registry first
+    // Build a lookup of materials by id without using MaterialRegistry or MaterialType
     private void EnsureMaterialLookup()
     {
         if (_materialById != null && _materialById.Count > 0) return;
 
         _materialById = new Dictionary<int, MaterialData>();
-        _materialByType = new Dictionary<MaterialType, MaterialData>();
 
-        if (materialRegistry != null)
+        // 1) Gather from current UI slots (runtime-safe)
+        foreach (var slot in _inventorySlots)
         {
-            foreach (var m in materialRegistry.materials)
+            if (slot != null && !slot.IsEmpty && slot.Item != null)
             {
-                if (m == null) continue;
+                var m = slot.Item;
                 if (!_materialById.ContainsKey(m.id)) _materialById[m.id] = m;
-                if (!_materialByType.ContainsKey(m.materialType)) _materialByType[m.materialType] = m;
             }
-            if (_materialById.Count > 0) return;
         }
 
-        // Editor-only fallback to find assets
+        // 2) Editor-only: index all MaterialData assets in project (for reliable load in editor)
 #if UNITY_EDITOR
         var guids = UnityEditor.AssetDatabase.FindAssets("t:MaterialData");
         foreach (var g in guids)
@@ -325,7 +316,6 @@ public class InventoryService : MonoBehaviour, IInventory
             var m = UnityEditor.AssetDatabase.LoadAssetAtPath<MaterialData>(path);
             if (m == null) continue;
             if (!_materialById.ContainsKey(m.id)) _materialById[m.id] = m;
-            if (!_materialByType.ContainsKey(m.materialType)) _materialByType[m.materialType] = m;
         }
 #endif
     }
@@ -334,11 +324,5 @@ public class InventoryService : MonoBehaviour, IInventory
     {
         EnsureMaterialLookup();
         return (_materialById != null && _materialById.TryGetValue(id, out var material)) ? material : null;
-    }
-
-    private MaterialData FindMaterialByType(MaterialType type)
-    {
-        EnsureMaterialLookup();
-        return (_materialByType != null && _materialByType.TryGetValue(type, out var m)) ? m : null;    
     }
 }
