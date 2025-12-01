@@ -10,17 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a7087c4abf7f59e44a712449f9d793f8, type: 3}
-  m_Name: Start_Story 21
+  m_Name: Start_Tutorial_Conveyor 4
   m_EditorClassIdentifier: 
-  text: There is currently no conveyor belt at the output of the machine, so for
-    now they will go into the storage. Check it and start selling to get enough for
-    your next machine.
+  text: 'Nice this is the correct spot now let''s confirm the placement. '
   textBackdropSprite: {fileID: 0}
   textFont: {fileID: 0}
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
-  anchor: 7
-  waitForSignal: 4
-  highlightTargetPath: Canvas/InventoryButton
+  anchor: 2
+  waitForSignal: 5
+  highlightTargetPath: Canvas/ConfirmButton
   gateInputOutsideHighlight: 1
   fingerMode: 1
   showFinger: 1
@@ -28,5 +26,6 @@ MonoBehaviour:
   dragTargetPath: 
   dragDuration: 1.25
   dragLoop: 0
-  typewriterCharsPerSecond: 60
+  showDimmerImage: 1
+  typewriterCharsPerSecond: -1
   fullscreenSprite: {fileID: 0}

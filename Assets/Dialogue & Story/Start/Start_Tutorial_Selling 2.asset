@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a7087c4abf7f59e44a712449f9d793f8, type: 3}
-  m_Name: Start_Story 22
+  m_Name: Start_Tutorial_Selling 2
   m_EditorClassIdentifier: 
   text: '[NO EVENT SIGNAL]
 
@@ -21,8 +21,8 @@ MonoBehaviour:
   textFont: {fileID: 0}
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
   anchor: 7
-  waitForSignal: 0
-  highlightTargetPath: Canvas/Inventory/InventorySlot
+  waitForSignal: 10
+  highlightTargetPath: Canvas/Inventory/InventoryPanel/InventorySlot
   gateInputOutsideHighlight: 1
   fingerMode: 1
   showFinger: 1
@@ -30,5 +30,6 @@ MonoBehaviour:
   dragTargetPath: 
   dragDuration: 1.25
   dragLoop: 0
+  showDimmerImage: 1
   typewriterCharsPerSecond: -1
   fullscreenSprite: {fileID: 0}

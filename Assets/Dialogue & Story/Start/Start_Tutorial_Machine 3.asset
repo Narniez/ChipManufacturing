@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7087c4abf7f59e44a712449f9d793f8, type: 3}
+  m_Name: Start_Tutorial_Machine 3
+  m_EditorClassIdentifier: 
+  text: Place our first machine and lets cut those wafers. 2
+  textBackdropSprite: {fileID: 0}
+  textFont: {fileID: 0}
+  speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
+  anchor: 3
+  waitForSignal: 3
+  highlightTargetPath: Canvas/TestShopPannel/MachBuyButton
+  gateInputOutsideHighlight: 1
+  fingerMode: 0
+  showFinger: 0
+  fingerOffset: {x: 0, y: -30}
+  dragTargetPath: 
+  dragDuration: 1.25
+  dragLoop: 0
+  showDimmerImage: 1
+  typewriterCharsPerSecond: -1
+  fullscreenSprite: {fileID: 0}
