@@ -16,7 +16,7 @@ MonoBehaviour:
     now they will go into the storage. Check it and start selling to get enough for
     your next machine.
   textBackdropSprite: {fileID: 0}
-  textFont: {fileID: 0}
+  textFont: {fileID: 11400000, guid: 5aaa7e67d3ced3f4faaaaf7aa95534e7, type: 2}
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
   anchor: 7
   waitForSignal: 9
