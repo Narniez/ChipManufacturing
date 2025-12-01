@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -93,14 +92,9 @@ public class FactorySceneBuilder : MonoBehaviour
                     continue;
                 }
 
-                // Try Addressables first, then Resources fallback
                 MachineData data = null;
-                var mh = Addressables.LoadAssetAsync<MachineData>(m.machineDataPath);
-                yield return mh;
-                if (mh.Status == AsyncOperationStatus.Succeeded)
-                    data = mh.Result;
-                else
-                    data = Resources.Load<MachineData>(m.machineDataPath);
+                // Try Resources first, then DataRegistry (runtime-safe)
+                yield return StartCoroutine(LoadAssetResourceOrRegistry<MachineData>(m.machineDataPath, d => data = d));
 
                 if (data == null || data.prefab == null)
                 {
@@ -141,12 +135,7 @@ public class FactorySceneBuilder : MonoBehaviour
                 if (!string.IsNullOrEmpty(b.itemMaterialKey))
                 {
                     MaterialData mat = null;
-                    var ah = Addressables.LoadAssetAsync<MaterialData>(b.itemMaterialKey);
-                    yield return ah;
-                    if (ah.Status == AsyncOperationStatus.Succeeded)
-                        mat = ah.Result;
-                    else
-                        mat = Resources.Load<MaterialData>(b.itemMaterialKey);
+                    yield return StartCoroutine(LoadAssetResourceOrRegistry<MaterialData>(b.itemMaterialKey, d => mat = d));
 
                     if (mat != null)
                     {
@@ -199,5 +188,98 @@ public class FactorySceneBuilder : MonoBehaviour
             // Allow runtime systems to resume
             GameStateService.IsLoading = false;
         }
+    }
+
+    // Try to convert an asset path into a Resources.Load path.
+    // Examples:
+    //  - "Assets/Resources/Materials/Silicon.asset" -> "Materials/Silicon"
+    //  - "Assets/Scripts/Machines/Materials/Sillicon.asset" -> "Sillicon" (fallback to filename)
+    private static string ToResourcesPath(string assetPath)
+    {
+        if (string.IsNullOrEmpty(assetPath)) return null;
+        // strip extension if present
+        var p = assetPath;
+        if (p.EndsWith(".asset", StringComparison.OrdinalIgnoreCase))
+            p = p.Substring(0, p.Length - ".asset".Length);
+
+        // look for standard "Assets/Resources/" location
+        var idx = p.IndexOf("Assets/Resources/", StringComparison.OrdinalIgnoreCase);
+        if (idx >= 0)
+            return p.Substring(idx + "Assets/Resources/".Length);
+
+        // also accept any "Resources/" folder
+        idx = p.IndexOf("/Resources/", StringComparison.OrdinalIgnoreCase);
+        if (idx >= 0)
+            return p.Substring(idx + "/Resources/".Length);
+
+        // fallback: filename only (last segment)
+        var last = p.LastIndexOf('/');
+        if (last >= 0 && last + 1 < p.Length)
+            return p.Substring(last + 1);
+
+        return p;
+    }
+
+    // Coroutine helper: try Resources.Load first, then DataRegistry lookup (no Addressables).
+    private static IEnumerator LoadAssetResourceOrRegistry<T>(string key, Action<T> callback) where T : UnityEngine.Object
+    {
+        T result = null;
+
+        // Try Resources-derived path(s) first
+        var resPath = ToResourcesPath(key);
+        if (!string.IsNullOrEmpty(resPath))
+        {
+            result = Resources.Load<T>(resPath);
+            if (result != null)
+            {
+                callback(result);
+                yield break;
+            }
+        }
+
+        // Registry lookup (id match or asset.name)
+        var registry = Resources.Load<DataRegistry>("DataRegistry");
+        if (registry != null)
+        {
+            if (typeof(T) == typeof(MachineData))
+            {
+                var md = registry.GetMachine(key);
+                if (md != null) { callback(md as T); yield break; }
+
+                // match by id or asset.name among entries
+                foreach (var e in registry.machines)
+                {
+                    if (e.data == null) continue;
+                    if (e.id == key || e.data.name == key)
+                    {
+                        callback(e.data as T);
+                        yield break;
+                    }
+                }
+            }
+            else if (typeof(T) == typeof(MaterialData))
+            {
+                var mat = registry.GetMaterial(key);
+                if (mat != null) { callback(mat as T); yield break; }
+
+                foreach (var e in registry.materials)
+                {
+                    if (e.data == null) continue;
+                    if (e.id == key || e.data.name == key)
+                    {
+                        callback(e.data as T);
+                        yield break;
+                    }
+                }
+            }
+        }
+
+        // Final fallback: try Resources.Load by the raw key (in case key == Resources path)
+        if (!string.IsNullOrEmpty(key))
+        {
+            result = Resources.Load<T>(key);
+        }
+
+        callback(result);
     }
 }

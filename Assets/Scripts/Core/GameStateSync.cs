@@ -1,34 +1,38 @@
-using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-using UnityEditor.AddressableAssets;
-using UnityEditor.AddressableAssets.Settings;
-#endif
+ï»¿using UnityEngine;
 
 public static class GameStateSync
 {
-    // Editor/runtime helpers to derive an address/key for MachineData and MaterialData
-    private static string ResolveAssetAddress(Object asset)
+    // Prefer registry-based id (stable in builds). Fallbacks keep previous behavior.
+    private static string ResolveAssetId(Object asset)
     {
         if (asset == null) return string.Empty;
 
-#if UNITY_EDITOR
-        string path = AssetDatabase.GetAssetPath(asset);
-        if (string.IsNullOrEmpty(path)) return string.Empty;
-        string guid = AssetDatabase.AssetPathToGUID(path);
-        var settings = AddressableAssetSettingsDefaultObject.Settings;
-        if (settings != null)
+        // Try registry in Resources (works in Editor + builds)
+        var registry = Resources.Load<DataRegistry>("DataRegistry");
+        if (registry != null)
         {
-            var entry = settings.FindAssetEntry(guid);
-            if (entry != null && !string.IsNullOrEmpty(entry.address))
-                return entry.address;
+            // Match by exact ScriptableObject reference first (preferred stable id).
+            foreach (var me in registry.machines)
+            {
+                if (me.data == asset)
+                    return me.id;
+            }
+            foreach (var ma in registry.materials)
+            {
+                if (ma.data == asset)
+                    return ma.id;
+            }
+
+            // Fallback: if registry contains an entry whose id or data.name matches the asset name, use that id/name.
+            var byName = registry.GetMachine(asset.name);
+            if (byName != null) return asset.name;
+
+            var matByName = registry.GetMaterial(asset.name);
+            if (matByName != null) return asset.name;
         }
-        // fallback to GUID (stable if you set entry.address = guid) or asset name
-        return guid;
-#else
-        // At runtime fallback to name (or saved address produced in editor)
+
+        // Runtime fallback: use asset name (ScriptableObject name) so builds remain deterministic.
         return (asset as ScriptableObject)?.name ?? string.Empty;
-#endif
     }
 
     public static void TryAddOrUpdateMachine(Machine m)
@@ -42,7 +46,7 @@ public static class GameStateSync
         {
             list.Add(new MachineState
             {
-                machineDataPath = m.Data != null ? ResolveAssetAddress(m.Data) : string.Empty,
+                machineDataPath = m.Data != null ? ResolveAssetId(m.Data) : string.Empty,
                 anchor = m.Anchor,
                 orientation = m.Orientation,
                 isBroken = m.IsBroken
@@ -51,7 +55,7 @@ public static class GameStateSync
         else
         {
             if (m.Data != null && string.IsNullOrEmpty(entry.machineDataPath))
-                entry.machineDataPath = ResolveAssetAddress(m.Data);
+                entry.machineDataPath = ResolveAssetId(m.Data);
             entry.orientation = m.Orientation;
             entry.isBroken = m.IsBroken;
         }
@@ -101,12 +105,12 @@ public static class GameStateSync
         var item = b.PeekItem();
         if (item != null && item.materialData != null)
         {
-            itemKey = ResolveAssetAddress(item.materialData);
+            itemKey = ResolveAssetId(item.materialData);
             itemAmount = 1;
         }
 
         // Defensive check: avoid recording belt state before the belt is actually registered
-        // in the GridService at the expected anchor — but only skip when there's nothing to save.
+        // in the GridService at the expected anchor â€” but only skip when there's nothing to save.
         var grid = Object.FindFirstObjectByType<GridService>();
         if (grid != null && grid.HasGrid)
         {
@@ -142,8 +146,7 @@ public static class GameStateSync
                 }
             }
         }
-        // If GridService isn't available yet, allow the write — it may be added later.
-
+        // If GridService isn't available yet, allow the write â€” it may be added later.
         var list = svc.State.belts;
         var entryIndex = list.FindIndex(x => x.anchor == b.Anchor);
         int turnKind = (int)(b.IsCorner ? b.TurnKind : ConveyorBelt.BeltTurnKind.None);
@@ -192,7 +195,7 @@ public static class GameStateSync
             e.turnKind = (int)(b.IsCorner ? b.TurnKind : ConveyorBelt.BeltTurnKind.None);
             // update item presence if any
             var item = b.PeekItem();
-            e.itemMaterialKey = item != null && item.materialData != null ? ResolveAssetAddress(item.materialData) : string.Empty;
+            e.itemMaterialKey = item != null && item.materialData != null ? ResolveAssetId(item.materialData) : string.Empty;
             e.itemAmount = item != null ? 1 : 0;
             svc.State.belts[idx] = e;
             GameStateService.MarkDirty();

@@ -112,6 +112,17 @@ public class TutorialEventBus : MonoBehaviour
         PublishSignal(TutorialSignal.InventoryItemSold, null);
     }
 
+    public static void PublishConveyorConnectedToMachine(object payload = null)
+    {
+        OnConveyorPreviewConfirmed?.Invoke();
+        PublishSignal(TutorialSignal.ConveyorConnectedToMachine, payload);
+    }
+
+    public static void PublishConveyorChainLengthReached(int length)
+    {      
+        PublishSignal(TutorialSignal.ConveyorChainLengthReached, length);
+    }
+
     public static void PublishSignal(TutorialSignal sig, object payload = null)
     {
         //Debug.Log($"TutorialEventBus.PublishSignal: sig={sig}, payload={payload}");
