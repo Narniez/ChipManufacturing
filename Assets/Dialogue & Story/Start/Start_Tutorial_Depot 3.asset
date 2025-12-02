@@ -16,9 +16,9 @@ MonoBehaviour:
   textBackdropSprite: {fileID: 0}
   textFont: {fileID: 11400000, guid: 8a2743ad59e7cbf4b8007d6b0330cb28, type: 2}
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
-  anchor: 3
+  anchor: 5
   waitForSignal: 3
-  highlightTargetPath: TestShopPannel/PopUpPanel/Product PopUp/BuyButton
+  highlightTargetPath: Canvas/TestShopPannel/PopUpPanel/Product PopUp/BuyButton
   gateInputOutsideHighlight: 1
   fingerMode: 1
   showFinger: 1
