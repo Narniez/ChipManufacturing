@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7087c4abf7f59e44a712449f9d793f8, type: 3}
+  m_Name: Start_Tutorial_Selling 3
+  m_EditorClassIdentifier: 
+  text: There is currently no conveyor belt at the output of the machine, so for
+    now they will go into the storage. Check it and start selling to get enough for
+    your next machine.
+  textBackdropSprite: {fileID: 0}
+  textFont: {fileID: 11400000, guid: 5aaa7e67d3ced3f4faaaaf7aa95534e7, type: 2}
+  speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
+  anchor: 7
+  waitForSignal: 11
+  highlightTargetPath: Canvas/Inventory/InventorySlot/Panel/Sell
+  gateInputOutsideHighlight: 1
+  fingerMode: 1
+  showFinger: 1
+  fingerOffset: {x: 0, y: -30}
+  dragTargetPath: 
+  dragDuration: 1.25
+  dragLoop: 0
+  showDimmerImage: 1
+  typewriterCharsPerSecond: -1
+  fullscreenSprite: {fileID: 0}
