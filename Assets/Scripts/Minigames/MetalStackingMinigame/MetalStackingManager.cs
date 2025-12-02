@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Events;
 
 public class MetalStackingManager : MonoBehaviour
 {
@@ -13,14 +12,11 @@ public class MetalStackingManager : MonoBehaviour
 
     private Transform clawTransform;
     private GameObject currentPiece;
-    private GameObject lastPiece;
-
     private MetalStack currentStack;
+
+    private GameObject lastPiece;
     private bool isHolding;
-
-    [Header("Completion")]
-    private UnityEvent onPuzzleComplete;
-
+    private int level;
     private bool completed;
 
     private void Awake()
@@ -38,18 +34,24 @@ public class MetalStackingManager : MonoBehaviour
 
     private void Update()
     {
-        if (isHolding && Input.GetMouseButtonDown(0))
-        {
-            ReleaseCurrent();
-        }
         if (completed)
         {
             return;
+        }
+
+        if (isHolding && Input.GetMouseButtonDown(0))
+        {
+            ReleaseCurrent();
         }
     }
 
     private void SpawnAndAttach()
     {
+        if (completed)
+        {
+            return;
+        }
+
         if (metalStackPrefab == null || clawTransform == null)
         {
             Debug.LogWarning("MetalStackingManager: Assign both metalStackPrefab and clawTransform in the Inspector.");
@@ -57,6 +59,11 @@ public class MetalStackingManager : MonoBehaviour
         }
 
         currentPiece = Instantiate(metalStackPrefab, clawTransform);
+        if(lastPiece != null)
+        {
+            currentPiece.transform.localScale = lastPiece.transform.localScale;
+        }
+
         currentStack = currentPiece.GetComponent<MetalStack>();
         if (currentStack == null)
         {

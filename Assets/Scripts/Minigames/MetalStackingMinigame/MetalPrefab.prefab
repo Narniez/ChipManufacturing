@@ -155,3 +155,6 @@ MonoBehaviour:
   dropVelocityBoost: 40
   minStickSpeed: 0
   destroyRigidbodyOnStick: 1
+  cutOnStick: 1
+  minOverlapZ: 0.001
+  yStackTolerance: 0.01
