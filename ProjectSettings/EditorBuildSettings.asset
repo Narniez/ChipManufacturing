@@ -20,7 +20,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Testing/BandsawMinigameTest.unity
     guid: 60fcf30b9261cce4787848849abae1b6
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Testing/LensesMinigameTest.unity
     guid: 5a0253c12de44bb429b6eff386c9bc53
   m_configObjects:
