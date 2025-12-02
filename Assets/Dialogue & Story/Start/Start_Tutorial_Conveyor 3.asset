@@ -30,3 +30,4 @@ MonoBehaviour:
   showDimmerImage: 0
   typewriterCharsPerSecond: -1
   fullscreenSprite: {fileID: 0}
+  blockAllUIInteraction: 1

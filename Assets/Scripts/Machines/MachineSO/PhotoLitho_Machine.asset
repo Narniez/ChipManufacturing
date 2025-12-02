@@ -14,20 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
   machineName: Photolithography Machine
-  prefab: {fileID: 2835681397389331181, guid: 166213423c1ea8a41a2fdfc2186a3b29, type: 3}
-  icon: {fileID: 0}
-  cost: 0
-  inputMaterial: {fileID: 0}
-  outputMaterial: {fileID: 0}
-  processingTime: 2
+  prefab: {fileID: 315169815577762446, guid: 26074415fce2b1643b17bbc03927c622, type: 3}
+  icon: {fileID: -9095717837082945937, guid: ba9e883793fe0424f95847dcde257b85, type: 3}
+  cost: 500
+  inputMaterial: {fileID: 11400000, guid: 2e04e17488d4d544696b225af5ef64b9, type: 2}
+  outputMaterial: {fileID: 11400000, guid: ae6f80625a8c53c43986d6bdee75e9c2, type: 2}
+  processingTime: 4
   recipes: []
-  size: {x: 1, y: 1}
-  repairMinigame: {fileID: 0}
+  size: {x: 2, y: 3}
+  repairMinigame: {fileID: 11400000, guid: 3d8ff34971520df4daf12e353d1bb994, type: 2}
   upgrades: []
-  ports: []
-  inputPortIndicatorPrefab: {fileID: 0}
-  outputPortIndicatorPrefab: {fileID: 0}
+  ports:
+  - kind: 2
+    side: 0
+    offset: -1
+  - kind: 1
+    side: 2
+    offset: -1
+  inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
+  outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
   chanceIncreasePerOutput: 2
-  minimunChanceToBreak: 20
-  brokenMachineIndicator: {fileID: 0}
-  brokenMachineParticleEffect: {fileID: 0}
+  minimunChanceToBreak: 50
+  brokenMachineIndicator: {fileID: 7888490462930570013, guid: 935c78f711e1a0c4480c2400a759f878, type: 3}
+  brokenMachineParticleEffect: {fileID: 6957141498569091356, guid: b7191a096fb3fc74fb80033db4ccaa7d, type: 3}

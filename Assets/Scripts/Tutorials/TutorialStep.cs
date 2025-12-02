@@ -52,5 +52,9 @@ public class TutorialStep : ScriptableObject
     [Tooltip("Sprite to display when fullscreen is enabled.")]
     public Sprite fullscreenSprite;
 
-    
+    [Header("Interaction control")]
+    [Tooltip("If true, ALL underlying UI interaction is disabled for this step (ignores highlight gating).")]
+    public bool blockAllUIInteraction = false;
+
+
 }

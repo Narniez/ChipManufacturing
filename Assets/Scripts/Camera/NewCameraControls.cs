@@ -213,7 +213,7 @@ public class NewCameraControls : MonoBehaviour
 
         bool allowUserInput = !inputLocked && !blockUntilNoPointerUp;
 
-        // NEW: If the user is touching/clicking over UI, prevent camera movement.
+        // If the user is touching/clicking over UI, prevent camera movement.
         // This uses an EventSystem raycast similar to InteractionManager.IsPointerOverUI.
         if (allowUserInput && EventSystem.current != null)
         {

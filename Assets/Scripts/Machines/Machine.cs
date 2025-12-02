@@ -496,6 +496,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     {
         var svc = InventoryService.Instance;
         if (svc == null) return;
+        TutorialEventBus.PublishMaterialProduced();
         svc.AddOrStack(mat, amount);
     }
     #endregion

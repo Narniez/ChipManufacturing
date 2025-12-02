@@ -123,6 +123,11 @@ public class TutorialEventBus : MonoBehaviour
         PublishSignal(TutorialSignal.ConveyorChainLengthReached, length);
     }
 
+    public static void PublishMaterialProduced()
+    {
+        PublishSignal(TutorialSignal.MachineProducedMaterial, null);
+    }
+
     public static void PublishSignal(TutorialSignal sig, object payload = null)
     {
         //Debug.Log($"TutorialEventBus.PublishSignal: sig={sig}, payload={payload}");

@@ -124,4 +124,6 @@ public class TutorialManager : MonoBehaviour
     public void OnClickInventoryItemSell() => TutorialEventBus.PublishInventoryItemSold();
     public void OnClickFixMachineButton() => TutorialEventBus.PublishMachineFixButtonClicked();
     public void OnClickBoostMachineButton() => TutorialEventBus.PublishMachineBoostButtonClicked();
+
+    //public void OnMachineProducedMaterial() => TutorialEventBus.PublishMaterialProduced();
 }
