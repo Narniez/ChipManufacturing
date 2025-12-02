@@ -20,8 +20,8 @@ MonoBehaviour:
   waitForSignal: 1
   highlightTargetPath: Canvas/ShopButton
   gateInputOutsideHighlight: 1
-  fingerMode: 0
-  showFinger: 0
+  fingerMode: 1
+  showFinger: 1
   fingerOffset: {x: 0, y: -80}
   dragTargetPath: 
   dragDuration: 1.25
