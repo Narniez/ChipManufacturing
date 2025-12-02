@@ -198,15 +198,16 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
         _gateOutside = step.gateInputOutsideHighlight;
         _blockAll = step.blockAllUIInteraction;
 
-        // Dimmer controls visibility and blocking
+        // Dimmer
         if (dimmer != null)
         {
             dimmer.enabled = step.showDimmerImage;
             dimmer.gameObject.SetActive(step.showDimmerImage);
-            dimmer.raycastTarget = step.showDimmerImage; // acts as blocker when visible
+            dimmer.raycastTarget = step.showDimmerImage;
         }
 
-        if (_blockAll) DisableUIRaycasts();
+        // Block / restore UI with whitelist of highlight target
+        if (_blockAll) DisableUIRaycasts(_highlightTarget);
         else RestoreUIRaycasts();
 
         // Fullscreen image (optional)
@@ -527,17 +528,28 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
         return !highlight.Contains(canvasSpacePoint);
     }
 
-    private void DisableUIRaycasts()
+    private void DisableUIRaycasts(RectTransform whitelistTarget)
     {
         if (uiCanvasesToBlock == null) return;
 
         foreach (var c in uiCanvasesToBlock)
         {
             if (c == null) continue;
+
             foreach (var g in c.GetComponentsInChildren<Graphic>(true))
             {
                 if (g == null) continue;
-                if (transform != null && g.transform.IsChildOf(transform)) continue; // skip overlay
+                // Skip tutorial overlay itself
+                if (transform != null && g.transform.IsChildOf(transform)) continue;
+
+                // Whitelist highlight target (and its children)
+                if (whitelistTarget != null &&
+                    (g.transform == whitelistTarget ||
+                     g.transform.IsChildOf(whitelistTarget)))
+                {
+                    // Do not modify; leave interactable
+                    continue;
+                }
 
                 if (!_prevGraphicRaycast.ContainsKey(g))
                     _prevGraphicRaycast[g] = g.raycastTarget;
