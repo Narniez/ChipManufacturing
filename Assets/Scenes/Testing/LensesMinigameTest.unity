@@ -543,7 +543,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33087fccbd53ee74f821b3cd0159bd81, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LensInputHandler
-  inputActions: {fileID: -944628639613478452, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  inputActions: {fileID: -944628639613478452, guid: 1a82000aa6c383d47b16c92f3c7f6e3c, type: 3}
   touchMapName: Touch
   pointActionName: Point
   deltaActionName: Delta
