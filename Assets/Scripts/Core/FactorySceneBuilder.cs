@@ -107,13 +107,6 @@ public class FactorySceneBuilder : MonoBehaviour
                 yield return null; // allow one frame so object registers with grid if needed
             }
 
-            // Wait for MaterialVisualRegistry to be available before restoring visuals
-            int mvWait = 0;
-            while (MaterialVisualRegistry.Instance == null && mvWait++ < 120)
-                yield return null;
-            if (MaterialVisualRegistry.Instance == null)
-                Debug.LogWarning("FactorySceneBuilder: MaterialVisualRegistry not available. Item visuals may not be restored.");
-
             // Then belts (use PlacementManager to keep behavior consistent)
             foreach (var b in beltsSnapshot)
             {
@@ -139,16 +132,14 @@ public class FactorySceneBuilder : MonoBehaviour
 
                     if (mat != null)
                     {
-                        GameObject visualPrefab = MaterialVisualRegistry.Instance != null
-                            ? MaterialVisualRegistry.Instance.GetPrefab(mat.materialType)
-                            : null;
+                        GameObject visualPrefab = mat.prefab;
                         GameObject visual = visualPrefab != null ? Instantiate(visualPrefab) : null;
                         var item = new ConveyorItem(mat, visual);
 
                         // Force-restore item during load 
                         belt.RestoreItem(item);
 
-                        // If restore failed for some reason and we created a visual, clean up
+                        // If restore failed and we created a visual, clean up
                         if (!belt.HasItem && visual != null)
                             Destroy(visual);
 
@@ -160,7 +151,7 @@ public class FactorySceneBuilder : MonoBehaviour
                         Debug.LogWarning($"FactorySceneBuilder: failed to restore belt item for key '{b.itemMaterialKey}' at {b.anchor}");
                     }
                 }
-                yield return null; // allow frame for occupancy registration
+                yield return null; 
             }
 
             // Final pass: refresh links once occupancy and objects are in place
@@ -191,9 +182,6 @@ public class FactorySceneBuilder : MonoBehaviour
     }
 
     // Try to convert an asset path into a Resources.Load path.
-    // Examples:
-    //  - "Assets/Resources/Materials/Silicon.asset" -> "Materials/Silicon"
-    //  - "Assets/Scripts/Machines/Materials/Sillicon.asset" -> "Sillicon" (fallback to filename)
     private static string ToResourcesPath(string assetPath)
     {
         if (string.IsNullOrEmpty(assetPath)) return null;
@@ -223,19 +211,19 @@ public class FactorySceneBuilder : MonoBehaviour
     // Coroutine helper: try Resources.Load first, then DataRegistry lookup (no Addressables).
     private static IEnumerator LoadAssetResourceOrRegistry<T>(string key, Action<T> callback) where T : UnityEngine.Object
     {
-        T result = null;
+        //T result = null;
 
-        // Try Resources-derived path(s) first
-        var resPath = ToResourcesPath(key);
-        if (!string.IsNullOrEmpty(resPath))
-        {
-            result = Resources.Load<T>(resPath);
-            if (result != null)
-            {
-                callback(result);
-                yield break;
-            }
-        }
+        //// Try Resources-derived path(s) first
+        //var resPath = ToResourcesPath(key);
+        //if (!string.IsNullOrEmpty(resPath))
+        //{
+        //    result = Resources.Load<T>(resPath);
+        //    if (result != null)
+        //    {
+        //        callback(result);
+        //        yield break;
+        //    }
+        //}
 
         // Registry lookup (id match or asset.name)
         var registry = Resources.Load<DataRegistry>("DataRegistry");
@@ -274,12 +262,12 @@ public class FactorySceneBuilder : MonoBehaviour
             }
         }
 
-        // Final fallback: try Resources.Load by the raw key (in case key == Resources path)
-        if (!string.IsNullOrEmpty(key))
-        {
-            result = Resources.Load<T>(key);
-        }
+        //// Final fallback: try Resources.Load by the raw key (in case key == Resources path)
+        //if (!string.IsNullOrEmpty(key))
+        //{
+        //    result = Resources.Load<T>(key);
+        //}
 
-        callback(result);
+        //callback(result);
     }
 }

@@ -14,10 +14,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private InventoryItem inventoryItem;
 
     // Legacy single-input queue (used only if no recipes defined)
-    private readonly Queue<MaterialType> _inputQueue = new Queue<MaterialType>();
+    private readonly Queue<MaterialData> _inputQueue = new Queue<MaterialData>();
 
     // Recipe-mode input buffer per material
-    private readonly Dictionary<MaterialType, int> _buffer = new Dictionary<MaterialType, int>();
+    private readonly Dictionary<MaterialData, int> _buffer = new Dictionary<MaterialData, int>();
     private MachineRecipe _currentRecipe;
     private bool _inventoryDumpedThisCycle = false;
 
@@ -46,8 +46,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private bool IsLegacyGenerator =>
         data != null &&
         !data.HasRecipes &&
-        (data.inputMaterial == null || data.inputMaterial.materialType == MaterialType.None) &&
-        data.outputMaterial != null && data.outputMaterial.materialType != MaterialType.None;
+        (data.inputMaterial == null) &&
+        data.outputMaterial != null;
 
     private void OnEnable()
     {
@@ -90,7 +90,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _grid = FindFirstObjectByType<GridService>();
 
         _initialized = true;
-;
 
         StartProduction();
     }
@@ -104,7 +103,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // Try to start one cycle if inputs are ready
     private void StartProduction()
     {
-        //if (data == null) { Debug.LogError("Machine.StartProduction: MachineData not set."); return; }
         if (productionRoutine != null) return;
         if (_isBroken) return;
 
@@ -156,7 +154,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             for (int j = 0; j < r.inputs.Count; j++)
             {
                 var req = r.inputs[j];
-                _buffer.TryGetValue(req.material.materialType, out int have);
+                _buffer.TryGetValue(req.material, out int have);
                 if (have < Mathf.Max(1, req.amount)) { ok = false; break; }
             }
             if (ok) return r;
@@ -169,9 +167,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         for (int i = 0; i < recipe.inputs.Count; i++)
         {
             var req = recipe.inputs[i];
-            if (_buffer.TryGetValue(req.material.materialType, out int have))
+            if (_buffer.TryGetValue(req.material, out int have))
             {
-                _buffer[req.material.materialType] = Mathf.Max(0, have - Mathf.Max(1, req.amount));
+                _buffer[req.material] = Mathf.Max(0, have - Mathf.Max(1, req.amount));
             }
         }
         _inventoryDumpedThisCycle = false;
@@ -312,9 +310,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
                 break;
             }
 
-            GameObject visualPrefab = MaterialVisualRegistry.Instance != null
-                ? MaterialVisualRegistry.Instance.GetPrefab(data.outputMaterial.materialType)
-                : null;
+            GameObject visualPrefab = data.outputMaterial != null ? data.outputMaterial.prefab : null;
             GameObject visual = null;
             if (visualPrefab != null) visual = Instantiate(visualPrefab);
 
@@ -396,9 +392,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         if (!belt.IsCorner && !belt.IsTurnPrefab) // plain straight
             return belt.Orientation == worldSide;
 
-        
-
-        // Corner visual: outward side can be belt forward or its CW/CCW rotation
         var fwd = belt.Orientation;
         if (fwd == worldSide) return true;
         if (fwd.RotatedCW() == worldSide) return true;
@@ -431,9 +424,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             outputs.Add((cell, worldSide));
         }
 
-        GameObject visualPrefab = MaterialVisualRegistry.Instance != null
-            ? MaterialVisualRegistry.Instance.GetPrefab(mat.materialType)
-            : null;
+        GameObject visualPrefab = mat != null ? mat.prefab : null;
 
         bool placed = false;
 
@@ -613,39 +604,39 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     public void OnConveyorItemArrived(MaterialData material)
     {
-        if (Data == null) return;
+        if (Data == null || material == null) return;
 
         if (data.HasRecipes)
         {
             // Accept only materials that appear in at least one recipe
-            if (!AppearsInAnyRecipe(material.materialType)) return;
-            AddToBuffer(material.materialType, 1);
+            if (!AppearsInAnyRecipe(material)) return;
+            AddToBuffer(material, 1);
             StartProduction();
             return;
         }
 
         // Legacy single input
-        if (Data.inputMaterial.materialType != MaterialType.None && Data.inputMaterial.materialType != material.materialType) return;
-        _inputQueue.Enqueue(material.materialType);
+        if (Data.inputMaterial != null && Data.inputMaterial != material) return;
+        _inputQueue.Enqueue(material);
         StartProduction();
     }
 
     public bool CanAcceptInventoryItem(MaterialData item)
     {
         if (item == null || Data == null) return false;
-        if (data.HasRecipes) return AppearsInAnyRecipe(item.materialType);
-        return Data.inputMaterial.materialType == MaterialType.None || Data.inputMaterial.materialType == item.materialType;
+        if (data.HasRecipes) return AppearsInAnyRecipe(item);
+        return Data.inputMaterial == null || Data.inputMaterial == item;
     }
 
     public int TryQueueInventoryItem(MaterialData item, int amount)
     {
         if (item == null || amount <= 0) return 0;
-        return TryQueueInventoryMaterial(item.materialType, amount);
+        return TryQueueInventoryMaterial(item, amount);
     }
 
-    public int TryQueueInventoryMaterial(MaterialType material, int amount)
+    public int TryQueueInventoryMaterial(MaterialData material, int amount)
     {
-        if (Data == null || amount <= 0) return 0;
+        if (Data == null || material == null || amount <= 0) return 0;
 
         if (data.HasRecipes)
         {
@@ -656,26 +647,27 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         }
 
         // Legacy single input
-        if (Data.inputMaterial.materialType != MaterialType.None && Data.inputMaterial.materialType != material) return 0;
+        if (Data.inputMaterial != null && Data.inputMaterial != material) return 0;
         for (int i = 0; i < amount; i++) _inputQueue.Enqueue(material);
         StartProduction();
         return amount;
     }
 
-    private bool AppearsInAnyRecipe(MaterialType mat)
+    private bool AppearsInAnyRecipe(MaterialData mat)
     {
-        if (!data.HasRecipes) return false;
+        if (mat == null || !data.HasRecipes) return false;
         for (int i = 0; i < data.recipes.Count; i++)
         {
             var r = data.recipes[i];
             for (int j = 0; j < r.inputs.Count; j++)
-                if (r.inputs[j].material.materialType == mat) return true;
+                if (r.inputs[j].material == mat) return true;
         }
         return false;
     }
 
-    private void AddToBuffer(MaterialType mat, int amount)
+    private void AddToBuffer(MaterialData mat, int amount)
     {
+        if (mat == null || amount <= 0) return;
         if (!_buffer.TryGetValue(mat, out int have)) have = 0;
         _buffer[mat] = have + Mathf.Max(1, amount);
     }

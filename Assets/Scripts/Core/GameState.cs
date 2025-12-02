@@ -33,8 +33,6 @@ public class InventoryState
 [Serializable]
 public struct InventoryEntry
 {
-    public MaterialType type;
-
     // id of MaterialData (preferred). If > 0, will use this to find the MaterialData asset.
     public int materialId;
 
