@@ -72,8 +72,6 @@ public class MetalStack : MonoBehaviour
         {
             _rb.linearVelocity += Vector3.down * dropVelocityBoost;
         }
-
-        // Keep ignoring collisions with the claw (as requested)
     }
 
     private void OnCollisionEnter(Collision collision)

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class MetalStackingManager : MonoBehaviour
 {
@@ -12,8 +13,15 @@ public class MetalStackingManager : MonoBehaviour
 
     private Transform clawTransform;
     private GameObject currentPiece;
+    private GameObject lastPiece;
+
     private MetalStack currentStack;
     private bool isHolding;
+
+    [Header("Completion")]
+    private UnityEvent onPuzzleComplete;
+
+    private bool completed;
 
     private void Awake()
     {
@@ -33,6 +41,10 @@ public class MetalStackingManager : MonoBehaviour
         if (isHolding && Input.GetMouseButtonDown(0))
         {
             ReleaseCurrent();
+        }
+        if (completed)
+        {
+            return;
         }
     }
 
@@ -69,7 +81,8 @@ public class MetalStackingManager : MonoBehaviour
 
         Invoke(nameof(SpawnAndAttach), respawnDelay);
 
+        lastPiece = currentPiece;
         currentPiece = null;
-        currentStack = null;
     }
+    
 }
