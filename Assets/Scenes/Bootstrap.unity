@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 778964626}
   - component: {fileID: 778964625}
   - component: {fileID: 778964627}
+  - component: {fileID: 778964628}
   m_Layer: 0
   m_Name: GameBootstrapper
   m_TagString: Untagged
@@ -191,6 +192,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5a2707c63a49c04fa26302561ae6f05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameStateService
+--- !u!114 &778964628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 778964623}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63f953522b193b14aaf2e501f1e60041, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  mainSceneName: Demo
 --- !u!1 &2007049692
 GameObject:
   m_ObjectHideFlags: 0

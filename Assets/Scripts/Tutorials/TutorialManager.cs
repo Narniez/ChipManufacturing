@@ -11,16 +11,20 @@ public class TutorialManager : MonoBehaviour
 
     private void OnEnable()
     {
-        //Debug.Log($"TutorialManager.OnEnable instanceID={this.GetInstanceID()}, gameObject={gameObject.name}");
-        // Single subscription to generic tutorial stream — ensures all PublishSignal(...) calls are observed.
         TutorialEventBus.OnSignalPublished += OnSignalReceived;
-
-        if (autoStart) StartSequence();
+       
     }
 
     private void OnDisable()
     {
         TutorialEventBus.OnSignalPublished -= OnSignalReceived;
+        if (overlay != null) overlay.SkipRequested -= OnSkipRequested;
+    }
+
+    private void Start()
+    {
+        if (overlay != null) overlay.SkipRequested += OnSkipRequested;
+        if (autoStart) StartSequence();
     }
 
     private void Update()
@@ -43,19 +47,17 @@ public class TutorialManager : MonoBehaviour
         overlay?.Show(false);
     }
 
+    private void OnSkipRequested()
+    {
+        StopSequence();
+    }
+
     private void Advance()
     {
         _index++;
 
-        if (sequence == null)
+        if (sequence == null || sequence.steps == null || sequence.steps.Count == 0)
         {
-            Debug.LogWarning("TutorialManager: No TutorialSequence assigned.");
-            overlay?.Show(false);
-            return;
-        }
-        if (sequence.steps == null || sequence.steps.Count == 0)
-        {
-            Debug.LogWarning("TutorialManager: TutorialSequence has no steps.");
             overlay?.Show(false);
             return;
         }
@@ -93,28 +95,18 @@ public class TutorialManager : MonoBehaviour
     private void TryAdvance(TutorialSignal sig, object payload)
     {
         if (!HasActiveStep) return;
-
         var step = sequence.steps[_index];
-
         if (step.waitForSignal != sig) return;
-
         Advance();
     }
 
-    // Single generic handler for all tutorial signals (subscribed in OnEnable).
     private void OnSignalReceived(TutorialSignal signal, object payload)
     {
-        //Debug.Log($"TutorialManager.OnSignalReceived: signal={signal}, payload={payload}");
         TryAdvance(signal, payload);
     }
 
-    // Keep these helper methods for UI wiring (they still call the bus helpers)
     public void OnClickShop() => TutorialEventBus.PublishShopOpened();
-    public void OnShopBuyButton()
-    {
-        //Debug.Log($"TutorialManager.OnShopBuyButton called (instance={this.GetInstanceID()})");
-        TutorialEventBus.PublishShopBuyClicked();
-    }
+    public void OnShopBuyButton() => TutorialEventBus.PublishShopBuyClicked();
     public void OnClickShopItem() => TutorialEventBus.PublishShopItemSelected(null);
     public void OnConfirmButton() => TutorialEventBus.PublishPreviewConfirmed();
 
@@ -124,6 +116,4 @@ public class TutorialManager : MonoBehaviour
     public void OnClickInventoryItemSell() => TutorialEventBus.PublishInventoryItemSold();
     public void OnClickFixMachineButton() => TutorialEventBus.PublishMachineFixButtonClicked();
     public void OnClickBoostMachineButton() => TutorialEventBus.PublishMachineBoostButtonClicked();
-
-    //public void OnMachineProducedMaterial() => TutorialEventBus.PublishMaterialProduced();
 }

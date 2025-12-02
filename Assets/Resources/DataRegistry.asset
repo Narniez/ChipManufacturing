@@ -17,6 +17,10 @@ MonoBehaviour:
     data: {fileID: 11400000, guid: d4ac0eeb666d84e42933ecf1459abe98, type: 2}
   - id: Sillicon Material Depo
     data: {fileID: 11400000, guid: 6ba470c9a73f1184bb3abf8ff964a3be, type: 2}
+  - id: Photolithography Machine
+    data: {fileID: 11400000, guid: a4661fd3e7881bf4aa2fbba17314f173, type: 2}
+  - id: 'Metal Wiring Deposition '
+    data: {fileID: 11400000, guid: b2b249c125c210a49b5f2e8ed6f34fbe, type: 2}
   materials:
   - id: Copper
     data: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
@@ -24,3 +28,9 @@ MonoBehaviour:
     data: {fileID: 11400000, guid: 49083a82d5ba44046b9bb4a50141c0d7, type: 2}
   - id: Steel
     data: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
+  - id: Wafer
+    data: {fileID: 11400000, guid: 2e04e17488d4d544696b225af5ef64b9, type: 2}
+  - id: TransistorWafer
+    data: {fileID: 11400000, guid: ae6f80625a8c53c43986d6bdee75e9c2, type: 2}
+  - id: ChipDesign
+    data: {fileID: 11400000, guid: e06c5320cc760af4e940f23d23abaafb, type: 2}

@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6fc821ee10a45f45bf0f90da187c38c, type: 3}
   m_Name: ScoreThresholdEvaluator
   m_EditorClassIdentifier: Assembly-CSharp::ScoreThresholdEvaluator
-  requiredNormalizedScore: 0.132
+  requiredNormalizedScore: 0.8

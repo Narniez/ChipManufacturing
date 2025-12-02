@@ -19,6 +19,15 @@ public class TutorialStep : ScriptableObject
     [Tooltip("Optional TMP font to use for this step's text. Leave null to use the overlay default.")]
     public TMP_FontAsset textFont;
 
+
+
+    [Tooltip("If true, override the bubble text color for this step.")]
+    public bool overrideTextColor = false;
+
+    [Tooltip("Bubble text color when Override Text Color is true.")]
+    public Color textColor = Color.white;
+
+
     public Sprite speaker;
     public TutorialBubbleAnchor anchor = TutorialBubbleAnchor.BottomLeft;
 
