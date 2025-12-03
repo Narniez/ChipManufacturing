@@ -54,11 +54,11 @@ public class LensInputHandler : MonoBehaviour
         clickAction.started -= OnPressStarted;
         clickAction.canceled -= OnPressCanceled;
 
-        clickAction.Disable();
-        deltaAction.Disable();
-        pointAction.Disable();
+        //clickAction.Disable();
+        //deltaAction.Disable();
+        //pointAction.Disable();
 
-        inputActions.Disable();
+        //inputActions.Disable();
     }
 
     private void OnPressStarted(InputAction.CallbackContext ctx)

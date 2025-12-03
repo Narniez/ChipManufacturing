@@ -1,0 +1,75 @@
+{
+    "version": 1,
+    "name": "LensesMinigameActionMap",
+    "maps": [
+        {
+            "name": "Touch",
+            "id": "0f3acf99-69c2-4fe7-9b43-98e13ccacfe8",
+            "actions": [
+                {
+                    "name": "Point",
+                    "type": "Value",
+                    "id": "8ac6df65-c613-4923-ab53-1d5ae8a1ce77",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Click",
+                    "type": "Button",
+                    "id": "c95677f4-57e6-4b33-b080-f389fdf087c8",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Delta",
+                    "type": "Value",
+                    "id": "50863d9c-5a20-4516-9d3a-e2e9beac3831",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "6c0206a3-19de-4bc7-9d96-87f7f4343765",
+                    "path": "<Touchscreen>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Point",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8666a831-ddb5-4379-805d-acd602b78077",
+                    "path": "<Touchscreen>/Press",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Click",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7916d540-e88f-478e-a5dd-8d391c84b9df",
+                    "path": "<Touchscreen>/primaryTouch/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Delta",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

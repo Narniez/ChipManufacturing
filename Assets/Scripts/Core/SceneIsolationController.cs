@@ -18,6 +18,9 @@ public class SceneIsolationController : MonoBehaviour
     private bool _isIsolated;
     private Scene _factoryScene;
 
+    // Track a single global EventSystem we always keep active
+    private EventSystem _globalEventSystem;
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -42,12 +45,16 @@ public class SceneIsolationController : MonoBehaviour
     {
         if (IsMinigameScene(scene.name))
             EnterMinigameIsolation();
+        else
+            PruneDuplicateEventSystems(); // keep global ES active when new scenes load
     }
 
     private void OnSceneUnloaded(Scene scene)
     {
         if (IsMinigameScene(scene.name))
             ExitMinigameIsolation();
+        else
+            PruneDuplicateEventSystems();
     }
 
     public void EnterMinigameIsolation()
@@ -111,31 +118,73 @@ public class SceneIsolationController : MonoBehaviour
 
     private void EnsureGlobalEventSystem()
     {
+        // If we already have one, make sure it's active and persistent
+        if (_globalEventSystem != null)
+        {
+            if (_globalEventSystem != null && _globalEventSystem.gameObject != null)
+            {
+                _globalEventSystem.gameObject.SetActive(true);
+                DontDestroyOnLoad(_globalEventSystem.gameObject);
+            }
+        }
+
         var systems = FindObjectsByType<EventSystem>(FindObjectsSortMode.None);
-        if (systems.Length == 0)
+
+        if (_globalEventSystem == null)
         {
-            var esGO = new GameObject("GlobalEventSystem");
-            esGO.AddComponent<EventSystem>();
-            esGO.AddComponent<StandaloneInputModule>();
-            DontDestroyOnLoad(esGO);
+            // Prefer an existing explicitly named GlobalEventSystem
+            foreach (var es in systems)
+            {
+                if (es != null && es.gameObject.name == "GlobalEventSystem")
+                {
+                    _globalEventSystem = es;
+                    break;
+                }
+            }
+
+            // Otherwise take the first available
+            if (_globalEventSystem == null && systems.Length > 0)
+                _globalEventSystem = systems[0];
+
+            // Or create one if none exist
+            if (_globalEventSystem == null)
+            {
+                var esGO = new GameObject("GlobalEventSystem");
+                _globalEventSystem = esGO.AddComponent<EventSystem>();
+                esGO.AddComponent<StandaloneInputModule>();
+            }
+
+            DontDestroyOnLoad(_globalEventSystem.gameObject);
         }
-        else
+
+        // Disable any other EventSystems so only one stays active
+        foreach (var es in systems)
         {
-            // Keep first, disable rest
-            for (int i = 1; i < systems.Length; i++)
-                systems[i].gameObject.SetActive(false);
-            DontDestroyOnLoad(systems[0].gameObject);
+            if (es == null || es == _globalEventSystem) continue;
+            es.gameObject.SetActive(false);
         }
+
+        // Ensure the global is enabled
+        if (_globalEventSystem != null && !_globalEventSystem.gameObject.activeSelf)
+            _globalEventSystem.gameObject.SetActive(true);
     }
 
     private void PruneDuplicateEventSystems()
     {
+        EnsureGlobalEventSystem();
         var systems = FindObjectsByType<EventSystem>(FindObjectsSortMode.None);
-        if (systems.Length <= 1) return;
-        var keep = systems[0];
+
         foreach (var es in systems)
         {
-            if (es == keep) continue;
+            if (es == null) continue;
+            if (es == _globalEventSystem)
+            {
+                if (!es.gameObject.activeSelf)
+                    es.gameObject.SetActive(true);
+                continue;
+            }
+
+            // Keep extras disabled to avoid conflicts
             es.gameObject.SetActive(false);
         }
     }

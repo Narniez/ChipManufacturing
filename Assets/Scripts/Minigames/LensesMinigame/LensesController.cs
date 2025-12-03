@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class LensesController : MonoBehaviour
 {
@@ -62,6 +63,13 @@ public class LensesController : MonoBehaviour
     [Header("Completion")]
     public UnityEvent onPuzzleComplete;
 
+    [SerializeField] private GameObject quitButton;
+
+    // NEW: completion UI mirroring Bandsaw tracker
+    [SerializeField] private GameObject completionPanel;
+    [SerializeField] private Button completionReturnButton;
+    [SerializeField] private Button completionExitButton;
+
     private bool completed;
     private Lens currentSelected;
     private Vector3[] initialLinePositions;
@@ -81,6 +89,14 @@ public class LensesController : MonoBehaviour
 
         if (line != null)
             line.useWorldSpace = true;
+
+        if (completionPanel != null)
+            completionPanel.SetActive(false);
+    }
+
+    private void OnEnable()
+    {
+        WireUI();
     }
 
     private void Start()
@@ -100,6 +116,48 @@ public class LensesController : MonoBehaviour
         CastAndRenderBeam();
     }
 
+    private void WireUI()
+    {
+        // Persistent early-exit (keeps machine broken)
+        if (quitButton != null)
+        {
+            var btn = quitButton.GetComponent<Button>();
+            if (btn != null)
+            {
+                btn.onClick.RemoveAllListeners();
+                btn.onClick.AddListener(() =>
+                {
+                    RepairMinigameManager.ExitWithoutRepair(0f);
+                });
+            }
+        }
+
+        // Completion panel buttons (shown only after success)
+        if (completionReturnButton != null)
+        {
+            completionReturnButton.onClick.RemoveAllListeners();
+            completionReturnButton.onClick.AddListener(() =>
+            {
+                if (!completed) return;
+                RepairMinigameManager.ReportResult(new MinigameResult
+                {
+                    completed = true,
+                    scoreNormalized = 1f
+                });
+            });
+        }
+
+        if (completionExitButton != null)
+        {
+            completionExitButton.onClick.RemoveAllListeners();
+            completionExitButton.onClick.AddListener(() =>
+            {
+                // Exit back without repairing, even after completion if chosen
+                RepairMinigameManager.ExitWithoutRepair(0f);
+            });
+        }
+    }
+
     public void RegisterLens(GameObject lens)
     {
         if (!lenses.Contains(lens))
@@ -110,8 +168,7 @@ public class LensesController : MonoBehaviour
 
     private void AutoFindLenses()
     {
-          lenses = FindObjectsOfType<Lens>().Select(l => l.gameObject).ToList();
-       // lenses = FindAnyObjectByType<Lens>().ToList();
+        lenses = FindObjectsOfType<Lens>().Select(l => l.gameObject).ToList();
     }
 
     #region Spawning
@@ -271,8 +328,6 @@ public class LensesController : MonoBehaviour
                     if (rb == null)
                         rb = go.AddComponent<Rigidbody>();
 
-                   // rb.isKinematic = false;
-                   // rb.useGravity = false;
                     rb.constraints = RigidbodyConstraints.FreezePositionZ
                                    | RigidbodyConstraints.FreezeRotationX
                                    | RigidbodyConstraints.FreezeRotationY;
@@ -316,8 +371,6 @@ public class LensesController : MonoBehaviour
                     if (rb == null)
                         rb = go.AddComponent<Rigidbody>();
 
-                   /* rb.isKinematic = false;
-                    rb.useGravity = false;*/
                     rb.constraints = RigidbodyConstraints.FreezePositionZ
                                    | RigidbodyConstraints.FreezeRotationX
                                    | RigidbodyConstraints.FreezeRotationY;
@@ -492,7 +545,18 @@ public class LensesController : MonoBehaviour
         if (line != null)
             line.gameObject.SetActive(false);
 
+        // Hide the in-game quit button and show the completion options
+        if (quitButton != null)
+            quitButton.SetActive(false);
+
+        ShowCompletionPanel();
         DeselectAll();
+    }
+
+    private void ShowCompletionPanel()
+    {
+        if (completionPanel != null)
+            completionPanel.SetActive(true);
     }
 
     public void ResetPuzzle()
@@ -521,6 +585,12 @@ public class LensesController : MonoBehaviour
                 line.SetPosition(0, emitter.position);
             }
         }
+
+        if (completionPanel != null)
+            completionPanel.SetActive(false);
+
+        if (quitButton != null)
+            quitButton.SetActive(true);
 
         completed = false;
     }

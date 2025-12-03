@@ -11,6 +11,24 @@ public class SaveManager : MonoBehaviour
     private static string SavePath => Path.Combine(SaveDir, "save.json");
     private static string BackupPath => Path.Combine(SaveDir, "save.bak");
 
+    // Persistence toggle
+    [SerializeField, Tooltip("Enable or disable saving/loading. When disabled, nothing is read or written.")]
+    private bool persistenceEnabled = true;
+    private static bool _persistenceEnabled = true;
+    public static bool PersistenceEnabled
+    {
+        get => _persistenceEnabled;
+        set
+        {
+            _persistenceEnabled = value;
+#if UNITY_EDITOR
+            Debug.Log($"[SaveManager] Persistence {(value ? "ENABLED" : "DISABLED")}");
+#endif
+            if (Instance != null)
+                Instance.persistenceEnabled = value; // keep inspector in sync
+        }
+    }
+
     // Autosave throttle
     private static bool _dirty;
     private static float _lastWriteTime;
@@ -29,6 +47,16 @@ public class SaveManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         Directory.CreateDirectory(SaveDir); // ensure directory exists
+
+        // sync static toggle with inspector value on this instance
+        _persistenceEnabled = persistenceEnabled;
+    }
+
+    void OnValidate()
+    {
+        // keep static flag in sync while editing/playing
+        if (Instance == null || Instance == this)
+            _persistenceEnabled = persistenceEnabled;
     }
 
     void Update()
@@ -47,6 +75,14 @@ public class SaveManager : MonoBehaviour
 
     public static GameState Load()
     {
+        if (!_persistenceEnabled)
+        {
+#if UNITY_EDITOR
+            Debug.Log("[SaveManager] Load skipped: persistence disabled.");
+#endif
+            return new GameState();
+        }
+
         try
         {
             Directory.CreateDirectory(SaveDir);
@@ -72,6 +108,14 @@ public class SaveManager : MonoBehaviour
 
     public static void Save(GameState state)
     {
+        if (!_persistenceEnabled)
+        {
+#if UNITY_EDITOR
+            Debug.Log("[SaveManager] Save skipped: persistence disabled.");
+#endif
+            return;
+        }
+
         if (state == null) return;
         try
         {
@@ -101,6 +145,7 @@ public class SaveManager : MonoBehaviour
 
     private void Flush()
     {
+        if (!_persistenceEnabled) return;
         Save(GameStateService.Instance?.State);
     }
 

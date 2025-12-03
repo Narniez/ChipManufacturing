@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public class BandsawMinigameTracker : MonoBehaviour
@@ -17,6 +18,15 @@ public class BandsawMinigameTracker : MonoBehaviour
     [Range(0, 3)] public int decimals = 1;
     public string percentSuffix = "%";
 
+    [Header("Standalone Mode (when NOT launched via RepairMinigameManager)")]
+    [SerializeField] private float standaloneRequiredScore = 0.8f;
+    [SerializeField] private string standaloneReturnScene = "Demo";
+    [SerializeField] private bool loadReturnSceneOnComplete = true;
+    [SerializeField] private bool loadReturnSceneOnExit = true;
+
+    [Header("Optional Threshold Source")]
+    [SerializeField] private ScoreThresholdEvaluator standaloneThresholdEvaluator;
+
     float _requiredScore = 1f;
     float _latestScore = 0f;
     bool _completed;
@@ -28,8 +38,15 @@ public class BandsawMinigameTracker : MonoBehaviour
 
     void OnEnable()
     {
-        if (evaluator) evaluator.OnScoreComputed += OnScoreComputed;
-        SetupThresholdFromEvaluator();
+        if (!evaluator)
+            evaluator = FindObjectOfType<PatternCutEvaluator>();
+
+        if (evaluator)
+            evaluator.OnScoreComputed += OnScoreComputed;
+        else
+            Debug.LogWarning("BandsawMinigameTracker: PatternCutEvaluator reference missing. Evaluation will not work.");
+
+        SetupThreshold();
         WireUI();
         UpdateScoreLabel();
     }
@@ -39,23 +56,32 @@ public class BandsawMinigameTracker : MonoBehaviour
         if (evaluator) evaluator.OnScoreComputed -= OnScoreComputed;
     }
 
-    void SetupThresholdFromEvaluator()
+    private void SetupThreshold()
     {
-        _requiredScore = 1f; // default
-        var def = RepairMinigameManager.CurrentMinigame;
-        if (def != null && def.evaluator != null)
+        // Prefer repair session thresholds whenever a session is active
+        if (RepairMinigameManager.HasActive)
         {
-            // If threshold-based evaluator, read its field
-            if (def.evaluator is ScoreThresholdEvaluator st)
+            _requiredScore = 1f;
+            var def = RepairMinigameManager.CurrentMinigame;
+            if (def != null && def.evaluator is ScoreThresholdEvaluator st)
                 _requiredScore = Mathf.Clamp01(st.requiredNormalizedScore);
             else
-                _requiredScore = 1f; 
+                _requiredScore = 1f;
         }
+        else
+        {
+            // Standalone thresholds
+            if (standaloneThresholdEvaluator != null)
+                _requiredScore = Mathf.Clamp01(standaloneThresholdEvaluator.requiredNormalizedScore);
+            else
+                _requiredScore = Mathf.Clamp01(standaloneRequiredScore);
+        }
+
         if (thresholdText)
             thresholdText.text = $"Target: {(_requiredScore * 100f).ToString($"F{decimals}")}{percentSuffix}";
     }
 
-    void WireUI()
+    private void WireUI()
     {
         if (evaluateButton)
         {
@@ -63,37 +89,65 @@ public class BandsawMinigameTracker : MonoBehaviour
             evaluateButton.onClick.AddListener(() =>
             {
                 if (evaluator) evaluator.EvaluateCut();
+                else Debug.LogWarning("BandsawMinigameTracker: Evaluate clicked but no evaluator assigned.");
             });
         }
+
         if (completionReturnButton)
         {
             completionReturnButton.onClick.RemoveAllListeners();
             completionReturnButton.onClick.AddListener(() =>
             {
-                if (!_completed)
+                if (!_completed) return;
+
+                if (RepairMinigameManager.HasActive)
                 {
-                    // Safety: ignore if not completed
-                    return;
+                    // Repair flow
+                    RepairMinigameManager.ReportResult(new MinigameResult
+                    {
+                        completed = true,
+                        scoreNormalized = _latestScore
+                    });
                 }
-                RepairMinigameManager.ReportResult(new MinigameResult
+                else
                 {
-                    completed = true,
-                    scoreNormalized = _latestScore
-                });
+                    // Standalone return
+                    if (loadReturnSceneOnComplete && !string.IsNullOrEmpty(standaloneReturnScene))
+                        LoadReturnSceneIfNeeded();
+                }
             });
         }
+
         if (completionExitButton)
         {
             completionExitButton.onClick.RemoveAllListeners();
             completionExitButton.onClick.AddListener(() =>
             {
-                // Early exit fails repair
-                RepairMinigameManager.ExitWithoutRepair(_latestScore);
+                if (RepairMinigameManager.HasActive)
+                {
+                    // Early exit fails repair
+                    RepairMinigameManager.ExitWithoutRepair(_latestScore);
+                }
+                else
+                {
+                    // Standalone exit
+                    if (loadReturnSceneOnExit && !string.IsNullOrEmpty(standaloneReturnScene))
+                        LoadReturnSceneIfNeeded();
+                }
             });
         }
     }
 
-    void OnScoreComputed(float score01)
+    private void LoadReturnSceneIfNeeded()
+    {
+        var scene = SceneManager.GetSceneByName(standaloneReturnScene);
+        if (!scene.IsValid() || !scene.isLoaded)
+            SceneManager.LoadScene(standaloneReturnScene, LoadSceneMode.Single);
+        else
+            SceneManager.SetActiveScene(scene);
+    }
+
+    private void OnScoreComputed(float score01)
     {
         _latestScore = Mathf.Clamp01(score01);
         UpdateScoreLabel();
@@ -105,13 +159,13 @@ public class BandsawMinigameTracker : MonoBehaviour
         }
     }
 
-    void UpdateScoreLabel()
+    private void UpdateScoreLabel()
     {
         if (latestScoreText)
             latestScoreText.text = $"Score: {(_latestScore * 100f).ToString($"F{decimals}")}{percentSuffix}";
     }
 
-    void ShowCompletionPanel()
+    private void ShowCompletionPanel()
     {
         if (completionPanel)
             completionPanel.SetActive(true);
