@@ -19,6 +19,15 @@ public class TutorialStep : ScriptableObject
     [Tooltip("Optional TMP font to use for this step's text. Leave null to use the overlay default.")]
     public TMP_FontAsset textFont;
 
+
+
+    [Tooltip("If true, override the bubble text color for this step.")]
+    public bool overrideTextColor = false;
+
+    [Tooltip("Bubble text color when Override Text Color is true.")]
+    public Color textColor = Color.white;
+
+
     public Sprite speaker;
     public TutorialBubbleAnchor anchor = TutorialBubbleAnchor.BottomLeft;
 
@@ -52,5 +61,9 @@ public class TutorialStep : ScriptableObject
     [Tooltip("Sprite to display when fullscreen is enabled.")]
     public Sprite fullscreenSprite;
 
-    
+    [Header("Interaction control")]
+    [Tooltip("If true, ALL underlying UI interaction is disabled for this step (ignores highlight gating).")]
+    public bool blockAllUIInteraction = false;
+
+
 }

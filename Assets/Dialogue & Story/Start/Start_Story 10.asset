@@ -16,7 +16,7 @@ MonoBehaviour:
     it\u2019s gone\u2026 But we cannot stop after a single defeat. Let\u2019s build
     back what we lost."
   textBackdropSprite: {fileID: 0}
-  textFont: {fileID: 0}
+  textFont: {fileID: 11400000, guid: 5aaa7e67d3ced3f4faaaaf7aa95534e7, type: 2}
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
   anchor: 7
   waitForSignal: 0
@@ -28,5 +28,6 @@ MonoBehaviour:
   dragTargetPath: 
   dragDuration: 1.25
   dragLoop: 0
+  showDimmerImage: 1
   typewriterCharsPerSecond: 60
   fullscreenSprite: {fileID: 0}

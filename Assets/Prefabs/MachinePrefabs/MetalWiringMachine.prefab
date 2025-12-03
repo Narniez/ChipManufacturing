@@ -155,7 +155,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e73de98a6bd314f4b9958a2ad3857024, type: 2}
+  - {fileID: 2100000, guid: 4ee8711e263d01443a52aa7171c4ca6e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -188,6 +188,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2538584428075789374}
   - component: {fileID: 8585279772556397264}
+  - component: {fileID: -6949857042137274109}
   m_Layer: 0
   m_Name: MetalWiringMachine
   m_TagString: Untagged
@@ -203,7 +204,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7889884535009700644}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.5, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -233,3 +234,15 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.182239, y: 0.9005292, z: 1.0494292}
   m_Center: {x: -0.0070729256, y: 0.42809698, z: -0.033410907}
+--- !u!114 &-6949857042137274109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7889884535009700644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 212a52e4359d7d04b88c7a4903ca1cf9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Machine
