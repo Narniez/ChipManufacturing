@@ -7,27 +7,22 @@ public class MetalStackingManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private GameObject clawObject;
     [SerializeField] private GameObject metalStackPrefab;
-    [SerializeField] private MetalStackingEvaluator evaluator; // handles win/fail and layer target
+    [SerializeField] private MetalStackingEvaluator evaluator;
 
     [Header("Spawn/Drop")]
-    [SerializeField] private Vector3 localOffset = new(0f, -0.3f, 0f);
+    [SerializeField] private Vector3 localOffset = new Vector3(0f, -0.3f, 0f);
     [SerializeField] private float respawnDelay = 0.15f;
 
     private Transform clawTransform;
     private GameObject currentPiece;
     private MetalStack currentStack;
 
-    private GameObject lastPiece; // last successfully placed piece
-    private readonly List<GameObject> _placedPieces = new List<GameObject>(); // optional tracking
-
+    private GameObject lastPiece;
     private bool isHolding;
-    private int level; // number of successfully placed layers
+    private int level;
     private bool completed;
 
-    // Track per-piece event handlers to avoid unsubscribing the wrong instance
     private readonly Dictionary<MetalStack, Action<MetalStack>> _stuckHandlers = new Dictionary<MetalStack, Action<MetalStack>>();
-
-    // Buffer clicks during respawn so user can click anytime
     private bool _queuedDrop;
 
     private void Awake()
@@ -45,8 +40,10 @@ public class MetalStackingManager : MonoBehaviour
 
     private void Update()
     {
-        if (completed)
+        // Hard gate: ignore input entirely if finished or completed
+        if (completed || (evaluator != null && evaluator.IsFinished))
         {
+            _queuedDrop = false; // purge any buffered click
             return;
         }
 
@@ -65,7 +62,8 @@ public class MetalStackingManager : MonoBehaviour
 
     private void SpawnAndAttach()
     {
-        if (completed)
+        // Do not spawn when finished
+        if (completed || (evaluator != null && evaluator.IsFinished))
         {
             return;
         }
@@ -88,7 +86,6 @@ public class MetalStackingManager : MonoBehaviour
             currentStack = currentPiece.AddComponent<MetalStack>();
         }
 
-        // Per-piece handler
         Action<MetalStack> handler = stuckTo => OnPieceStuck(currentStack, stuckTo);
         _stuckHandlers[currentStack] = handler;
         currentStack.StuckTo += handler;
@@ -105,6 +102,12 @@ public class MetalStackingManager : MonoBehaviour
 
     private void ReleaseCurrent()
     {
+        // Do not release when finished
+        if (completed || (evaluator != null && evaluator.IsFinished))
+        {
+            return;
+        }
+
         if (currentPiece == null || currentStack == null)
         {
             return;
@@ -118,23 +121,22 @@ public class MetalStackingManager : MonoBehaviour
 
     private void OnPieceStuck(MetalStack piece, MetalStack stuckTo)
     {
-        // Unsubscribe safely
         if (piece != null && _stuckHandlers.TryGetValue(piece, out var handler))
         {
             piece.StuckTo -= handler;
             _stuckHandlers.Remove(piece);
         }
 
-        if (completed) return;
+        if (completed || (evaluator != null && evaluator.IsFinished))
+        {
+            return;
+        }
 
-        // First layer: accept any target, set as lastPiece
         bool isFirstLayer = level == 0;
         if (isFirstLayer)
         {
             level++;
             lastPiece = piece != null ? piece.gameObject : null;
-            if (lastPiece != null) _placedPieces.Add(lastPiece);
-
             if (ReferenceEquals(currentStack, piece))
             {
                 currentPiece = null;
@@ -142,34 +144,39 @@ public class MetalStackingManager : MonoBehaviour
             }
 
             evaluator?.OnLayerCompleted(level);
+            // If evaluator finished due to reaching target, mark completed to stop any pending actions
+            if (evaluator != null && evaluator.IsFinished)
+            {
+                completed = true;
+                _queuedDrop = false;
+            }
             return;
         }
 
-        // From second layer onwards: must stick to exactly the lastPiece
         GameObject stuckToGO = stuckTo != null ? stuckTo.gameObject : null;
         bool stuckToLast = stuckToGO != null && ReferenceEquals(stuckToGO, lastPiece);
 
         if (!stuckToLast)
         {
             completed = true;
-            if (evaluator != null) evaluator.Fail();
+            _queuedDrop = false;
+            evaluator?.Fail();
             return;
         }
 
-        // Success: promote current as lastPiece
         level++;
         lastPiece = piece != null ? piece.gameObject : lastPiece;
-        if (lastPiece != null && (_placedPieces.Count == 0 || !ReferenceEquals(_placedPieces[_placedPieces.Count - 1], lastPiece)))
-        {
-            _placedPieces.Add(lastPiece);
-        }
-
         if (ReferenceEquals(currentStack, piece))
         {
             currentPiece = null;
             currentStack = null;
         }
 
-        if (evaluator != null) evaluator.OnLayerCompleted(level);
+        evaluator?.OnLayerCompleted(level);
+        if (evaluator != null && evaluator.IsFinished)
+        {
+            completed = true;
+            _queuedDrop = false;
+        }
     }
 }

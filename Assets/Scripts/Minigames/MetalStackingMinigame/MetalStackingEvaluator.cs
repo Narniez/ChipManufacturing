@@ -1,27 +1,72 @@
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class MetalStackingEvaluator : MonoBehaviour
 {
     [Header("Goal")]
     [SerializeField] private int targetLayers = 10;
 
-    private UnityEvent onWin;
+    [Header("Completion")]
+    [SerializeField] private UnityEvent onPuzzleComplete;
+    [SerializeField] private GameObject quitButton;
+    [SerializeField] private GameObject completionPanel;
+    [SerializeField] private Button completionReturnButton;
+    [SerializeField] private Button completionExitButton;
+
     private UnityEvent onFail;
     private UnityEvent<int> onLayerCountChanged;
 
     private bool _finished;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
+    // Public read-only flag for external gating
+    public bool IsFinished => _finished;
 
+    private void OnEnable()
+    {
+        WireUI();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void WireUI()
     {
+        // Persistent early-exit (keeps machine broken)
+        if (quitButton != null)
+        {
+            var btn = quitButton.GetComponent<Button>();
+            if (btn != null)
+            {
+                btn.onClick.RemoveAllListeners();
+                btn.onClick.AddListener(() =>
+                {
+                    RepairMinigameManager.ExitWithoutRepair(0f);
+                });
+            }
+        }
 
+        // Completion panel buttons (shown only after success)
+        if (completionReturnButton != null)
+        {
+            completionReturnButton.onClick.RemoveAllListeners();
+            completionReturnButton.onClick.AddListener(() =>
+            {
+                if (!_finished) return;
+                RepairMinigameManager.ReportResult(new MinigameResult
+                {
+                    completed = true,
+                    scoreNormalized = 1f
+                });
+            });
+        }
+
+        if (completionExitButton != null)
+        {
+            completionExitButton.onClick.RemoveAllListeners();
+            completionExitButton.onClick.AddListener(() =>
+            {
+                // Exit back without repairing, even after completion if chosen
+                RepairMinigameManager.ExitWithoutRepair(0f);
+            });
+        }
     }
 
     public void OnLayerCompleted(int totalLayers)
@@ -30,13 +75,10 @@ public class MetalStackingEvaluator : MonoBehaviour
         {
             return;
         }
-
-        onLayerCountChanged?.Invoke(totalLayers);
-
         if (totalLayers >= targetLayers)
         {
             _finished = true;
-            onWin?.Invoke();
+            onPuzzleComplete?.Invoke();
             Debug.Log($"MetalStacking: Win! Layers={totalLayers}/{targetLayers}");
         }
     }
@@ -51,6 +93,7 @@ public class MetalStackingEvaluator : MonoBehaviour
         _finished = true;
         onFail?.Invoke();
         Debug.Log("MetalStacking: Fail.");
+        ResetRun();
     }
 
     public void ResetRun()
