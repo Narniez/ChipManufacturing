@@ -6,13 +6,13 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: AssemblyTestAnim
+  m_Name: Assembly
   serializedVersion: 5
   m_AnimatorParameters: []
   m_AnimatorLayers:
   - serializedVersion: 5
     m_Name: Base Layer
-    m_StateMachine: {fileID: 158119705264591797}
+    m_StateMachine: {fileID: 2511608990161594377}
     m_Mask: {fileID: 0}
     m_Motions: []
     m_Behaviours: []
@@ -22,7 +22,7 @@ AnimatorController:
     m_IKPass: 0
     m_SyncedLayerAffectsTiming: 0
     m_Controller: {fileID: 9100000}
---- !u!1107 &158119705264591797
+--- !u!1107 &2511608990161594377
 AnimatorStateMachine:
   serializedVersion: 6
   m_ObjectHideFlags: 1
@@ -32,8 +32,8 @@ AnimatorStateMachine:
   m_Name: Base Layer
   m_ChildStates:
   - serializedVersion: 1
-    m_State: {fileID: 7018332674263004425}
-    m_Position: {x: 384, y: 240.00002, z: 0}
+    m_State: {fileID: 3310991700245033937}
+    m_Position: {x: 433.99133, y: 241.8274, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []
@@ -43,8 +43,8 @@ AnimatorStateMachine:
   m_EntryPosition: {x: 50, y: 120, z: 0}
   m_ExitPosition: {x: 800, y: 120, z: 0}
   m_ParentStateMachinePosition: {x: 800, y: 20, z: 0}
-  m_DefaultState: {fileID: 7018332674263004425}
---- !u!1102 &7018332674263004425
+  m_DefaultState: {fileID: 3310991700245033937}
+--- !u!1102 &3310991700245033937
 AnimatorState:
   serializedVersion: 6
   m_ObjectHideFlags: 1
