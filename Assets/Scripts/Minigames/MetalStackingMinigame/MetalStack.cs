@@ -51,8 +51,6 @@ public class MetalStack : MonoBehaviour
 
         _rb.isKinematic = true;
         _rb.useGravity = false;
-        _rb.linearVelocity = Vector3.zero;
-        _rb.angularVelocity = Vector3.zero;
 
         _isHeld = true;
         _isStuck = false;

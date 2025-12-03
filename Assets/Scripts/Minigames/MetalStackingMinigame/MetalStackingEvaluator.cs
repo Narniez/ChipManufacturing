@@ -6,23 +6,22 @@ public class MetalStackingEvaluator : MonoBehaviour
     [Header("Goal")]
     [SerializeField] private int targetLayers = 10;
 
-    [Header("Events")]
-    [SerializeField] private UnityEvent onWin;
-    [SerializeField] private UnityEvent onFail;
-    [SerializeField] private UnityEvent<int> onLayerCountChanged;
+    private UnityEvent onWin;
+    private UnityEvent onFail;
+    private UnityEvent<int> onLayerCountChanged;
 
     private bool _finished;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public void OnLayerCompleted(int totalLayers)

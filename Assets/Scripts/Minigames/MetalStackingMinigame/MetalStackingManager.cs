@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class MetalStackingManager : MonoBehaviour
@@ -8,21 +10,25 @@ public class MetalStackingManager : MonoBehaviour
     [SerializeField] private MetalStackingEvaluator evaluator; // handles win/fail and layer target
 
     [Header("Spawn/Drop")]
-    [SerializeField] private Vector3 localOffset = new Vector3(0f, -0.3f, 0f);
+    [SerializeField] private Vector3 localOffset = new(0f, -0.3f, 0f);
     [SerializeField] private float respawnDelay = 0.15f;
-
-    [Header("Validation")]
-    [SerializeField] private float yStackTolerance = 0.05f; // acceptable vertical adjacency (more forgiving)
-    [SerializeField] private float minZOverlap = 0.001f;     // minimal Z overlap to count as stacked
 
     private Transform clawTransform;
     private GameObject currentPiece;
     private MetalStack currentStack;
 
-    private GameObject lastPiece;
+    private GameObject lastPiece; // last successfully placed piece
+    private readonly List<GameObject> _placedPieces = new List<GameObject>(); // optional tracking
+
     private bool isHolding;
     private int level; // number of successfully placed layers
     private bool completed;
+
+    // Track per-piece event handlers to avoid unsubscribing the wrong instance
+    private readonly Dictionary<MetalStack, Action<MetalStack>> _stuckHandlers = new Dictionary<MetalStack, Action<MetalStack>>();
+
+    // Buffer clicks during respawn so user can click anytime
+    private bool _queuedDrop;
 
     private void Awake()
     {
@@ -44,9 +50,16 @@ public class MetalStackingManager : MonoBehaviour
             return;
         }
 
-        if (isHolding && Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0))
         {
-            ReleaseCurrent();
+            if (isHolding)
+            {
+                ReleaseCurrent();
+            }
+            else
+            {
+                _queuedDrop = true;
+            }
         }
     }
 
@@ -75,12 +88,19 @@ public class MetalStackingManager : MonoBehaviour
             currentStack = currentPiece.AddComponent<MetalStack>();
         }
 
-        // Subscribe to stick event to validate collision target
-        currentStack.StuckTo += OnCurrentStuckTo;
+        // Per-piece handler
+        Action<MetalStack> handler = stuckTo => OnPieceStuck(currentStack, stuckTo);
+        _stuckHandlers[currentStack] = handler;
+        currentStack.StuckTo += handler;
 
-        // Pass the clawObject so MetalStack can ignore collisions with it
         currentStack.AttachToClaw(clawTransform, localOffset, clawObject);
         isHolding = true;
+
+        if (_queuedDrop)
+        {
+            _queuedDrop = false;
+            ReleaseCurrent();
+        }
     }
 
     private void ReleaseCurrent()
@@ -91,115 +111,65 @@ public class MetalStackingManager : MonoBehaviour
         }
 
         isHolding = false;
-
         currentStack.ReleaseFromClaw();
 
-        // Respawn next piece with a delay
         Invoke(nameof(SpawnAndAttach), respawnDelay);
-
-        lastPiece = currentPiece;
-        currentPiece = null;
     }
 
-    private void OnCurrentStuckTo(MetalStack stuckTo)
+    private void OnPieceStuck(MetalStack piece, MetalStack stuckTo)
     {
-        // Detach subscription from the piece once it has stuck
-        if (currentStack != null)
+        // Unsubscribe safely
+        if (piece != null && _stuckHandlers.TryGetValue(piece, out var handler))
         {
-            currentStack.StuckTo -= OnCurrentStuckTo;
+            piece.StuckTo -= handler;
+            _stuckHandlers.Remove(piece);
         }
 
-        if (completed)
-        {
-            return;
-        }
+        if (completed) return;
 
-        // First layer always succeeds
+        // First layer: accept any target, set as lastPiece
         bool isFirstLayer = level == 0;
         if (isFirstLayer)
         {
             level++;
-            if (evaluator != null)
+            lastPiece = piece != null ? piece.gameObject : null;
+            if (lastPiece != null) _placedPieces.Add(lastPiece);
+
+            if (ReferenceEquals(currentStack, piece))
             {
-                evaluator.OnLayerCompleted(level);
+                currentPiece = null;
+                currentStack = null;
             }
+
+            evaluator?.OnLayerCompleted(level);
             return;
         }
 
-        // From the second piece onward, validate overlap/stacking against lastPiece
-        var lastStackTransform = lastPiece != null ? lastPiece.transform : null;
-        var currentTransform = currentStack != null ? currentStack.transform : null;
+        // From second layer onwards: must stick to exactly the lastPiece
+        GameObject stuckToGO = stuckTo != null ? stuckTo.gameObject : null;
+        bool stuckToLast = stuckToGO != null && ReferenceEquals(stuckToGO, lastPiece);
 
-        bool validStack = lastStackTransform != null &&
-                          BoundsOverlapZAndStacked(currentTransform, lastStackTransform, yStackTolerance, minZOverlap);
-
-        if (!validStack)
+        if (!stuckToLast)
         {
             completed = true;
-            if (evaluator != null)
-            {
-                evaluator.Fail();
-            }
-            else
-            {
-                Debug.Log("MetalStacking: Game Over (missed last piece).");
-            }
+            if (evaluator != null) evaluator.Fail();
             return;
         }
 
-        // Count a completed layer
+        // Success: promote current as lastPiece
         level++;
-        if (evaluator != null)
+        lastPiece = piece != null ? piece.gameObject : lastPiece;
+        if (lastPiece != null && (_placedPieces.Count == 0 || !ReferenceEquals(_placedPieces[_placedPieces.Count - 1], lastPiece)))
         {
-            evaluator.OnLayerCompleted(level);
-        }
-    }
-
-    private static bool BoundsOverlapZAndStacked(Transform top, Transform bottom, float yTolerance, float minZOverlap)
-    {
-        if (top == null || bottom == null) return false;
-
-        if (!TryGetCombinedBounds(top, out var topBounds)) return false;
-        if (!TryGetCombinedBounds(bottom, out var bottomBounds)) return false;
-
-        // Top piece should sit at/above bottom's top face within tolerance
-        float bottomTopY = bottomBounds.max.y;
-        float topBottomY = topBounds.min.y;
-
-        // Inclusive check allows tiny penetration/solver nudges
-        bool verticallyStacked = topBottomY >= bottomTopY - yTolerance;
-        if (!verticallyStacked) return false;
-
-        // Z overlap length
-        float zOverlap = Mathf.Max(0f, Mathf.Min(topBounds.max.z, bottomBounds.max.z) - Mathf.Max(topBounds.min.z, bottomBounds.min.z));
-        return zOverlap >= minZOverlap;
-    }
-
-    private static bool TryGetCombinedBounds(Transform root, out Bounds bounds)
-    {
-        var renderers = root.GetComponentsInChildren<Renderer>(true);
-        if (renderers != null && renderers.Length > 0)
-        {
-            bounds = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
-            {
-                if (renderers[i] != null) bounds.Encapsulate(renderers[i].bounds);
-            }
-            return true;
+            _placedPieces.Add(lastPiece);
         }
 
-        var colliders = root.GetComponentsInChildren<Collider>(true);
-        if (colliders != null && colliders.Length > 0)
+        if (ReferenceEquals(currentStack, piece))
         {
-            bounds = colliders[0].bounds;
-            for (int i = 1; i < colliders.Length; i++)
-            {
-                if (colliders[i] != null) bounds.Encapsulate(colliders[i].bounds);
-            }
-            return true;
+            currentPiece = null;
+            currentStack = null;
         }
 
-        bounds = new Bounds();
-        return false;
+        if (evaluator != null) evaluator.OnLayerCompleted(level);
     }
 }
