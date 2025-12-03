@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class MetalStack : MonoBehaviour
@@ -13,6 +14,9 @@ public class MetalStack : MonoBehaviour
     [SerializeField] private bool cutOnStick = true; // enable auto-cut on Z to align with the piece below
     [SerializeField] private float minOverlapZ = 0.001f; // minimal Z overlap to consider valid (in world units)
     [SerializeField] private float yStackTolerance = 0.01f; // how much higher this piece must be to consider it "on top"
+
+    // Raised when this piece sticks. Parameter is the MetalStack it stuck to (can be null if non-MetalStack).
+    public event Action<MetalStack> StuckTo;
 
     private Rigidbody _rb;
     private bool _isHeld;
@@ -123,19 +127,25 @@ public class MetalStack : MonoBehaviour
         _rb.constraints = RigidbodyConstraints.FreezeAll;
         _rb.Sleep();
 
-        // Align/cut on Z if we stuck on top of another MetalStack
-        if (cutOnStick && collision.collider != null)
+        // Identify what we stuck to (may be null or a non-MetalStack)
+        MetalStack otherStack = null;
+        if (collision.collider != null)
         {
-            var otherStack = collision.collider.GetComponentInParent<MetalStack>();
-            if (otherStack != null && otherStack != this)
+            otherStack = collision.collider.GetComponentInParent<MetalStack>();
+        }
+
+        // Align/cut on Z if we stuck on top of another MetalStack
+        if (cutOnStick && otherStack != null && otherStack != this)
+        {
+            // Ensure we are on top of the other piece (by Y)
+            if (transform.position.y >= otherStack.transform.position.y + yStackTolerance)
             {
-                // Ensure we are on top of the other piece (by Y)
-                if (transform.position.y >= otherStack.transform.position.y + yStackTolerance)
-                {
-                    AlignZWithinBelow(otherStack.transform);
-                }
+                AlignZWithinBelow(otherStack.transform);
             }
         }
+
+        // Notify listeners
+        StuckTo?.Invoke(otherStack);
 
         if (destroyRigidbodyOnStick)
         {

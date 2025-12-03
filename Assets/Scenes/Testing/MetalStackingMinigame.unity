@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 85763227}
   - component: {fileID: 85763228}
+  - component: {fileID: 85763229}
   m_Layer: 0
   m_Name: MetalStackingManager
   m_TagString: Untagged
@@ -165,8 +166,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MetalStackingManager
   clawObject: {fileID: 1009557099}
   metalStackPrefab: {fileID: 361832703877855444, guid: feb92c8aa2dcd5f4db5276361dfd5e79, type: 3}
+  evaluator: {fileID: 85763229}
   localOffset: {x: 0, y: 1.2, z: 0}
   respawnDelay: 1.5
+  yStackTolerance: 0.02
+  minZOverlap: 0.001
+--- !u!114 &85763229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 85763226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 935caebb4914f07449bb8d3ea28b2736, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MetalStackingEvaluator
+  targetLayers: 10
+  onWin:
+    m_PersistentCalls:
+      m_Calls: []
+  onFail:
+    m_PersistentCalls:
+      m_Calls: []
+  onLayerCountChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &116153701
 GameObject:
   m_ObjectHideFlags: 0
@@ -1113,8 +1139,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38da71e61cc371c439148e4c07d6bdcf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClawController
-  moveSpeed: 10
-  boundaryX: 7.5
+  moveSpeed: 15
+  boundaryX: 10
   yAmplitude: 3
   ySpeed: 3
 --- !u!1 &1251183455
