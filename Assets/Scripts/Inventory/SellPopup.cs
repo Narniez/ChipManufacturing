@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Net.Mail;
 using TMPro;
@@ -32,7 +33,7 @@ public class SellPopup : MonoBehaviour
     {
         mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<NewCameraControls>();
 
-        gameObject.SetActive(false);
+        //gameObject.SetActive(false);
 
         amountSlider.wholeNumbers = true;
 
@@ -57,7 +58,7 @@ public class SellPopup : MonoBehaviour
 
     // ---------------- OPEN / CLOSE ----------------
 
-    public void OpenFor(InventoryItem item)
+  /*  public void OpenFor(InventoryItem item)
     {
         _openedFromSlot = false;
 
@@ -98,7 +99,7 @@ public class SellPopup : MonoBehaviour
             InventoryService.Instance.OnChanged += OnInventoryChanged;
 
         mainCamera.SetInputLocked(true);
-    }
+    }*/
 
     // Open popup for a slot (no InventoryItem child required)
     public void OpenForSlot(InventorySlot slot)
@@ -115,7 +116,6 @@ public class SellPopup : MonoBehaviour
             return;
         }
 
-        // In slot mode, treat the slot UI as the source of truth
         _have = Mathf.Max(0, _slot.Amount);
 
         if (nameText) nameText.text = _slot.Item.materialName;
@@ -137,8 +137,8 @@ public class SellPopup : MonoBehaviour
         {
             transform.SetParent(_popupCanvas.transform, worldPositionStays: false);
             transform.SetAsLastSibling();
-            gameObject.SetActive(true);
             RepositionToItem();
+            gameObject.SetActive(true);
         }
         else
         {

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
+public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler/*, IPointerClickHandler*/
 {
     [Header("Bound Data")]
     [SerializeField] private MaterialData slotItem;
@@ -170,7 +170,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         (_originSlot ?? CurrentSlot)?.Clear();
     }
 
-    public void OnPointerClick(PointerEventData eventData)
+   /* public void OnPointerClick(PointerEventData eventData)
     {
         if (sellPopup == null) return;
 
@@ -178,5 +178,5 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             sellPopup.Close();
         else
             sellPopup.OpenFor(this);
-    }
+    }*/
 }
