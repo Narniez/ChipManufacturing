@@ -506,7 +506,7 @@ public class LensesController : MonoBehaviour
 
                 if (hit.collider.CompareTag("Target"))
                 {
-                    CompletePuzzle();
+                    Invoke("CompletePuzzle", 2f);
                     break;
                 }
 
