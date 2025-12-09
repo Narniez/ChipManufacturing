@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class MetalStackingEvaluator : MonoBehaviour
 {
     [Header("Goal")]
-    [SerializeField] private int targetLayers = 10;
+    [SerializeField] public int targetLayers = 10;
 
     [Header("Completion")]
     [SerializeField] private UnityEvent onPuzzleComplete;

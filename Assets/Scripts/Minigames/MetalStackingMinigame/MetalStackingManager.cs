@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class MetalStackingManager : MonoBehaviour
@@ -12,6 +13,10 @@ public class MetalStackingManager : MonoBehaviour
     [Header("Spawn/Drop")]
     [SerializeField] private Vector3 localOffset = new Vector3(0f, -0.3f, 0f);
     [SerializeField] private float respawnDelay = 0.15f;
+
+    [Header("UI")]
+    [SerializeField] private TextMeshProUGUI layerCountText;
+    [SerializeField] private TextMeshProUGUI targetLayerText;
 
     private Transform clawTransform;
     private GameObject currentPiece;
@@ -31,6 +36,7 @@ public class MetalStackingManager : MonoBehaviour
         {
             clawTransform = clawObject.transform;
         }
+        targetLayerText.text = evaluator != null ? evaluator.targetLayers.ToString() : "N/A";
     }
 
     private void Start()
@@ -136,6 +142,7 @@ public class MetalStackingManager : MonoBehaviour
         if (isFirstLayer)
         {
             level++;
+            layerCountText.text = level.ToString();
             lastPiece = piece != null ? piece.gameObject : null;
             if (ReferenceEquals(currentStack, piece))
             {
@@ -165,6 +172,7 @@ public class MetalStackingManager : MonoBehaviour
         }
 
         level++;
+        layerCountText.text = level.ToString();
         lastPiece = piece != null ? piece.gameObject : lastPiece;
         if (ReferenceEquals(currentStack, piece))
         {
@@ -178,5 +186,59 @@ public class MetalStackingManager : MonoBehaviour
             completed = true;
             _queuedDrop = false;
         }
+    }
+
+    public void ResetMinigame()
+    {
+        // Cancel any pending spawns
+        CancelInvoke(nameof(SpawnAndAttach));
+
+        // Unsubscribe all handlers to avoid dangling refs
+        foreach (var kvp in _stuckHandlers)
+        {
+            var stack = kvp.Key;
+            var handler = kvp.Value;
+            if (stack != null)
+            {
+                stack.StuckTo -= handler;
+            }
+        }
+        _stuckHandlers.Clear();
+
+        // Destroy all stacks in the scene
+        var allStacks = FindObjectsOfType<MetalStack>(true);
+        for (int i = 0; i < allStacks.Length; i++)
+        {
+            var stack = allStacks[i];
+            if (stack != null)
+            {
+                var go = stack.gameObject;
+                if (go != null)
+                {
+                    Destroy(go);
+                }
+            }
+        }
+
+        // Clear state
+        currentPiece = null;
+        currentStack = null;
+        lastPiece = null;
+        isHolding = false;
+        _queuedDrop = false;
+        completed = false;
+
+        // Reset level and UI
+        level = 0;
+        if (layerCountText != null)
+        {
+            layerCountText.text = "0";
+        }
+
+        // Reset evaluator run state
+        if(evaluator != null) evaluator.ResetRun();
+
+        // Respawn new piece to start fresh
+        SpawnAndAttach();
     }
 }

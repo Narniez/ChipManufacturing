@@ -39,6 +39,9 @@ public class MetalStack : MonoBehaviour
         _rb.linearDamping = 0.1f;
         _rb.angularDamping = 0.5f;
 
+        // Always freeze rotation
+        _rb.constraints = RigidbodyConstraints.FreezeRotation;
+
         _pieceColliders = GetComponentsInChildren<Collider>(true);
     }
 
@@ -51,6 +54,9 @@ public class MetalStack : MonoBehaviour
 
         _rb.isKinematic = true;
         _rb.useGravity = false;
+
+        // Keep rotation frozen while held
+        _rb.constraints = RigidbodyConstraints.FreezeRotation;
 
         _isHeld = true;
         _isStuck = false;
@@ -73,6 +79,9 @@ public class MetalStack : MonoBehaviour
 
         _rb.isKinematic = false;
         _rb.useGravity = true;
+
+        // Keep rotation frozen while falling
+        _rb.constraints = RigidbodyConstraints.FreezeRotation;
 
         if (dropVelocityBoost > 0f)
         {
@@ -195,8 +204,7 @@ public class MetalStack : MonoBehaviour
             transform.localScale = ls;
 
             // Recompute bounds after scaling to reposition accurately
-            Bounds topAfter;
-            if (!TryGetCombinedBounds(transform, out topAfter))
+            if (!TryGetCombinedBounds(transform, out Bounds topAfter))
             {
                 return;
             }
