@@ -101,11 +101,11 @@ public class LensesController : MonoBehaviour
 
     private void Start()
     {
-        if (spawnOnStart && lensPrefab != null)
+       /* if (spawnOnStart && lensPrefab != null)
         {
             SpawnLenses();
             SpawnObstacles();
-        }
+        }*/
 
         if (autoFindLenses)
             AutoFindLenses();
@@ -210,7 +210,7 @@ public class LensesController : MonoBehaviour
         }
     }
 
-    private void SpawnLenses()
+  /*  private void SpawnLenses()
     {
         if (lensPrefab == null || spawnCount <= 0)
             return;
@@ -222,7 +222,7 @@ public class LensesController : MonoBehaviour
 
         if (spawnInTwoColumns)
             SpawnTwoColumns(z);
-    }
+    }*/
 
     private void ClearExistingLenses()
     {
@@ -263,14 +263,14 @@ public class LensesController : MonoBehaviour
 
         obstacles.Clear();
     }
-
+/*
     [ContextMenu("Regenerate Spawns")]
     public void RegenerateSpawns()
     {
         RegenerateSpawns(true, true);
-    }
+    }*/
 
-    public void RegenerateSpawns(bool clearLenses, bool clearObstacles)
+   /* public void RegenerateSpawns(bool clearLenses, bool clearObstacles)
     {
         if (clearObstacles)
             ClearObstacles();
@@ -283,7 +283,7 @@ public class LensesController : MonoBehaviour
 
         if (autoFindLenses)
             AutoFindLenses();
-    }
+    }*/
 
     private void SpawnTwoColumns(float z)
     {
