@@ -53,13 +53,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     {
         if (_grid == null) _grid = FindFirstObjectByType<GridService>();
         // Only resume if machine was initialized (avoid running before Initialize())
-        if (_initialized) StartCoroutine(DeferredResume());
-    }
-
-    private IEnumerator DeferredResume()
-    {
-        yield return null;
-        TryStartIfIdle();
+        if (_initialized) TryStartIfIdle();
     }
 
     // Clear stale coroutine handle when disabled

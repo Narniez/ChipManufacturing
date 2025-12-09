@@ -21,7 +21,7 @@ MonoBehaviour:
   outputMaterial: {fileID: 11400000, guid: e06c5320cc760af4e940f23d23abaafb, type: 2}
   processingTime: 4
   recipes: []
-  size: {x: 3, y: 2}
+  size: {x: 3, y: 1}
   repairMinigame: {fileID: 11400000, guid: b2b712ef2fc181c48ac73bd398eff069, type: 2}
   upgrades: []
   ports:
