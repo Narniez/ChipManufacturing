@@ -510,16 +510,21 @@ public class PreviewPlacementState : BasePlacementState
 
     private Vector2Int ComputePortCell(GridOrientation localSide, Vector2Int orientedSize, int offset)
     {
-        GridOrientation side = RotateSide(localSide, _orientation);
-        int sideLen = (side == GridOrientation.North || side == GridOrientation.South) ? orientedSize.x : orientedSize.y;
-        int idx = offset < 0 ? Mathf.Max(0, (sideLen - 1) / 2) : Mathf.Clamp(offset, 0, Mathf.Max(0, sideLen - 1));
+        var worldSide = RotateSide(localSide, _orientation);
+        int sideLen = (worldSide == GridOrientation.North || worldSide == GridOrientation.South)
+            ? orientedSize.x : orientedSize.y;
 
-        switch (side)
+        int idxLocal = offset < 0 ? Mathf.Max(0, (sideLen - 1) / 2) : Mathf.Clamp(offset, 0, Mathf.Max(0, sideLen - 1));
+        int idxWorld = (worldSide == GridOrientation.East || worldSide == GridOrientation.South)
+            ? (sideLen - 1 - idxLocal)
+            : idxLocal;
+
+        switch (worldSide)
         {
-            case GridOrientation.North: return new Vector2Int(_anchor.x + idx, _anchor.y + orientedSize.y);
-            case GridOrientation.South: return new Vector2Int(_anchor.x + idx, _anchor.y - 1);
-            case GridOrientation.East: return new Vector2Int(_anchor.x + orientedSize.x, _anchor.y + idx);
-            case GridOrientation.West: return new Vector2Int(_anchor.x - 1, _anchor.y + idx);
+            case GridOrientation.North: return new Vector2Int(_anchor.x + idxWorld, _anchor.y + orientedSize.y);
+            case GridOrientation.South: return new Vector2Int(_anchor.x + idxWorld, _anchor.y - 1);
+            case GridOrientation.East: return new Vector2Int(_anchor.x + orientedSize.x, _anchor.y + idxWorld);
+            case GridOrientation.West: return new Vector2Int(_anchor.x - 1, _anchor.y + idxWorld);
             default: return _anchor;
         }
     }

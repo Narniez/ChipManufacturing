@@ -11,7 +11,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private Coroutine productionRoutine;
     private GridService _grid;
 
-    private InventoryItem inventoryItem;
+    //private InventoryItem inventoryItem;
 
     // Legacy single-input queue (used only if no recipes defined)
     private readonly Queue<MaterialData> _inputQueue = new Queue<MaterialData>();
@@ -753,17 +753,41 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     private Vector2Int ComputePortCell(GridOrientation localSide, Vector2Int size, int offset)
     {
-        GridOrientation side = RotateSide(localSide, Orientation);
-        int sideLen = (side == GridOrientation.North || side == GridOrientation.South) ? size.x : size.y;
-        int idx = offset < 0 ? Mathf.Max(0, (sideLen - 1) / 2) : Mathf.Clamp(offset, 0, Mathf.Max(0, sideLen - 1));
+        // localSide is defined relative to "North" model; Orientation rotates it to world
+        var worldSide = RotateSide(localSide, Orientation);
 
-        switch (side)
+        // Length of the edge in world
+        int sideLen = (worldSide == GridOrientation.North || worldSide == GridOrientation.South)
+            ? size.x
+            : size.y;
+
+        // Resolve local index along the side
+        int idxLocal = offset < 0
+            ? Mathf.Max(0, (sideLen - 1) / 2) // center; for even choose lower-middle
+            : Mathf.Clamp(offset, 0, Mathf.Max(0, sideLen - 1));
+
+        // Mirror index for East and South so "left-to-right" in LOCAL space stays intuitive
+        int idxWorld = (worldSide == GridOrientation.East || worldSide == GridOrientation.South)
+            ? (sideLen - 1 - idxLocal)
+            : idxLocal;
+
+        // Build world cell from bottom-left Anchor
+        switch (worldSide)
         {
-            case GridOrientation.North: return new Vector2Int(Anchor.x + idx, Anchor.y + size.y);
-            case GridOrientation.South: return new Vector2Int(Anchor.x + idx, Anchor.y - 1);
-            case GridOrientation.East:  return new Vector2Int(Anchor.x + size.x, Anchor.y + idx);
-            case GridOrientation.West:  return new Vector2Int(Anchor.x - 1, Anchor.y + idx);
-            default: return Anchor;
+            case GridOrientation.North:
+                // top edge: x runs left->right from Anchor.x
+                return new Vector2Int(Anchor.x + idxWorld, Anchor.y + size.y);
+            case GridOrientation.South:
+                // bottom edge: x runs left->right from Anchor.x
+                return new Vector2Int(Anchor.x + idxWorld, Anchor.y - 1);
+            case GridOrientation.East:
+                // right edge: y runs top->bottom from Anchor.y
+                return new Vector2Int(Anchor.x + size.x, Anchor.y + idxWorld);
+            case GridOrientation.West:
+                // left edge: y runs top->bottom from Anchor.y
+                return new Vector2Int(Anchor.x - 1, Anchor.y + idxWorld);
+            default:
+                return Anchor;
         }
     }
     #endregion

@@ -109,15 +109,28 @@ public class MachinePortIndicatorController
 
     private static Vector2Int ComputePortCell(Vector2Int anchor, Vector2Int size, GridOrientation worldSide, int offset)
     {
-        int sideLen = (worldSide == GridOrientation.North || worldSide == GridOrientation.South) ? size.x : size.y;
-        int idx = offset < 0 ? Mathf.Max(0, (sideLen - 1) / 2) : Mathf.Clamp(offset, 0, Mathf.Max(0, sideLen - 1));
+        // Edge length in world using oriented footprint
+        int sideLen = (worldSide == GridOrientation.North || worldSide == GridOrientation.South)
+            ? size.x
+            : size.y;
 
+        // Local index along the side; -1 = center (lower-middle for even)
+        int idxLocal = offset < 0
+            ? Mathf.Max(0, (sideLen - 1) / 2)
+            : Mathf.Clamp(offset, 0, Mathf.Max(0, sideLen - 1));
+
+        // Mirror for East/South so local left->right remains intuitive after rotation
+        int idxWorld = (worldSide == GridOrientation.East || worldSide == GridOrientation.South)
+            ? (sideLen - 1 - idxLocal)
+            : idxLocal;
+
+        // Build world cell from bottom-left anchor of oriented footprint
         switch (worldSide)
         {
-            case GridOrientation.North: return new Vector2Int(anchor.x + idx, anchor.y + size.y);
-            case GridOrientation.South: return new Vector2Int(anchor.x + idx, anchor.y - 1);
-            case GridOrientation.East:  return new Vector2Int(anchor.x + size.x, anchor.y + idx);
-            case GridOrientation.West:  return new Vector2Int(anchor.x - 1, anchor.y + idx);
+            case GridOrientation.North: return new Vector2Int(anchor.x + idxWorld, anchor.y + size.y);
+            case GridOrientation.South: return new Vector2Int(anchor.x + idxWorld, anchor.y - 1);
+            case GridOrientation.East: return new Vector2Int(anchor.x + size.x, anchor.y + idxWorld);
+            case GridOrientation.West: return new Vector2Int(anchor.x - 1, anchor.y + idxWorld);
             default: return anchor;
         }
     }

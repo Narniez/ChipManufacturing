@@ -27,7 +27,7 @@ MonoBehaviour:
   ports:
   - kind: 2
     side: 0
-    offset: -1
+    offset: 1
   - kind: 1
     side: 2
     offset: -1
