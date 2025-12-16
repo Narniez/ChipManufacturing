@@ -33,6 +33,10 @@ public class SelectionUI : MonoBehaviour
 
     public void Show(string title, Action onRotateLeft, Action onRotateRight, bool isBelt)
     {
+        ResetButtons();
+
+        if (testDestroyButton != null) testDestroyButton.interactable = true;
+
         _onRotateLeft = onRotateLeft;
         _onRotateRight = onRotateRight;
         if (testDestroyButton != null)
@@ -117,4 +121,13 @@ public class SelectionUI : MonoBehaviour
         // Unity event may come from background thread-like timing; ensure set on main thread - but in Unity it's fine.
         productionSlider.value = Mathf.Clamp01(progress);
     }
+
+    private void ResetButtons()
+    {
+        var buttons = GetComponentsInChildren<Button>(true);
+        foreach (var b in buttons)
+            b.interactable = true;
+    }
+
+
 }
