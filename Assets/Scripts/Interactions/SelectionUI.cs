@@ -126,7 +126,18 @@ public class SelectionUI : MonoBehaviour
     {
         var buttons = GetComponentsInChildren<Button>(true);
         foreach (var b in buttons)
+        {
             b.interactable = true;
+        }
+
+        var images = GetComponentsInChildren<Image>(true);
+        {
+            foreach(var i  in images)
+            {
+                i.raycastTarget = true;
+            }
+        }
+        
     }
 
 
