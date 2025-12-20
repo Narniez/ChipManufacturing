@@ -13,6 +13,8 @@ public class TutorialEventBus : MonoBehaviour
     public static event Action<IGridOccupant> OnSelectionChanged;
     public static event Action OnConveyorPreviewConfirmed;
 
+    public static event Action<GameObject> OnMachineSpawned;
+
     public static event Action OnInventoryOpened;
     public static event Action OnRecipeTreeOpened;
     public static event Action OnMachineFixClicked;
@@ -48,7 +50,7 @@ public class TutorialEventBus : MonoBehaviour
     public static void PublishPreviewStarted(GameObject prefab)
     {
         OnPreviewStarted?.Invoke(prefab);
-        PublishSignal(TutorialSignal.PreviewStarted, prefab);
+        PublishSignal(TutorialSignal.MachinePlaced, prefab);
     }
 
     public static void PublishPreviewConfirmed()
@@ -126,6 +128,12 @@ public class TutorialEventBus : MonoBehaviour
     public static void PublishMaterialProduced()
     {
         PublishSignal(TutorialSignal.MachineProducedMaterial, null);
+    }
+
+    public static void PublishMachineGameObject(GameObject prefab)
+    {
+        OnMachineSpawned?.Invoke(prefab);
+        PublishSignal(TutorialSignal.PreviewStarted, prefab);
     }
 
     public static void PublishSignal(TutorialSignal sig, object payload = null)
