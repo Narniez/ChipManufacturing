@@ -11,6 +11,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private int upgradeLevel = 0;
     private Coroutine productionRoutine;
     private GridService _grid;
+    // Pending outputs produced by a finished recipe, released on next clock tick
+    private readonly List<MaterialData> _pendingOutputs = new List<MaterialData>();
 
     //private InventoryItem inventoryItem;
 
@@ -55,6 +57,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         if (_grid == null) _grid = FindFirstObjectByType<GridService>();
         // Only resume if machine was initialized (avoid running before Initialize())
         if (_initialized) TryStartIfIdle();
+        // subscribe to clock ticks
+        AudioManager.OnClockTick += HandleClockTick;
     }
 
     // Clear stale coroutine handle when disabled
@@ -69,6 +73,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         // Reset progress when disabled so UI does not show stale value
         _productionProgress = 0f;
         ProductionProgressChanged?.Invoke(_productionProgress);
+        // unsubscribe from clock ticks
+        AudioManager.OnClockTick -= HandleClockTick;
     }
 
     public void Initialize(MachineData machineData)
@@ -195,7 +201,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _productionProgress = 1f;
         ProductionProgressChanged?.Invoke(_productionProgress);
 
-        // Produce all outputs of current recipe
+        // Instead of producing immediately, collect outputs and wait for the next clock tick to release them.
+        _pendingOutputs.Clear();
         if (_currentRecipe != null)
         {
             for (int i = 0; i < _currentRecipe.outputs.Count; i++)
@@ -203,16 +210,16 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
                 var outStack = _currentRecipe.outputs[i];
                 int count = Mathf.Max(1, outStack.amount);
                 for (int c = 0; c < count; c++)
-                    ProduceOneOutput(outStack.material);
+                    _pendingOutputs.Add(outStack.material);
             }
         }
 
+        // mark production finished; actual release happens on clock tick handler
         productionRoutine = null;
         _productionProgress = 0f;
         ProductionProgressChanged?.Invoke(_productionProgress);
 
-        // Attempt next recipe if inputs are available
-        StartProduction();
+        // Do NOT StartProduction() here; StartProduction() will be called after outputs are released on tick.
     }
 
     private IEnumerator ProcessOneLegacy()
@@ -241,13 +248,15 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _productionProgress = 1f;
         ProductionProgressChanged?.Invoke(_productionProgress);
 
-        // Produce legacy single output (data.outputMaterial)
-        ProduceOneOutput(data.outputMaterial);
+        // Legacy single output: queue output to be released on next clock tick
+        _pendingOutputs.Clear();
+        if (data.outputMaterial != null)
+            _pendingOutputs.Add(data.outputMaterial);
 
         productionRoutine = null;
         _productionProgress = 0f;
         ProductionProgressChanged?.Invoke(_productionProgress);
-        StartProduction();
+        // Do not StartProduction() here — outputs will be released on the next clock tick, then StartProduction() is called.
     }
 
     private IEnumerator DelayedGeneratorRetry(float delaySeconds)
@@ -294,30 +303,19 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             yield break;
         }
 
-        foreach (var belt in belts)
+        // Queue one output per connected belt; actual release (events, break checks, visual instantiation
+        // and belt placement) will occur on the next clock tick in HandleClockTick().
+        _pendingOutputs.Clear();
+        for (int i = 0; i < belts.Count; i++)
         {
-            if (_isBroken) break;
-            OnMaterialProduced?.Invoke(data.outputMaterial, transform.position);
-            _chanceToBreak += _chanceToBreakIncrement;
-            if (BreakCheck())
-            {
-                Break();
-                break;
-            }
-
-            GameObject visualPrefab = data.outputMaterial != null ? data.outputMaterial.prefab : null;
-            GameObject visual = null;
-            if (visualPrefab != null) visual = Instantiate(visualPrefab);
-
-            var item = new ConveyorItem(data.outputMaterial, visual);
-            if (!belt.TrySetItem(item) && visual != null)
-                Destroy(visual);
+            if (data.outputMaterial != null)
+                _pendingOutputs.Add(data.outputMaterial);
         }
 
         productionRoutine = null;
         _productionProgress = 0f;
         ProductionProgressChanged?.Invoke(_productionProgress);
-        StartProduction();
+        // Do not StartProduction() here; StartProduction() will be called after outputs are released on tick.
     }
 
     private void ProduceOneOutput(MaterialData mat)
@@ -798,4 +796,28 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     private static GridOrientation Opposite(GridOrientation o)
         => (GridOrientation)(((int)o + 2) & 3);
+
+    // Called on each clock tick from AudioManager
+    private void HandleClockTick()
+    {
+        if (_isBroken) return;
+
+        // If a recipe finished and produced pending outputs, release them now
+        if (_pendingOutputs.Count > 0)
+        {
+            // produce each pending output (this will try to push to belts / inventory)
+            for (int i = 0; i < _pendingOutputs.Count; i++)
+            {
+                ProduceOneOutput(_pendingOutputs[i]);
+                if (_isBroken) break; // stop if machine broke during release
+            }
+            _pendingOutputs.Clear();
+            // After releasing outputs, attempt to start next production
+            StartProduction();
+            return;
+        }
+
+        // Otherwise keep normal behavior: some machines may want to start/resume on tick
+        TryStartIfIdle();
+    }
 }
