@@ -28,14 +28,22 @@ public class BeltSystemRuntime : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void OnEnable()
+    {
+        AudioManager.OnClockTick += HandleClockTick;
+    }
+
+    private void OnDisable()
+    {
+        AudioManager.OnClockTick -= HandleClockTick;
+    }
+
+    // Called on each clock tick; attempts moves for all belts that are not currently animating.
+    private void HandleClockTick()
     {
         // Pause belt processing while loading to avoid items moving during restore
         if (GameStateService.IsLoading) return;
 
-        // Animate every frame
-        AnimateItemVisuals(Time.deltaTime);
-        // Continuous movement: attempt moves immediately when item not animating
         for (int i = _belts.Count - 1; i >= 0; i--)
         {
             var b = _belts[i];
@@ -43,6 +51,15 @@ public class BeltSystemRuntime : MonoBehaviour
             if (b.HasItem && !b.IsItemAnimating())
                 b.TickMoveAttempt();
         }
+    }
+
+    private void Update()
+    {
+        // Pause belt processing while loading to avoid items moving during restore
+        if (GameStateService.IsLoading) return;
+
+        // Animate every frame
+        AnimateItemVisuals(Time.deltaTime);
     }
 
     private void AnimateItemVisuals(float dt)
