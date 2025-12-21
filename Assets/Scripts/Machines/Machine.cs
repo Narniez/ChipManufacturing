@@ -30,7 +30,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private float _miniMimumChanceToBreak = 0;
     private bool _isBroken = false;
 
-    private bool _initialized; 
+    private bool _initialized;
+    private bool _clockSubscribed = false;
 
     public static event Action<Machine, Vector3> OnMachineBroken;
     public static event Action<Machine> OnMachineRepaired;
@@ -57,8 +58,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         if (_grid == null) _grid = FindFirstObjectByType<GridService>();
         // Only resume if machine was initialized (avoid running before Initialize())
         if (_initialized) TryStartIfIdle();
-        // subscribe to clock ticks
-        AudioManager.OnClockTick += HandleClockTick;
+        // subscribe to machine-phase clock ticks (pre-belt)
+        AudioManager.OnClockTick_Machines += HandleClockTick;
     }
 
     // Clear stale coroutine handle when disabled
@@ -73,8 +74,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         // Reset progress when disabled so UI does not show stale value
         _productionProgress = 0f;
         ProductionProgressChanged?.Invoke(_productionProgress);
-        // unsubscribe from clock ticks
-        AudioManager.OnClockTick -= HandleClockTick;
+        // unsubscribe from clock ticks if subscribed
+        try { AudioManager.OnClockTick_Machines -= HandleClockTick; } catch { }
     }
 
     public void Initialize(MachineData machineData)
@@ -92,6 +93,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         _initialized = true;
 
+        // Subscribe to clock ticks only once, after initialization
+        // ensure we're subscribed to the pre-belt clock phase
+        try { AudioManager.OnClockTick_Machines += HandleClockTick; } catch { }
         StartProduction();
     }
 
@@ -800,6 +804,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // Called on each clock tick from AudioManager
     private void HandleClockTick()
     {
+        // Guard against receiving ticks before initialization or when data is missing
+        if (!_initialized || data == null) return;
+
         if (_isBroken) return;
 
         // If a recipe finished and produced pending outputs, release them now
