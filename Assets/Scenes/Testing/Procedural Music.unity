@@ -2445,25 +2445,13 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1841502347}
         m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
-        m_MethodName: StartClockRepeating
-        m_Mode: 4
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 1
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1841502347}
-        m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
-        m_MethodName: StopClockRepeating
+        m_MethodName: ToggleClock
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
-          m_FloatArgument: 0
+          m_FloatArgument: 1
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
@@ -3974,7 +3962,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 722404ef2a433fc49875fad2405db1e3, type: 2}
   - {fileID: 11400000, guid: b39d6ac2d26de3a408d9974960568cd2, type: 2}
   globalLockedSprite: {fileID: 21300000, guid: a8972b4180e6a6a4fa0495ebd7b59b8e, type: 3}
-  debugLogging: 1
+  debugLogging: 0
 --- !u!1 &509138415
 GameObject:
   m_ObjectHideFlags: 0
@@ -10777,7 +10765,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b004495cdcbcb047bcc1365395ec0ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventoryService
-  debug: 1
+  debug: 0
   slotRootGO: {fileID: 469765789}
 --- !u!1001 &1561134888
 PrefabInstance:
@@ -12979,7 +12967,7 @@ GameObject:
   - component: {fileID: 1841502348}
   - component: {fileID: 1841502347}
   m_Layer: 0
-  m_Name: TESTAudioManager
+  m_Name: ProceduralMusicManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -12997,6 +12985,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1876c09b62c8f9d4ea5c76227c502093, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  currentKey:
+    keyName: C
+  bpm: 60
+  measure:
+    beatsPerMeasure: 4
+    beatUnit: 4
+  reverbAmount: 0.2
+  soundReach: 10
+  masterVolume: 1
 --- !u!4 &1841502348
 Transform:
   m_ObjectHideFlags: 0

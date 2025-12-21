@@ -30,26 +30,84 @@ public class BeltSystemRuntime : MonoBehaviour
 
     private void OnEnable()
     {
-        AudioManager.OnClockTick += HandleClockTick;
+        AudioManager.OnClockTick_Belts += HandleClockTick;
     }
 
     private void OnDisable()
     {
-        AudioManager.OnClockTick -= HandleClockTick;
+        AudioManager.OnClockTick_Belts -= HandleClockTick;
     }
 
     // Called on each clock tick; attempts moves for all belts that are not currently animating.
     private void HandleClockTick()
     {
-        // Pause belt processing while loading to avoid items moving during restore
         if (GameStateService.IsLoading) return;
 
-        for (int i = _belts.Count - 1; i >= 0; i--)
+        int n = _belts.Count;
+        if (n == 0) return;
+
+        // Build initial queue of indices for belts that currently have a non-animating item.
+        var queue = new System.Collections.Generic.Queue<int>(Mathf.Max(16, n));
+        var enqueued = new bool[n]; // mark to avoid duplicate enqueue
+
+        for (int i = 0; i < n; i++)
         {
             var b = _belts[i];
             if (b == null) continue;
             if (b.HasItem && !b.IsItemAnimating())
-                b.TickMoveAttempt();
+            {
+                queue.Enqueue(i);
+                enqueued[i] = true;
+            }
+        }
+
+        // Process queue: when a belt moves forward, its predecessor may become eligible,
+        // so enqueue predecessor to propagate chain moves within same tick.
+        while (queue.Count > 0)
+        {
+            int idx = queue.Dequeue();
+            enqueued[idx] = false;
+
+            var belt = _belts[idx];
+            if (belt == null) continue;
+            if (!belt.HasItem || belt.IsItemAnimating()) continue;
+
+            bool moved = false;
+            try
+            {
+                moved = belt.TickMoveAttempt();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Belt TickMoveAttempt exception on {belt.name}: {ex}");
+                // skip this belt further this tick
+                moved = false;
+            }
+
+            if (moved)
+            {
+                // If this belt moved an item forward, its predecessor (if any) may now be able to move.
+                var prev = belt.PreviousInChain;
+                if (prev != null)
+                {
+                    int prevIdx = _belts.IndexOf(prev);
+                    if (prevIdx >= 0 && !enqueued[prevIdx] && prev.HasItem && !prev.IsItemAnimating())
+                    {
+                        queue.Enqueue(prevIdx);
+                        enqueued[prevIdx] = true;
+                    }
+                }
+                else
+                {
+                    // If not linked by chain, consider scanning nearby belts (optional)
+                }
+            }
+            else
+            {
+                // If couldn't move now, it might become able later in the same tick after others move;
+                // but to avoid busy looping we rely on predecessors enqueuing successors when they move.
+                // Optionally re-enqueue after some other moves if desired (omitted for perf).
+            }
         }
     }
 
