@@ -59,7 +59,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         // Only resume if machine was initialized (avoid running before Initialize())
         if (_initialized) TryStartIfIdle();
         // subscribe to machine-phase clock ticks (pre-belt)
-        AudioManager.OnClockTick_Machines += HandleClockTick;
+        ProceduralMusicManager.OnClockTick_Machines += HandleClockTick;
     }
 
     // Clear stale coroutine handle when disabled
@@ -75,7 +75,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _productionProgress = 0f;
         ProductionProgressChanged?.Invoke(_productionProgress);
         // unsubscribe from clock ticks if subscribed
-        try { AudioManager.OnClockTick_Machines -= HandleClockTick; } catch { }
+        try { ProceduralMusicManager.OnClockTick_Machines -= HandleClockTick; } catch { }
     }
 
     public void Initialize(MachineData machineData)
@@ -95,7 +95,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
         // Subscribe to clock ticks only once, after initialization
         // ensure we're subscribed to the pre-belt clock phase
-        try { AudioManager.OnClockTick_Machines += HandleClockTick; } catch { }
+        try { ProceduralMusicManager.OnClockTick_Machines += HandleClockTick; } catch { }
         StartProduction();
     }
 
@@ -801,7 +801,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private static GridOrientation Opposite(GridOrientation o)
         => (GridOrientation)(((int)o + 2) & 3);
 
-    // Called on each clock tick from AudioManager
+    // Called on each clock tick from ProceduralMusicManager
     private void HandleClockTick()
     {
         // Guard against receiving ticks before initialization or when data is missing
