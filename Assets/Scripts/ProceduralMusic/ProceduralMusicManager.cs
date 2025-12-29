@@ -2,13 +2,13 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-public class AudioManager : MonoBehaviour
+public class ProceduralMusicManager : MonoBehaviour
 {
     #region Music Structure (inspector)
     [Header("Music Structure")]
 
     [Tooltip("Displayed current key (read-only for now)")]
-    [SerializeField] private Key currentKey;
+    [SerializeField] public Key currentKey;
 
     [Tooltip("Beats per minute — controls the clock speed")]
     [SerializeField, Range(30, 240)] private int bpm = 80;

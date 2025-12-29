@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ec71697e7fc1ad49b4327a1b7811a93, type: 3}
+  m_Name: TestMaterialSoundData
+  m_EditorClassIdentifier: Assembly-CSharp::MaterialSoundData
+  producingMachine: {fileID: 0}
+  playTiming: 0
+  overrideMachineSoundProfile: {fileID: 11400000, guid: e09c75aa186569348856e5f9a2f318fd, type: 2}
+  percussionCategory: 2
+  everyN: 3
+  subdivisionKind: 0
+  possiblePitches: 
+  pitch: 0
+  chordBias: 0.5
+  lengthInSubdivisions: 1
+  maxJumpSemitones: 12

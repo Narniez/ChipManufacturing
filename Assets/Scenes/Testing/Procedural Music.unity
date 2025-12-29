@@ -2754,7 +2754,7 @@ Transform:
   m_GameObject: {fileID: 283493382}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -24.663734, y: -25.511677, z: 11.15148}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4925,7 +4925,7 @@ Transform:
   m_GameObject: {fileID: 682233057}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -10.74318, y: -2.14071, z: -11.55575}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5563,6 +5563,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 736512430}
   m_CullTransparentMesh: 1
+--- !u!1 &761767923 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4262052264892793044, guid: e3563cc3869535948b01b757286cf131, type: 3}
+  m_PrefabInstance: {fileID: 5236349426239776945}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &775445499
 GameObject:
   m_ObjectHideFlags: 0
@@ -7006,7 +7011,7 @@ Transform:
   m_GameObject: {fileID: 951112262}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -13.45318, y: -2.68071, z: -15.87575}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9065,7 +9070,7 @@ Transform:
   m_GameObject: {fileID: 1281914065}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 13.45318, y: 2.68071, z: 15.87575}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -9838,7 +9843,7 @@ Transform:
   m_GameObject: {fileID: 1372498194}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -9.095078, y: 2.2311456, z: -18.966644}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10747,7 +10752,7 @@ Transform:
   m_GameObject: {fileID: 1560065970}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 479.2891, y: 272.97937, z: -15.87575}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12966,6 +12971,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1841502348}
   - component: {fileID: 1841502347}
+  - component: {fileID: 1841502349}
+  - component: {fileID: 1841502350}
   m_Layer: 0
   m_Name: ProceduralMusicManager
   m_TagString: Untagged
@@ -12986,7 +12993,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
   currentKey:
-    keyName: C
+    displayName: C Major
+    root: 0
+    scale: 0
+    customIntervals: 0000000002000000040000000500000007000000090000000b000000
   bpm: 60
   measure:
     beatsPerMeasure: 4
@@ -13009,6 +13019,57 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1281914066}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1841502349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1841502346}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28f4e486c02c22c41b45c1eab4980926, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ConveyorChordManager
+  progressionLength: 8
+  repetitionChance: 0.5
+  chordDurationInBeats: 4
+  chordOctave: 4
+  timelineBoxWidth: 24
+  timelineBoxHeight: 24
+  fmodEventPath: event:/Conveyor
+  playCurrentChordOnGenerate: 1
+--- !u!114 &1841502350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1841502346}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a6610d2e704f1648819acc8d7460285, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioEventEmitter
+  CollisionTag: 
+  EventReference:
+    Guid:
+      Data1: -1953765688
+      Data2: 1304285277
+      Data3: -1666388845
+      Data4: -436356112
+    Path: event:/Conveyor
+  Event: 
+  EventPlayTrigger: 1
+  EventStopTrigger: 2
+  AllowFadeout: 1
+  TriggerOnce: 0
+  Preload: 0
+  NonRigidbodyVelocity: 0
+  Params: []
+  OverrideAttenuation: 0
+  OverrideMinDistance: 1
+  OverrideMaxDistance: 20
 --- !u!1 &1863546736
 GameObject:
   m_ObjectHideFlags: 0
@@ -19304,12 +19365,26 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4069804967976006138, guid: e3563cc3869535948b01b757286cf131, type: 3}
   m_PrefabInstance: {fileID: 5236349426239776945}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 761767923}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3d00e59d0c621b047a21e83cba3d8ef2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NewCameraControls
+--- !u!114 &4365471052268879472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 761767923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86c6556701af9e04380698b89f691b6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioListener
+  nonRigidbodyVelocity: 0
+  attenuationObject: {fileID: 0}
 --- !u!224 &4387347035106565387
 RectTransform:
   m_ObjectHideFlags: 0
@@ -19980,7 +20055,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4262052264892793044, guid: e3563cc3869535948b01b757286cf131, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4365471052268879472}
   m_SourcePrefab: {fileID: 100100000, guid: e3563cc3869535948b01b757286cf131, type: 3}
 --- !u!224 &5287662099760079020
 RectTransform:

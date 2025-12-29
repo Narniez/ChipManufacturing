@@ -30,12 +30,12 @@ public class BeltSystemRuntime : MonoBehaviour
 
     private void OnEnable()
     {
-        AudioManager.OnClockTick_Belts += HandleClockTick;
+        ProceduralMusicManager.OnClockTick_Belts += HandleClockTick;
     }
 
     private void OnDisable()
     {
-        AudioManager.OnClockTick_Belts -= HandleClockTick;
+        ProceduralMusicManager.OnClockTick_Belts -= HandleClockTick;
     }
 
     // Called on each clock tick; attempts moves for all belts that are not currently animating.

@@ -1,0 +1,70 @@
+using System;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
+
+[CustomEditor(typeof(ConveyorChordManager))]
+public class ConveyorChordManagerEditor : Editor
+{
+    private ConveyorChordManager manager => (ConveyorChordManager)target;
+
+    public override void OnInspectorGUI()
+    {
+        // Draw default inspector first
+        DrawDefaultInspector();
+
+        // Timeline preview
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Progression Timeline", EditorStyles.boldLabel);
+
+        int count = manager.ProgressionCount;
+        if (count == 0)
+        {
+            EditorGUILayout.HelpBox("No progression generated.", MessageType.Info);
+            return;
+        }
+
+        // layout rect for timeline
+        float boxW = 24f;
+        float boxH = 24f;
+        float spacing = 4f;
+        float totalW = count * (boxW + spacing);
+        Rect r = GUILayoutUtility.GetRect(totalW, boxH);
+
+        // draw background
+        EditorGUI.DrawRect(r, new Color(0.12f, 0.12f, 0.12f));
+
+        for (int i = 0; i < count; i++)
+        {
+            Rect cell = new Rect(r.x + i * (boxW + spacing), r.y, boxW, boxH);
+            Color bg;
+            if (i < manager.CurrentIndex) bg = new Color(0.55f, 0.55f, 0.55f);
+            else if (i == manager.CurrentIndex) bg = new Color(0.18f, 0.6f, 0.2f);
+            else bg = Color.white;
+
+            EditorGUI.DrawRect(cell, bg);
+
+            int rootMidi = manager.GetChordRootMidi(i);
+            string label = rootMidi >= 0 ? MidiToNoteName(rootMidi) : "-";
+            var style = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleCenter };
+            EditorGUI.LabelField(cell, label, style);
+        }
+
+        // Add a regenerate button for convenience
+        EditorGUILayout.Space();
+        if (GUILayout.Button("Regenerate Progression"))
+        {
+            Undo.RecordObject(manager, "Regenerate progression");
+            manager.GenerateProgression();
+            EditorUtility.SetDirty(manager);
+        }
+    }
+
+    private string MidiToNoteName(int midi)
+    {
+        int pc = ((midi % 12) + 12) % 12;
+        int octave = midi / 12 - 1;
+        string[] names = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+        return $"{names[pc]}{octave}";
+    }
+}
