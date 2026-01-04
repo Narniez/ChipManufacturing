@@ -15,12 +15,19 @@ MonoBehaviour:
   machines:
   - id: Chip Machine
     data: {fileID: 11400000, guid: d4ac0eeb666d84e42933ecf1459abe98, type: 2}
+    soundData: {fileID: 11400000, guid: e09c75aa186569348856e5f9a2f318fd, type: 2}
   - id: Sillicon Material Depo
     data: {fileID: 11400000, guid: 6ba470c9a73f1184bb3abf8ff964a3be, type: 2}
+    soundData: {fileID: 11400000, guid: 6bf40b3348463e4438f5da10702776c2, type: 2}
   - id: Photolithography Machine
     data: {fileID: 11400000, guid: a4661fd3e7881bf4aa2fbba17314f173, type: 2}
+    soundData: {fileID: 0}
   - id: 'Metal Wiring Deposition '
     data: {fileID: 11400000, guid: b2b249c125c210a49b5f2e8ed6f34fbe, type: 2}
+    soundData: {fileID: 0}
+  - id: Press
+    data: {fileID: 11400000, guid: f44cd445d1201fd42a89e4ee49ccc272, type: 2}
+    soundData: {fileID: 11400000, guid: 08d445a622c7f1e45ac3070f44ec3d3b, type: 2}
   materials:
   - id: Copper
     data: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
@@ -34,3 +41,13 @@ MonoBehaviour:
     data: {fileID: 11400000, guid: ae6f80625a8c53c43986d6bdee75e9c2, type: 2}
   - id: ChipDesign
     data: {fileID: 11400000, guid: e06c5320cc760af4e940f23d23abaafb, type: 2}
+  recipes:
+  - id: Steel
+    data: {fileID: 11400000, guid: c3835561a1409554b8e63d396ce3a5da, type: 2}
+    soundData: {fileID: 11400000, guid: a877e1dceb1006843be9f1d31169d74f, type: 2}
+  - id: Test1
+    data: {fileID: 11400000, guid: 882bdd72bb6ee694b99d9c7726f44fe8, type: 2}
+    soundData: {fileID: 0}
+  - id: PressTest
+    data: {fileID: 11400000, guid: cde54a842ee127f4b9e50c75c1c82c43, type: 2}
+    soundData: {fileID: 0}

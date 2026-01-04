@@ -8638,6 +8638,81 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5462531188168002413, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
   m_PrefabInstance: {fileID: 1176070249}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1208305223
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1208305224}
+  - component: {fileID: 1208305226}
+  - component: {fileID: 1208305225}
+  m_Layer: 5
+  m_Name: MainShopIconImage
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1208305224
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1208305223}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.99998975, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1557664291203117676}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -0.00012207031, y: 560.00006}
+  m_SizeDelta: {x: 659.801, y: 266.1939}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1208305225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1208305223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: -9095717837082945937, guid: ba9e883793fe0424f95847dcde257b85, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1208305226
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1208305223}
+  m_CullTransparentMesh: 1
 --- !u!1 &1236272029
 GameObject:
   m_ObjectHideFlags: 0
@@ -12972,7 +13047,6 @@ GameObject:
   - component: {fileID: 1841502348}
   - component: {fileID: 1841502347}
   - component: {fileID: 1841502349}
-  - component: {fileID: 1841502350}
   m_Layer: 0
   m_Name: ProceduralMusicManager
   m_TagString: Untagged
@@ -13013,7 +13087,7 @@ Transform:
   m_GameObject: {fileID: 1841502346}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 12.1, y: 13.36, z: -17.16}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -13031,45 +13105,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28f4e486c02c22c41b45c1eab4980926, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ConveyorChordManager
-  progressionLength: 8
-  repetitionChance: 0.5
+  preChordCount: 5
+  postChordCount: 5
+  repetitionChance: 0
+  keyChangeChance: 0.264
   chordDurationInBeats: 4
-  chordOctave: 4
-  timelineBoxWidth: 24
-  timelineBoxHeight: 24
-  fmodEventPath: event:/Conveyor
-  playCurrentChordOnGenerate: 1
---- !u!114 &1841502350
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1841502346}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a6610d2e704f1648819acc8d7460285, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioEventEmitter
-  CollisionTag: 
-  EventReference:
-    Guid:
-      Data1: -1953765688
-      Data2: 1304285277
-      Data3: -1666388845
-      Data4: -436356112
-    Path: event:/Conveyor
-  Event: 
-  EventPlayTrigger: 1
-  EventStopTrigger: 2
-  AllowFadeout: 1
-  TriggerOnce: 0
-  Preload: 0
-  NonRigidbodyVelocity: 0
-  Params: []
-  OverrideAttenuation: 0
-  OverrideMinDistance: 1
-  OverrideMaxDistance: 20
+  chordOctave: 3
+  addSeventhChance: 0.25
+  addNinthChance: 0.12
+  spreadVoicingChance: 0.5
+  bassOctaveVariationChance: 0.25
+  bassUpperPassingChance: 0.12
 --- !u!1 &1863546736
 GameObject:
   m_ObjectHideFlags: 0
@@ -17226,6 +17272,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8277338566273653441}
+  - {fileID: 1208305224}
   m_Father: {fileID: 8781536616868804206}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -18701,7 +18748,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Silicon Depot
+  m_text: Press
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -19655,7 +19702,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54a119d9bddf314ca27c7e74abf6d15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProductPanel
-  machineData: {fileID: 11400000, guid: 6ba470c9a73f1184bb3abf8ff964a3be, type: 2}
+  machineData: {fileID: 11400000, guid: f44cd445d1201fd42a89e4ee49ccc272, type: 2}
   mainButton: {fileID: 4950035174714760047}
   detailsPanel: {fileID: 3735512382512343517}
   detailsPanelRect: {fileID: 4966733011486312345}
@@ -20795,7 +20842,7 @@ GameObject:
   - component: {fileID: 4950035174714760047}
   - component: {fileID: 4679050961864153022}
   m_Layer: 5
-  m_Name: SilliconDepotProductPanel (2)
+  m_Name: PressMachineProductPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -92,18 +92,18 @@ public class FactorySceneBuilder : MonoBehaviour
                     continue;
                 }
 
-                MachineData data = null;
+                MachineData machineData = null;
                 // Try Resources first, then DataRegistry (runtime-safe)
-                yield return StartCoroutine(LoadAssetResourceOrRegistry<MachineData>(m.machineDataPath, d => data = d));
+                yield return StartCoroutine(LoadAssetResourceOrRegistry<MachineData>(m.machineDataPath, d => machineData = d));
 
-                if (data == null || data.prefab == null)
+                if (machineData == null || machineData.prefab == null)
                 {
                     Debug.LogWarning($"MachineData load failed for key '{m.machineDataPath}' at {m.anchor}. Skipping.");
                     continue;
                 }
 
                 // Use placement API so MoveToFactoryScene, occupancy and GameState sync behave the same as interactive placement.
-                placement.PlaceMachineFromSave(data, m.anchor, m.orientation, m.isBroken);
+                placement.PlaceMachineFromSave(machineData, m.anchor, m.orientation, m.isBroken);
                 yield return null; // allow one frame so object registers with grid if needed
             }
 
