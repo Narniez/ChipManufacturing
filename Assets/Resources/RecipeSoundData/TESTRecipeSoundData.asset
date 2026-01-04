@@ -9,17 +9,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ec71697e7fc1ad49b4327a1b7811a93, type: 3}
-  m_Name: TestMaterialSoundData
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialSoundData
+  m_Script: {fileID: 11500000, guid: 0495f949e9111bd4e90b815563fe0c9a, type: 3}
+  m_Name: TESTRecipeSoundData
+  m_EditorClassIdentifier: Assembly-CSharp::ProceduralMusic.RecipeSoundData
   producingMachine: {fileID: 0}
   playTiming: 0
-  overrideMachineSoundProfile: {fileID: 11400000, guid: e09c75aa186569348856e5f9a2f318fd, type: 2}
-  percussionCategory: 2
+  overrideMachineSoundProfile: {fileID: 0}
+  percussionCategory: 0
   everyN: 3
   subdivisionKind: 0
   possiblePitches: 
   pitch: 0
   chordBias: 0.5
-  lengthInSubdivisions: 1
+  lengthInSubdivisions: 4
   maxJumpSemitones: 12

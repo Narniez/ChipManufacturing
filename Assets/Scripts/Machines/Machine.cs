@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using ProceduralMusic;
+using System.Reflection;
 
 public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 {
@@ -31,11 +33,11 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private bool _isBroken = false;
 
     private bool _initialized;
-    private bool _clockSubscribed = false;
 
     public static event Action<Machine, Vector3> OnMachineBroken;
     public static event Action<Machine> OnMachineRepaired;
-    public static event Action<MaterialData, Vector3> OnMaterialProduced;
+    // Include MachineRecipe so consumers (sounds, analytics) know which recipe produced the material.
+    public static event Action<MaterialData, Vector3, MachineRecipe> OnMaterialProduced;
 
     //Progress tracking for UI
     private float _productionProgress = 0f; // 0..1
@@ -43,6 +45,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public event Action<float> ProductionProgressChanged;
 
     public MachineData Data => data;
+    // Expose current recipe for other systems (sound/etc) to query while producing.
+    public MachineRecipe CurrentRecipe => _currentRecipe;
     public bool IsProducing => productionRoutine != null;
     public bool IsBroken => _isBroken;
 
@@ -97,6 +101,28 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         // ensure we're subscribed to the pre-belt clock phase
         try { ProceduralMusicManager.OnClockTick_Machines += HandleClockTick; } catch { }
         StartProduction();
+
+        // --- auto-attach MachineSoundData using DataRegistry (preferred) or fallback to Resources registry ---
+        try
+        {
+            var registry = DataRegistry.Instance ?? DataRegistry.FindOrLoad();
+            MachineSoundData msd = null;
+            if (registry != null)
+            {
+                msd = registry.GetMachineSoundDataForMachineData(data);
+            }
+
+            if (msd != null)
+            {
+                var msComp = GetComponent<MachineSound>();
+                if (msComp == null) msComp = gameObject.AddComponent<MachineSound>();
+                msComp.AssignSoundData(msd);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"Machine.Initialize: error assigning MachineSoundData: {ex}");
+        }
     }
 
     public void TryStartIfIdle()
@@ -325,9 +351,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private void ProduceOneOutput(MaterialData mat)
     {
         if (_isBroken) return;
-
         Debug.Log($"[Machine] {name} produced one '{mat.materialName}'");
-        OnMaterialProduced?.Invoke(mat, transform.position);
+        // Include current recipe when notifying listeners.
+        OnMaterialProduced?.Invoke(mat, transform.position, _currentRecipe);
 
         // Increase break chance per produced output
         _chanceToBreak += _chanceToBreakIncrement;
@@ -823,8 +849,63 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             StartProduction();
             return;
         }
-
         // Otherwise keep normal behavior: some machines may want to start/resume on tick
         TryStartIfIdle();
+    }
+}
+
+// Extension helpers to provide a safe AssignSoundData call for older/newer MachineSound implementations.
+// Uses reflection to try common field/property/method names; logs a warning if nothing matches.
+public static class MachineSoundExtensions
+{
+    public static void AssignSoundData(this MachineSound msComp, MachineSoundData msd)
+    {
+        if (msComp == null || msd == null) return;
+
+        var t = msComp.GetType();
+
+        // Try common field names
+        var field = t.GetField("soundData", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (field != null && field.FieldType.IsAssignableFrom(typeof(MachineSoundData)))
+        {
+            field.SetValue(msComp, msd);
+            return;
+        }
+
+        field = t.GetField("_soundData", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (field != null && field.FieldType.IsAssignableFrom(typeof(MachineSoundData)))
+        {
+            field.SetValue(msComp, msd);
+            return;
+        }
+
+        // Try common property names
+        var prop = t.GetProperty("SoundData", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (prop != null && prop.CanWrite && prop.PropertyType.IsAssignableFrom(typeof(MachineSoundData)))
+        {
+            prop.SetValue(msComp, msd);
+            return;
+        }
+
+        // Try common method names that might perform assignment/initialization
+        var method = t.GetMethod("AssignSoundData", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (method != null)
+        {
+            try { method.Invoke(msComp, new object[] { msd }); return; } catch { /* ignore and continue */ }
+        }
+
+        method = t.GetMethod("Initialize", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (method != null)
+        {
+            try { method.Invoke(msComp, new object[] { msd }); return; } catch { /* ignore and continue */ }
+        }
+
+        method = t.GetMethod("SetSoundData", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (method != null)
+        {
+            try { method.Invoke(msComp, new object[] { msd }); return; } catch { /* ignore and continue */ }
+        }
+
+        Debug.LogWarning($"AssignSoundData: Could not assign MachineSoundData to MachineSound component on '{msComp.gameObject.name}'; no compatible field/property/method found.");
     }
 }

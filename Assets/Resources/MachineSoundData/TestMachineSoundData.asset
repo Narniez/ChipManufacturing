@@ -12,8 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 203e862b1fab5a646a9a961abbb05ef6, type: 3}
   m_Name: TestMachineSoundData
   m_EditorClassIdentifier: Assembly-CSharp::MachineSoundData
-  instrumentType: 0
-  fmodEventPaths: []
+  instrumentType: 3
+  prefabMatch: {fileID: 0}
+  fmodEventPaths:
+  - Event:/Cutter
   percussionCategory: 0
-  playTiming: 0
+  playTiming: 1
   randomizeSelection: 0
+  audibleDistance: 0
+  pitchParameterName: Pitch
