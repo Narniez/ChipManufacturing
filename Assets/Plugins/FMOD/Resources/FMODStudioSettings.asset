@@ -486,16 +486,8 @@ MonoBehaviour:
   VirtualChannelSettings: []
   RealChannelSettings: []
   Plugins: []
-  MasterBanks:
-  - Master
-  Banks:
-  - Bass
-  - Chord
-  - Lead
-  - Mini Games
-  - Percussion
-  - SFX
-  - Story Scenes
+  MasterBanks: []
+  Banks: []
   BanksToLoad: []
   LiveUpdatePort: 9264
   EnableMemoryTracking: 0
