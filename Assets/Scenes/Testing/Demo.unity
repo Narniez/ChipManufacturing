@@ -3486,6 +3486,86 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &428644883
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 428644884}
+  - component: {fileID: 428644886}
+  - component: {fileID: 428644885}
+  m_Layer: 0
+  m_Name: ProceduralMusicManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &428644884
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 428644883}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.3531799, y: 10.67929, z: -33.03575}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1281914066}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &428644885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 428644883}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28f4e486c02c22c41b45c1eab4980926, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ConveyorChordManager
+  preChordCount: 5
+  postChordCount: 5
+  repetitionChance: 0
+  keyChangeChance: 0.264
+  chordDurationInBeats: 4
+  chordOctave: 3
+  addSeventhChance: 0.25
+  addNinthChance: 0.12
+  spreadVoicingChance: 0.5
+  bassOctaveVariationChance: 0.25
+  bassUpperPassingChance: 0.12
+--- !u!114 &428644886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 428644883}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1876c09b62c8f9d4ea5c76227c502093, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  currentKey:
+    displayName: C Major
+    root: 0
+    scale: 0
+    customIntervals: 0000000002000000040000000500000007000000090000000b000000
+  bpm: 60
+  measure:
+    beatsPerMeasure: 4
+    beatUnit: 4
+  reverbAmount: 0.2
+  soundReach: 10
+  masterVolume: 1
 --- !u!1 &433934212
 GameObject:
   m_ObjectHideFlags: 0
@@ -8962,6 +9042,7 @@ Transform:
   - {fileID: 692706780}
   - {fileID: 340804947}
   - {fileID: 505073919}
+  - {fileID: 428644884}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1296553621
@@ -18712,7 +18793,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4069804967976006138, guid: e3563cc3869535948b01b757286cf131, type: 3}
   m_PrefabInstance: {fileID: 5236349426239776945}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 5236349426239776946}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3d00e59d0c621b047a21e83cba3d8ef2, type: 3}
@@ -19388,8 +19469,30 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4262052264892793044, guid: e3563cc3869535948b01b757286cf131, type: 3}
+      insertIndex: 3
+      addedObject: {fileID: 5236349426239776947}
   m_SourcePrefab: {fileID: 100100000, guid: e3563cc3869535948b01b757286cf131, type: 3}
+--- !u!1 &5236349426239776946 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4262052264892793044, guid: e3563cc3869535948b01b757286cf131, type: 3}
+  m_PrefabInstance: {fileID: 5236349426239776945}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5236349426239776947
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5236349426239776946}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86c6556701af9e04380698b89f691b6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioListener
+  nonRigidbodyVelocity: 0
+  attenuationObject: {fileID: 0}
 --- !u!224 &5287662099760079020
 RectTransform:
   m_ObjectHideFlags: 0
