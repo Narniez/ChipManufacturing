@@ -106,7 +106,8 @@ public class RecipeTreeManager : MonoBehaviour
             Debug.Log($"[RecipeTreeManager] Built material cache: {materialCache.Count} by ID, {materialByTypeCache.Count} by type");
     }
 
-    private void OnMachineProducedMaterial(MaterialData material, Vector3 position)
+    // Updated to accept the recipe parameter (may be null)
+    private void OnMachineProducedMaterial(MaterialData material, Vector3 position, MachineRecipe recipe)
     {
         if (material == null)
         {

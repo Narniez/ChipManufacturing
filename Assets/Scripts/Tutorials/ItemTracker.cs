@@ -38,7 +38,8 @@ public class ItemTracker : MonoBehaviour
         Machine.OnMaterialProduced -= UpdateCount;
     }
 
-    private void UpdateCount(MaterialData material, Vector3 machinePosition)
+    // accept optional recipe parameter (ignored here)
+    private void UpdateCount(MaterialData material, Vector3 machinePosition, MachineRecipe recipe)
     {
         if (_completed)
             return;
