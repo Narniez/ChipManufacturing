@@ -60,6 +60,13 @@ public class LensesController : MonoBehaviour
     [Tooltip("Start direction. If false, uses the emitter's forward.")]
     [SerializeField] private bool startDownward = false;
 
+    [Header("Puzzle Configurations")]
+    [SerializeField] private List<GameObject> puzzleConfigurations = new(); 
+    [SerializeField] private bool loadRandomOnEnable = true;
+
+    private GameObject currentConfigurationInstance;
+
+
     [Header("Completion")]
     public UnityEvent onPuzzleComplete;
 
@@ -97,6 +104,9 @@ public class LensesController : MonoBehaviour
     private void OnEnable()
     {
         WireUI();
+
+        if (loadRandomOnEnable)
+            LoadRandomConfiguration();
     }
 
     private void Start()
@@ -115,6 +125,65 @@ public class LensesController : MonoBehaviour
     {
         CastAndRenderBeam();
     }
+
+    private void LoadRandomConfiguration()
+    {
+        if (puzzleConfigurations == null || puzzleConfigurations.Count == 0)
+        {
+            Debug.LogWarning("LensesController: No puzzle configurations assigned.");
+            return;
+        }
+
+        // Clear previous config
+        if (currentConfigurationInstance != null)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying) DestroyImmediate(currentConfigurationInstance);
+            else Destroy(currentConfigurationInstance);
+#else
+        Destroy(currentConfigurationInstance);
+#endif
+            currentConfigurationInstance = null;
+        }
+
+        // IMPORTANT: clear lists BEFORE instantiating so Lens.Awake() can RegisterLens into a clean list
+        lenses.Clear();
+        obstacles.Clear();
+
+        int index = Random.Range(0, puzzleConfigurations.Count);
+        var prefab = puzzleConfigurations[index];
+        var parent = transform;
+
+        currentConfigurationInstance = Instantiate(prefab, parent);
+        currentConfigurationInstance.name = prefab.name + "_Instance";
+
+        // Rebuild lens list from THIS configuration only (safer than global FindObjectsOfType)
+        var foundLenses = currentConfigurationInstance.GetComponentsInChildren<Lens>(true);
+        foreach (var l in foundLenses)
+        {
+            if (l == null) continue;
+            if (!lenses.Contains(l.gameObject))
+                lenses.Add(l.gameObject);
+            l.gameObject.SetActive(true);
+        }
+
+        // Rebuild obstacle list (requires PuzzleObstacle marker on obstacle objects)
+        var foundObstacles = currentConfigurationInstance.GetComponentsInChildren<LensObstacle>(true);
+        foreach (var o in foundObstacles)
+        {
+            if (o == null) continue;
+            obstacles.Add(o.gameObject);
+        }
+
+        // Reset state/UI for a fresh run
+        completed = false;
+        if (line != null) line.gameObject.SetActive(true);
+        if (quitButton != null) quitButton.SetActive(true);
+        if (completionPanel != null) completionPanel.SetActive(false);
+
+        DeselectAll();
+    }
+
 
     private void WireUI()
     {
@@ -445,20 +514,17 @@ public class LensesController : MonoBehaviour
 
     public void SelectLens(Lens lens)
     {
-        if (lens == currentSelected)
-        {
-            if (currentSelected != null)
-                currentSelected.ToggleSelected();
+        if (lens == null) return;
 
-            currentSelected = null;
-            return;
-        }
+
+        if (lens == currentSelected) return;
+      
 
         if (currentSelected != null)
-            currentSelected.ToggleSelected();
+            currentSelected.SetSelected(false);
 
         currentSelected = lens;
-        currentSelected?.ToggleSelected();
+        currentSelected.SetSelected(true);
     }
 
     public void DeselectAll()
@@ -506,7 +572,7 @@ public class LensesController : MonoBehaviour
 
                 if (hit.collider.CompareTag("Target"))
                 {
-                    CompletePuzzle();
+                    Invoke("CompletePuzzle", 2f);
                     break;
                 }
 
