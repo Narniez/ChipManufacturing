@@ -20,7 +20,8 @@ MonoBehaviour:
   inputMaterial: {fileID: 11400000, guid: 2e04e17488d4d544696b225af5ef64b9, type: 2}
   outputMaterial: {fileID: 11400000, guid: ae6f80625a8c53c43986d6bdee75e9c2, type: 2}
   processingTime: 4
-  recipes: []
+  recipes:
+  - {fileID: 11400000, guid: 1337343925086af40b93e1c484b10819, type: 2}
   size: {x: 2, y: 3}
   repairMinigame: {fileID: 11400000, guid: 3d8ff34971520df4daf12e353d1bb994, type: 2}
   upgrades: []

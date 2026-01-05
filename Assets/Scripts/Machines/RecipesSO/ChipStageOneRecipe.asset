@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83a17a861bb8b1b44a879f8ea9223cf7, type: 3}
+  m_Name: ChipStageOneRecipe
+  m_EditorClassIdentifier: Assembly-CSharp::MachineRecipe
+  name: Chip Stage One
+  inputs:
+  - material: {fileID: 11400000, guid: e06c5320cc760af4e940f23d23abaafb, type: 2}
+    amount: 1
+  outputs:
+  - material: {fileID: 11400000, guid: b573a15bfc6806f4b943d93c85201d65, type: 2}
+    amount: 1
+  processingTimeOverride: -1
