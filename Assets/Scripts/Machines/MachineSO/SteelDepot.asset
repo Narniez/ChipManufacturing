@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SteelDepot
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
-  machineName: 
+  machineName: Steel Depot
   prefab: {fileID: 919132149155446097, guid: 2d787e6fdf78e7941b5f19cd450dc375, type: 3}
   icon: {fileID: 0}
   cost: 0

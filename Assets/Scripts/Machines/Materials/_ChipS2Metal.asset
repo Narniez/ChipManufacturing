@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: _ChipS2Metal
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
-  materialName: 
+  materialName: Chip S2 Metal
   icon: {fileID: 0}
   prefab: {fileID: 8559448409965842562, guid: d98b8db6ba6029d4880a2d3b51624cdc, type: 3}
   cost: 0
