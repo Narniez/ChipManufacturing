@@ -10,29 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8967eb2bc9f92e94cb009538a9497d84, type: 3}
-  m_Name: PressMachineData
+  m_Name: Welding_Machine
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
-  machineName: Press
-  prefab: {fileID: 9038231671212334539, guid: c9b619322d435f148a2f8a16fcf52b23, type: 3}
+  machineName: 
+  prefab: {fileID: 0}
   icon: {fileID: 0}
-  cost: 150
+  cost: 0
   inputMaterial: {fileID: 0}
   outputMaterial: {fileID: 0}
   processingTime: 2
   recipes:
-  - {fileID: 11400000, guid: f5e53b1038d739b428b0df3df441442e, type: 2}
-  - {fileID: 11400000, guid: a67b2dc4c9af8924480d737558e4bdb1, type: 2}
+  - {fileID: 11400000, guid: 14ac04f98f0cf1643ae8a6e76fbddb62, type: 2}
   size: {x: 1, y: 1}
   repairMinigame: {fileID: 0}
   upgrades: []
-  ports:
-  - kind: 1
-    side: 0
-    offset: 0
-  - kind: 2
-    side: 2
-    offset: 0
+  ports: []
   inputPortIndicatorPrefab: {fileID: 0}
   outputPortIndicatorPrefab: {fileID: 0}
   chanceIncreasePerOutput: 2

@@ -10,13 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 83a17a861bb8b1b44a879f8ea9223cf7, type: 3}
-  m_Name: FChip3Recipe
+  m_Name: BikeRecipe
   m_EditorClassIdentifier: Assembly-CSharp::MachineRecipe
-  name: Final Chip Three
+  name: Bike
   inputs:
-  - material: {fileID: 11400000, guid: 0543cd7c18686574882f91dd8c5d8347, type: 2}
+  - material: {fileID: 11400000, guid: 419d51098e3d6da47a1d5f96ac523bb7, type: 2}
     amount: 1
+  - material: {fileID: 11400000, guid: aef7ca3c1575b9e4a9b7a55f1c3fe098, type: 2}
+    amount: 1
+  - material: {fileID: 11400000, guid: ecdb29de4c00f2b4cb9daff77b7ba583, type: 2}
+    amount: 1
+  - material: {fileID: 11400000, guid: 88da2f958d8df7e4eb998bf302f7cb8f, type: 2}
+    amount: 2
   outputs:
-  - material: {fileID: 11400000, guid: be200e502727fc74cbdddd8a16f2b556, type: 2}
+  - material: {fileID: 11400000, guid: 152f5f255d4f7b945bd1a058c0aaec74, type: 2}
     amount: 1
   processingTimeOverride: -1

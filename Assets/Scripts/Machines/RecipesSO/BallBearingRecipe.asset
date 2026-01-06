@@ -10,13 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 83a17a861bb8b1b44a879f8ea9223cf7, type: 3}
-  m_Name: FChip3Recipe
+  m_Name: BallBearingRecipe
   m_EditorClassIdentifier: Assembly-CSharp::MachineRecipe
-  name: Final Chip Three
+  name: Ball Bearing
   inputs:
-  - material: {fileID: 11400000, guid: 0543cd7c18686574882f91dd8c5d8347, type: 2}
+  - material: {fileID: 11400000, guid: c5519c175500c1d44b677aec0579c8ab, type: 2}
+    amount: 8
+  - material: {fileID: 11400000, guid: 0007a670576c84446b4f8710efcb243a, type: 2}
     amount: 1
   outputs:
-  - material: {fileID: 11400000, guid: be200e502727fc74cbdddd8a16f2b556, type: 2}
+  - material: {fileID: 11400000, guid: 02d62db935a824a4b8b6db76a506b493, type: 2}
     amount: 1
   processingTimeOverride: -1
