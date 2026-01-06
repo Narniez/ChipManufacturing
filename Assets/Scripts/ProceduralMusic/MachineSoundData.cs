@@ -6,6 +6,10 @@ namespace ProceduralMusic
     [CreateAssetMenu(fileName = "MachineSoundData", menuName = "Scriptable Objects/ProceduralMusic/MachineSoundData")]
     public class MachineSoundData : ScriptableObject
     {
+        // Scriptable object that describes how a machine should sound.
+        // Contains references to FMOD event paths, playback timing, spatial settings
+        // and light-weight instrument categorization used by MachineSound and
+        // ConveyorSound at runtime.
         public enum InstrumentType
         {
             Percussion,
@@ -79,6 +83,13 @@ namespace ProceduralMusic
                 return fmodEventPaths[Random.Range(0, fmodEventPaths.Count)];
             }
             return fmodEventPaths[0];
+        }
+
+        private void OnValidate()
+        {
+            if (fmodEventPaths == null) fmodEventPaths = new List<string>();
+            audibleDistance = Mathf.Max(0f, audibleDistance);
+            if (string.IsNullOrEmpty(pitchParameterName)) pitchParameterName = "Pitch";
         }
     }
 }

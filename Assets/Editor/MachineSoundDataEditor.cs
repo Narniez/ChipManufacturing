@@ -10,6 +10,7 @@ namespace ProceduralMusic {
     {
         private SerializedProperty p_instrumentType;
         private SerializedProperty p_fmodEventPaths;
+    private SerializedProperty p_pitchParameterName;
         private SerializedProperty p_percussionCategory;
         private SerializedProperty p_playTiming;
         private SerializedProperty p_randomizeSelection;
@@ -19,6 +20,7 @@ namespace ProceduralMusic {
         {
             p_instrumentType = serializedObject.FindProperty("instrumentType");
             p_fmodEventPaths = serializedObject.FindProperty("fmodEventPaths");
+            p_pitchParameterName = serializedObject.FindProperty("pitchParameterName");
             p_percussionCategory = serializedObject.FindProperty("percussionCategory");
             p_playTiming = serializedObject.FindProperty("playTiming");
             p_randomizeSelection = serializedObject.FindProperty("randomizeSelection");
@@ -85,7 +87,19 @@ namespace ProceduralMusic {
 
             EditorGUILayout.Space();
             EditorGUILayout.PropertyField(p_playTiming);
-            EditorGUILayout.PropertyField(p_randomizeSelection);
+
+            // Only show pitch parameter name for instruments that use it
+            var instType = (MachineSoundData.InstrumentType)p_instrumentType.enumValueIndex;
+            if (instType != MachineSoundData.InstrumentType.Percussion)
+            {
+                EditorGUILayout.PropertyField(p_pitchParameterName, new GUIContent("Pitch Parameter"));
+            }
+
+            // Randomize selection is meaningless when there is only one event path
+            using (new EditorGUI.DisabledScope(p_fmodEventPaths.arraySize <= 1))
+            {
+                EditorGUILayout.PropertyField(p_randomizeSelection);
+            }
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Spatial", EditorStyles.boldLabel);

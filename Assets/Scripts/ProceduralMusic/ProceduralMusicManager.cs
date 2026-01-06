@@ -6,6 +6,11 @@ using UnityEngine;
 namespace ProceduralMusic {
     public class ProceduralMusicManager : MonoBehaviour
     {
+        // ProceduralMusicManager maintains the global musical state and clock.
+        // It exposes events for beats/measures and acts as a central place to
+        // configure global parameters (BPM, reverb, master volume, audible range)
+        // that other components (MachineSound, ConveyorSound, ConveyorChordManager)
+        // can read from.
         #region Music Structure (inspector)
         [Header("Music Structure")]
 
@@ -61,6 +66,17 @@ namespace ProceduralMusic {
 
             // Start clock automatically on startup
             StartClock();
+        }
+
+        // Validate serialized fields in editor/when values change
+        private void OnValidate()
+        {
+            bpm = Mathf.Clamp(bpm, 30, 240);
+            if (measure == null) measure = new Measure();
+            measure.beatsPerMeasure = Mathf.Max(1, measure.beatsPerMeasure);
+            reverbAmount = Mathf.Clamp01(reverbAmount);
+            soundReach = Mathf.Max(0f, soundReach);
+            masterVolume = Mathf.Clamp01(masterVolume);
         }
 
 
