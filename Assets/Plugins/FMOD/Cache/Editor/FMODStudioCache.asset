@@ -15,7 +15,7 @@ MonoBehaviour:
   Path: Assets/FMODBanks/Desktop/Chord.bank
   Name: Chord
   StudioPath: bank:/Machines/Chord
-  lastModified: 639032189480893938
+  lastModified: 639032953750303226
   FileSizes:
   - Name: Desktop
     Value: 2737056
@@ -84,7 +84,7 @@ MonoBehaviour:
   Path: Assets/FMODBanks/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639032189481514031
+  lastModified: 639032953751082142
   FileSizes:
   - Name: Desktop
     Value: 1250
@@ -307,7 +307,7 @@ MonoBehaviour:
   Path: Assets/FMODBanks/Desktop/SFX.bank
   Name: SFX
   StudioPath: bank:/SFX
-  lastModified: 639032189481846236
+  lastModified: 639032953752220897
   FileSizes:
   - Name: Desktop
     Value: 506
@@ -329,7 +329,7 @@ MonoBehaviour:
   Path: Assets/FMODBanks/Desktop/Story Scenes.bank
   Name: Story Scenes
   StudioPath: bank:/Story Scenes
-  lastModified: 639032189481846236
+  lastModified: 639032953752458149
   FileSizes:
   - Name: Desktop
     Value: 506
@@ -399,7 +399,7 @@ MonoBehaviour:
   Path: Assets/FMODBanks/Desktop/Bass.bank
   Name: Bass
   StudioPath: bank:/Machines/Bass
-  lastModified: 639032189480519849
+  lastModified: 639032953749860621
   FileSizes:
   - Name: Desktop
     Value: 29325600
@@ -475,7 +475,7 @@ MonoBehaviour:
   Path: Assets/FMODBanks/Desktop/Lead.bank
   Name: Lead
   StudioPath: bank:/Machines/Lead
-  lastModified: 639032189481378896
+  lastModified: 639032953750836332
   FileSizes:
   - Name: Desktop
     Value: 4355008
@@ -539,7 +539,7 @@ MonoBehaviour:
   StringsBanks:
   - {fileID: 1696318666109757255}
   cacheVersion: 131856
-  cacheTime: 639032189481846236
+  cacheTime: 639032953752458149
   SerializableEventsDict:
   - key: event:/Assembly
     index: 0
@@ -570,7 +570,7 @@ MonoBehaviour:
   Path: Assets/FMODBanks/Desktop/Mini Games.bank
   Name: Mini Games
   StudioPath: bank:/Mini Games
-  lastModified: 639032189481514031
+  lastModified: 639032953751522433
   FileSizes:
   - Name: Desktop
     Value: 506
@@ -592,7 +592,7 @@ MonoBehaviour:
   Path: Assets/FMODBanks/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639032189481514031
+  lastModified: 639032953751320467
   FileSizes:
   - Name: Desktop
     Value: 2096
@@ -910,7 +910,7 @@ MonoBehaviour:
   Path: Assets/FMODBanks/Desktop/Percussion.bank
   Name: Percussion
   StudioPath: bank:/Machines/Percussion
-  lastModified: 639032189481846236
+  lastModified: 639032953751994941
   FileSizes:
   - Name: Desktop
     Value: 4379168
