@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
   machineName: 
-  prefab: {fileID: 0}
+  prefab: {fileID: 7861369315571813530, guid: 653bf93a4fd0fb4469fcbc631e0afff7, type: 3}
   icon: {fileID: 0}
   cost: 0
   inputMaterial: {fileID: 0}
