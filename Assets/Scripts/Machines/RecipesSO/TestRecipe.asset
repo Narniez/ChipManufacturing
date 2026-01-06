@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MachineRecipe
   name: 'SilliconCutterRecipie '
   inputs:
-  - material: {fileID: 11400000, guid: 49083a82d5ba44046b9bb4a50141c0d7, type: 2}
+  - material: {fileID: 11400000, guid: 7cb532456354ca84bbc30eca1dedceec, type: 2}
     amount: 1
   outputs:
   - material: {fileID: 11400000, guid: 2e04e17488d4d544696b225af5ef64b9, type: 2}

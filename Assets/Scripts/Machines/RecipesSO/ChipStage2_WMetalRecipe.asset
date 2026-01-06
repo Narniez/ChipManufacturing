@@ -10,9 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 83a17a861bb8b1b44a879f8ea9223cf7, type: 3}
-  m_Name: MachineRecipe
+  m_Name: ChipStage2_WMetalRecipe
   m_EditorClassIdentifier: Assembly-CSharp::MachineRecipe
-  name: 
-  inputs: []
-  outputs: []
+  name: Chip Stage Two With Metal
+  inputs:
+  - material: {fileID: 11400000, guid: f810a6a076680e049a4df49f1a87a817, type: 2}
+    amount: 1
+  outputs:
+  - material: {fileID: 11400000, guid: 982fee018fda1e743adbe967cfbce7ef, type: 2}
+    amount: 1
   processingTimeOverride: -1
