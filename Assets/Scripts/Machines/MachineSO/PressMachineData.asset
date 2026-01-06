@@ -21,7 +21,8 @@ MonoBehaviour:
   outputMaterial: {fileID: 0}
   processingTime: 2
   recipes:
-  - {fileID: 11400000, guid: cde54a842ee127f4b9e50c75c1c82c43, type: 2}
+  - {fileID: 11400000, guid: f5e53b1038d739b428b0df3df441442e, type: 2}
+  - {fileID: 11400000, guid: a67b2dc4c9af8924480d737558e4bdb1, type: 2}
   size: {x: 1, y: 1}
   repairMinigame: {fileID: 0}
   upgrades: []

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83a17a861bb8b1b44a879f8ea9223cf7, type: 3}
+  m_Name: BikeRecipe
+  m_EditorClassIdentifier: Assembly-CSharp::MachineRecipe
+  name: Bike
+  inputs:
+  - material: {fileID: 11400000, guid: 419d51098e3d6da47a1d5f96ac523bb7, type: 2}
+    amount: 1
+  - material: {fileID: 11400000, guid: aef7ca3c1575b9e4a9b7a55f1c3fe098, type: 2}
+    amount: 1
+  - material: {fileID: 11400000, guid: ecdb29de4c00f2b4cb9daff77b7ba583, type: 2}
+    amount: 1
+  - material: {fileID: 11400000, guid: 88da2f958d8df7e4eb998bf302f7cb8f, type: 2}
+    amount: 2
+  outputs:
+  - material: {fileID: 11400000, guid: 152f5f255d4f7b945bd1a058c0aaec74, type: 2}
+    amount: 1
+  processingTimeOverride: -1

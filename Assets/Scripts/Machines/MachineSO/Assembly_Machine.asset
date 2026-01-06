@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
   machineName: 
-  prefab: {fileID: 0}
+  prefab: {fileID: 495015138674993689, guid: ac07a5391b3638e4a89e9f3e766851eb, type: 3}
   icon: {fileID: 0}
   cost: 0
   inputMaterial: {fileID: 0}
@@ -22,6 +22,13 @@ MonoBehaviour:
   processingTime: 2
   recipes:
   - {fileID: 11400000, guid: 50732cf04e32d4046bc41aa387e866c1, type: 2}
+  - {fileID: 11400000, guid: 98e26761f905ffb4191fca1317423947, type: 2}
+  - {fileID: 11400000, guid: 2c29753c5be5c354e82aa1f002d688bf, type: 2}
+  - {fileID: 11400000, guid: 9af4340802871de48badb84d11cfc825, type: 2}
+  - {fileID: 11400000, guid: a5b60c2da76683f4a9477fd1d89a8d88, type: 2}
+  - {fileID: 11400000, guid: 1fc98d873270ebc47ad83d57eebee533, type: 2}
+  - {fileID: 11400000, guid: 6f33647fa0928bd418b17e3ce25ac856, type: 2}
+  - {fileID: 11400000, guid: 54eaa7c2f09824640bfddef9ef31d525, type: 2}
   size: {x: 1, y: 1}
   repairMinigame: {fileID: 0}
   upgrades: []

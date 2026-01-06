@@ -271,9 +271,30 @@ namespace ProceduralMusic {
         }
 
         // Clamp semitone offset to FMOD parameter range (-24..+24)
+        // Soft-clamp the semitone offset used for FMOD pitch parameters.
+        // Issue addressed: very large raw semitone offsets (e.g. when converting
+        // from high MIDI numbers relative to a low reference) were being hard-clamped
+        // to +/-24 which collapsed many distinct pitches to the same limit and
+        // made chords sound muddied and similar. This function preserves linear
+        // mapping within +/-24 semitones but gently compresses larger offsets so
+        // distinct notes still map to different parameter values instead of all
+        // being identical.
         public static float ClampForFmodPitch(float semitoneOffset)
         {
-            return Mathf.Clamp(semitoneOffset, -24f, 24f);
+            const float hardLimit = 24f; // linear region
+            const float maxAllow = 48f; // absolute maximum after compression
+
+            float abs = Mathf.Abs(semitoneOffset);
+            if (abs <= hardLimit) return semitoneOffset;
+
+            // compress the overflow so that values beyond hardLimit map into
+            // (hardLimit..maxAllow) using a gentle curve. This avoids a hard stop
+            // which previously caused very different notes to collapse to +/-24.
+            float overflow = abs - hardLimit;
+            // reduce overflow influence (scale by 0.5) and clamp to available headroom
+            float compressedOverflow = Mathf.Min(overflow * 0.5f, maxAllow - hardLimit);
+            float result = hardLimit + compressedOverflow;
+            return Mathf.Sign(semitoneOffset) * result;
         }
     }
 }

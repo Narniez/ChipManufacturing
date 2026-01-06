@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83a17a861bb8b1b44a879f8ea9223cf7, type: 3}
+  m_Name: ChipStage2_WMetalRecipe
+  m_EditorClassIdentifier: Assembly-CSharp::MachineRecipe
+  name: Chip Stage Two With Metal
+  inputs:
+  - material: {fileID: 11400000, guid: f810a6a076680e049a4df49f1a87a817, type: 2}
+    amount: 1
+  outputs:
+  - material: {fileID: 11400000, guid: 982fee018fda1e743adbe967cfbce7ef, type: 2}
+    amount: 1
+  processingTimeOverride: -1

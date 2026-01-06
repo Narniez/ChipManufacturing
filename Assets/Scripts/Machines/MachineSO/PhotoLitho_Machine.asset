@@ -22,6 +22,8 @@ MonoBehaviour:
   processingTime: 4
   recipes:
   - {fileID: 11400000, guid: 1337343925086af40b93e1c484b10819, type: 2}
+  - {fileID: 11400000, guid: 9da2afdfbafde384a804fcbb8dc904b9, type: 2}
+  - {fileID: 11400000, guid: 2ea907c7d2870414a81c5dab7eaae825, type: 2}
   size: {x: 2, y: 3}
   repairMinigame: {fileID: 11400000, guid: 3d8ff34971520df4daf12e353d1bb994, type: 2}
   upgrades: []

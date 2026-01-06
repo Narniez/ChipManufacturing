@@ -13,7 +13,7 @@ namespace ProceduralMusic {
         [SerializeField, Min(0)] private int postChordCount = 5;
 
         [Tooltip("Chance (0..1) to repeat previous chord / introduce repetition pattern when generating progression")]
-        [SerializeField, Range(0f, 1f)] private float repetitionChance = 0.5f;
+    [SerializeField, Range(0f, 1f)] private float repetitionChance = 0.35f;
 
         [Tooltip("Chance (0..1) that the global key will change when generating/advancing the progression")]
         [SerializeField, Range(0f, 1f)] private float keyChangeChance = 0.02f;
@@ -28,9 +28,9 @@ namespace ProceduralMusic {
         [Tooltip("Chance to add a 7th to chords")]
         [SerializeField, Range(0f,1f)] private float addSeventhChance = 0.25f;
         [Tooltip("Chance to add a 9th to chords")]
-        [SerializeField, Range(0f,1f)] private float addNinthChance = 0.12f;
+    [SerializeField, Range(0f,1f)] private float addNinthChance = 0.25f;
         [Tooltip("Chance to spread chord tones across adjacent octaves (gives airiness)")]
-        [SerializeField, Range(0f,1f)] private float spreadVoicingChance = 0.5f;
+            [SerializeField, Range(0f,1f)] private float spreadVoicingChance = 0.7f;
 
         [Header("Bass groove")]
         [Tooltip("Chance to octave-fill the bass on non-accent beats (adds movement)")]
@@ -67,6 +67,12 @@ namespace ProceduralMusic {
 
         private void OnEnable()
         {
+            // ConveyorChordManager generates a short moving window of chords used by
+            // conveyors and machines. It keeps a timeline of previous/current/future
+            // chords and advances on measure beats. The progression generation aims
+            // to be musically useful by adding occasional sevenths/9ths and spreading
+            // voicings to reduce low-frequency masking.
+
             _proceduralMusicManager = FindFirstObjectByType<ProceduralMusicManager>();
             if (_proceduralMusicManager == null)
             {
@@ -140,11 +146,15 @@ namespace ProceduralMusic {
             var notes = new List<int> { rootMidi, thirdMidi, fifthMidi };
 
             if (_rand.NextDouble() < addSeventhChance)
+            if (_rand.NextDouble() < addSeventhChance)
                 notes.Add(keyData.MidiNoteForDegree(seventhDegree, chordOctave));
             if (_rand.NextDouble() < addNinthChance)
                 notes.Add(keyData.MidiNoteForDegree(ninthDegree, chordOctave + 1)); // ninth often sounds higher
 
             // Optionally spread voicing across octaves to avoid low drone
+            if (_rand.NextDouble() < spreadVoicingChance)
+            // spreading voicing helps avoid a muddy low-frequency cluster by moving
+            // some chord tones up an octave occasionally
             if (_rand.NextDouble() < spreadVoicingChance)
             {
                 // push some chord tones up an octave to create air
@@ -197,10 +207,9 @@ namespace ProceduralMusic {
                 if (chord != null && chord.Length > 0)
                 {
                     int root = chord[0];
-                    // If voicing spread pushed the root up, find the effective root pitch class
-                    bassMidi = Mathf.Max(0, (root % 12) + (chordOctave - 1) * 12);
-                    // prefer one octave below the chord's lowest tone
-                    bassMidi = Mathf.Min(bassMidi, root - 12);
+                    // Prefer one octave below the chord's lowest tone; ensures bass sits
+                    // below the harmony and reduces low-frequency masking.
+                    bassMidi = Mathf.Max(0, root - 12);
                 }
                 _bassNotes.Add(bassMidi);
             }
