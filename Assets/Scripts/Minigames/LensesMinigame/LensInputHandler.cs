@@ -54,11 +54,6 @@ public class LensInputHandler : MonoBehaviour
         clickAction.started -= OnPressStarted;
         clickAction.canceled -= OnPressCanceled;
 
-        //clickAction.Disable();
-        //deltaAction.Disable();
-        //pointAction.Disable();
-
-        //inputActions.Disable();
     }
 
     private void OnPressStarted(InputAction.CallbackContext ctx)
@@ -76,20 +71,10 @@ public class LensInputHandler : MonoBehaviour
                 activeLens = lens;
                 if (lensesController != null)
                     lensesController.SelectLens(lens);
+            }
+        }
 
-                isDragging = true;
-            }
-            else
-            {
-                activeLens = null;
-                isDragging = false;
-            }
-        }
-        else
-        {
-            activeLens = null;
-            isDragging = false;
-        }
+        isDragging = (activeLens != null);
     }
 
     private void OnPressCanceled(InputAction.CallbackContext ctx)
@@ -105,8 +90,6 @@ public class LensInputHandler : MonoBehaviour
 
         Vector2 dragDelta = deltaAction.ReadValue<Vector2>();
         if (dragDelta.sqrMagnitude > 0.0001f)
-        {
             activeLens.HandleTouch(dragDelta);
-        }
     }
 }

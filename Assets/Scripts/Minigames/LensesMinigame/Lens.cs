@@ -239,12 +239,17 @@ public class Lens : MonoBehaviour
         }
     }
 
+    public void SetSelected(bool selected)
+    {
+        isSelected = selected;
+
+        if (cachedRenderer == null) return;
+        cachedRenderer.material.color = isSelected ? Color.yellow : originalColor;
+    }
 
     public void ToggleSelected()
     {
-        isSelected = !isSelected;
-        if (cachedRenderer == null) return;
-        cachedRenderer.material.color = isSelected ? Color.yellow : originalColor;
+        SetSelected(!isSelected);
     }
 
     #endregion

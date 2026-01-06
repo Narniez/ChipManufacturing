@@ -189,6 +189,7 @@ GameObject:
   - component: {fileID: 5638600189119089135}
   - component: {fileID: 3603371676282872111}
   - component: {fileID: 5314181168466580079}
+  - component: {fileID: -1721784677275386396}
   m_Layer: 0
   m_Name: ConveyorBeltModelPrefab
   m_TagString: Untagged
@@ -251,6 +252,22 @@ MonoBehaviour:
   itemHeight: 0.8
   isTurnPrefab: 0
   lockCorner: 0
+  cost: 50
+--- !u!114 &-1721784677275386396
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5897710200705214331}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3724f362057c10742826c956ff28433e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ConveyorSound
+  fmodEventPath: event:/Conveyor
+  pitchParameterName: Conveyor_Pitch
+  audibleRangeOverride: 40
 --- !u!1 &8764306248646928469
 GameObject:
   m_ObjectHideFlags: 0

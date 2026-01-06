@@ -249,7 +249,12 @@ public class PlacementManager : MonoBehaviour
     public GameObject GetConveyorPrefab(bool isTurn) => isTurn ? conveyorTurnPrefab : conveyorStraightPrefab;
     public Material GetPreviewMaterial() => placementPreviewMaterial;
 
-    internal void SetCurrentSelection(IGridOccupant occ) => CurrentSelection = occ;
+    internal void SetCurrentSelection(IGridOccupant occ)
+    {
+        CurrentSelection = occ;
+        TutorialEventBus.PublishSelectionChanged(occ);
+
+    }
 
     // External call from PreviewPlacementState when it instantiates a machine/belt
     internal void NotifySpawned(GameObject go)

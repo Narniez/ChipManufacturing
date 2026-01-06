@@ -1,5 +1,116 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-9137794869178183784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Chord.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: Assets/FMODBanks/Desktop/Chord.bank
+  Name: Chord
+  StudioPath: bank:/Machines/Chord
+  lastModified: 639032189480893938
+  FileSizes:
+  - Name: Desktop
+    Value: 2737056
+  - Name: Mobile
+    Value: 4767136
+  Exists: 1
+--- !u!114 &-8938061184393546785
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Bass.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../FMOD Audio ChipFac/Build/Desktop/Bass.bank
+  Name: Bass
+  StudioPath: bank:/Machines/Bass
+  lastModified: 639030284066335641
+  FileSizes:
+  - Name: Desktop
+    Value: 7411872
+  Exists: 1
+--- !u!114 &-8852904537947606345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/MetalDeposition
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/MetalDeposition
+  Guid:
+    Data1: 435100931
+    Data2: 1261526085
+    Data3: -1525964153
+    Data4: -925959219
+  Banks:
+  - {fileID: 6200599905602818718}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 1792
+--- !u!114 &-8668105691501447964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Master.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: Assets/FMODBanks/Desktop/Master.bank
+  Name: Master
+  StudioPath: bank:/Master
+  lastModified: 639032189481514031
+  FileSizes:
+  - Name: Desktop
+    Value: 1250
+  - Name: Mobile
+    Value: 1250
+  Exists: 1
+--- !u!114 &-8211541106213440306
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Lead.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../FMOD Audio ChipFac/Build/Desktop/Lead.bank
+  Name: Lead
+  StudioPath: bank:/Machines/Lead
+  lastModified: 639030284098588998
+  FileSizes:
+  - Name: Desktop
+    Value: 1150336
+  Exists: 1
 --- !u!114 &-8207321814017023525
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19,14 +130,65 @@ MonoBehaviour:
     Data3: -1666388845
     Data4: -436356112
   Banks:
-  - {fileID: -2737026045959417360}
+  - {fileID: 4689304002633571177}
   IsStream: 1
   Is3D: 1
-  IsOneShot: 1
-  Parameters: []
+  IsOneShot: 0
+  Parameters:
+  - {fileID: 6499572792519349550}
   MinDistance: 1
   MaxDistance: 20
-  Length: 19487
+  Length: 3000
+--- !u!114 &-7910135271097024802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Assembly/Assembly_Arms_Moving
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Assembly_Arms_Moving
+  StudioPath: 
+  Min: 0
+  Max: 1
+  Default: 0
+  ID:
+    data1: 1253084912
+    data2: 904464130
+  Type: 2
+  IsGlobal: 0
+  Labels:
+  - False
+  - True
+  Exists: 1
+--- !u!114 &-7867886089023086972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Distance
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Distance
+  StudioPath: parameter:/Distance
+  Min: 0
+  Max: 20
+  Default: 0
+  ID:
+    data1: 810384823
+    data2: 1913176006
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
 --- !u!114 &-7799789439791534460
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -47,7 +209,90 @@ MonoBehaviour:
   - Name: Desktop
     Value: 506
   Exists: 1
---- !u!114 &-2737026045959417360
+--- !u!114 &-7530842434852999436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Cutter
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Cutter
+  Guid:
+    Data1: 212975143
+    Data2: 1138924964
+    Data3: -1619802476
+    Data4: -853000972
+  Banks:
+  - {fileID: -792605092609451412}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: -4817321964317688183}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 11904
+--- !u!114 &-7452499360185792725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/MetalDeposition
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/MetalDeposition
+  Guid:
+    Data1: 435100931
+    Data2: 1261526085
+    Data3: -1525964153
+    Data4: -925959219
+  Banks:
+  - {fileID: 8592018437637761813}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 1792
+--- !u!114 &-6684114143554465245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Assembly
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Assembly
+  Guid:
+    Data1: -1136467346
+    Data2: 1109673401
+    Data3: 1891356817
+    Data4: -1653879408
+  Banks:
+  - {fileID: -3646289763645196364}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: -2948186951488090424}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 7502
+--- !u!114 &-6532978513510876873
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -57,15 +302,185 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
-  m_Name: bank:/Machines.bank
+  m_Name: bank:/SFX.bank
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
-  Path: ../FMOD Audio ChipFac/Build/Desktop/Machines.bank
-  Name: Machines
-  StudioPath: bank:/Machines
-  lastModified: 638989873083593337
+  Path: Assets/FMODBanks/Desktop/SFX.bank
+  Name: SFX
+  StudioPath: bank:/SFX
+  lastModified: 639032189481846236
   FileSizes:
   - Name: Desktop
-    Value: 642240
+    Value: 506
+  - Name: Mobile
+    Value: 506
+  Exists: 1
+--- !u!114 &-5980924882416882858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Story Scenes.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: Assets/FMODBanks/Desktop/Story Scenes.bank
+  Name: Story Scenes
+  StudioPath: bank:/Story Scenes
+  lastModified: 639032189481846236
+  FileSizes:
+  - Name: Desktop
+    Value: 506
+  - Name: Mobile
+    Value: 506
+  Exists: 1
+--- !u!114 &-5416987214604798891
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Conveyor/Conveyor_Pitch
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Conveyor_Pitch
+  StudioPath: 
+  Min: -24
+  Max: 24
+  Default: 0
+  ID:
+    data1: 3964600442
+    data2: 760449711
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
+--- !u!114 &-4817321964317688183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Cutter/Cutter_Pitch
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Cutter_Pitch
+  StudioPath: 
+  Min: -24
+  Max: 24
+  Default: 0
+  ID:
+    data1: 3246844402
+    data2: 960697394
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
+--- !u!114 &-3646289763645196364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Bass.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: Assets/FMODBanks/Desktop/Bass.bank
+  Name: Bass
+  StudioPath: bank:/Machines/Bass
+  lastModified: 639032189480519849
+  FileSizes:
+  - Name: Desktop
+    Value: 29325600
+  - Name: Mobile
+    Value: 31839616
+  Exists: 1
+--- !u!114 &-3409523415184541722
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/IonGenerator
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/IonGenerator
+  Guid:
+    Data1: 97439731
+    Data2: 1185659688
+    Data3: 1122311353
+    Data4: 2053760730
+  Banks:
+  - {fileID: -8938061184393546785}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: 5380014249677431283}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 4125
+--- !u!114 &-2948186951488090424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Assembly/Assembly_Arms_Moving
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Assembly_Arms_Moving
+  StudioPath: 
+  Min: 0
+  Max: 1
+  Default: 0
+  ID:
+    data1: 1253084912
+    data2: 904464130
+  Type: 2
+  IsGlobal: 0
+  Labels:
+  - False
+  - True
+  Exists: 1
+--- !u!114 &-792605092609451412
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Lead.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: Assets/FMODBanks/Desktop/Lead.bank
+  Name: Lead
+  StudioPath: bank:/Machines/Lead
+  lastModified: 639032189481378896
+  FileSizes:
+  - Name: Desktop
+    Value: 4355008
+  - Name: Mobile
+    Value: 4412704
   Exists: 1
 --- !u!114 &-773184271467868157
 MonoBehaviour:
@@ -100,27 +515,118 @@ MonoBehaviour:
   m_Name: FMODStudioCache
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EventCache
   EditorBanks:
-  - {fileID: 3069229412319844210}
-  - {fileID: -2737026045959417360}
-  - {fileID: 2084448092091626879}
-  - {fileID: -7799789439791534460}
-  - {fileID: 7721336901143236758}
-  - {fileID: -773184271467868157}
+  - {fileID: 1696318666109757255}
+  - {fileID: -3646289763645196364}
+  - {fileID: -9137794869178183784}
+  - {fileID: -792605092609451412}
+  - {fileID: -8668105691501447964}
+  - {fileID: 361846988597634281}
+  - {fileID: 6200599905602818718}
+  - {fileID: -6532978513510876873}
+  - {fileID: -5980924882416882858}
   EditorEvents:
-  - {fileID: 8508182427264599236}
-  - {fileID: -8207321814017023525}
-  EditorParameters: []
+  - {fileID: -6684114143554465245}
+  - {fileID: 2455174876771172316}
+  - {fileID: 6068112497395607849}
+  - {fileID: -7530842434852999436}
+  - {fileID: 1831261743385378255}
+  - {fileID: -8852904537947606345}
+  - {fileID: 9001038957526363253}
+  EditorParameters:
+  - {fileID: 9009383838637447705}
   MasterBanks:
-  - {fileID: 2084448092091626879}
+  - {fileID: -8668105691501447964}
   StringsBanks:
-  - {fileID: 3069229412319844210}
+  - {fileID: 1696318666109757255}
   cacheVersion: 131856
-  cacheTime: 638989873083686199
+  cacheTime: 639032189481846236
   SerializableEventsDict:
-  - key: event:/Press
+  - key: event:/Assembly
     index: 0
-  - key: event:/Conveyor
+  - key: event:/IonGenerator
     index: 1
+  - key: event:/Conveyor
+    index: 2
+  - key: event:/Cutter
+    index: 3
+  - key: event:/Welding
+    index: 4
+  - key: event:/MetalDeposition
+    index: 5
+  - key: event:/Press
+    index: 6
+--- !u!114 &361846988597634281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Mini Games.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: Assets/FMODBanks/Desktop/Mini Games.bank
+  Name: Mini Games
+  StudioPath: bank:/Mini Games
+  lastModified: 639032189481514031
+  FileSizes:
+  - Name: Desktop
+    Value: 506
+  - Name: Mobile
+    Value: 506
+  Exists: 1
+--- !u!114 &1696318666109757255
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Master.strings.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: Assets/FMODBanks/Desktop/Master.strings.bank
+  Name: Master.strings
+  StudioPath: bank:/Master.strings
+  lastModified: 639032189481514031
+  FileSizes:
+  - Name: Desktop
+    Value: 2096
+  - Name: Mobile
+    Value: 2096
+  Exists: 1
+--- !u!114 &1831261743385378255
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Welding
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Welding
+  Guid:
+    Data1: 1448709260
+    Data2: 1195416135
+    Data3: 1620085405
+    Data4: -1827981108
+  Banks:
+  - {fileID: -792605092609451412}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: 2158619507570640384}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 2468
 --- !u!114 &2084448092091626879
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -136,10 +642,110 @@ MonoBehaviour:
   Path: ../FMOD Audio ChipFac/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 638989873072894793
+  lastModified: 639030283941906428
   FileSizes:
   - Name: Desktop
-    Value: 1074
+    Value: 1250
+  Exists: 1
+--- !u!114 &2158619507570640384
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Welding/Welding_Pitch
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Welding_Pitch
+  StudioPath: 
+  Min: -24
+  Max: 24
+  Default: 0
+  ID:
+    data1: 1108343336
+    data2: 3465374131
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
+--- !u!114 &2455174876771172316
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/IonGenerator
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/IonGenerator
+  Guid:
+    Data1: 97439731
+    Data2: 1185659688
+    Data3: 1122311353
+    Data4: 2053760730
+  Banks:
+  - {fileID: -3646289763645196364}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: 2742273535059236410}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 4125
+--- !u!114 &2461290065607064342
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Welding/Welding_Pitch
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Welding_Pitch
+  StudioPath: 
+  Min: -24
+  Max: 24
+  Default: 0
+  ID:
+    data1: 1108343336
+    data2: 3465374131
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
+--- !u!114 &2742273535059236410
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/IonGenerator/IonGenerator_Pitch
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: IonGenerator_Pitch
+  StudioPath: 
+  Min: -24
+  Max: 24
+  Default: 0
+  ID:
+    data1: 3094754179
+    data2: 72729480
+  Type: 0
+  IsGlobal: 0
+  Labels: []
   Exists: 1
 --- !u!114 &3069229412319844210
 MonoBehaviour:
@@ -156,11 +762,213 @@ MonoBehaviour:
   Path: ../FMOD Audio ChipFac/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 638989873072904772
+  lastModified: 639030283941926379
   FileSizes:
   - Name: Desktop
-    Value: 1018
+    Value: 2096
   Exists: 1
+--- !u!114 &3689077007360677679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Welding
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Welding
+  Guid:
+    Data1: 1448709260
+    Data2: 1195416135
+    Data3: 1620085405
+    Data4: -1827981108
+  Banks:
+  - {fileID: -8211541106213440306}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: 2461290065607064342}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 2468
+--- !u!114 &4689304002633571177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Chord.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../FMOD Audio ChipFac/Build/Desktop/Chord.bank
+  Name: Chord
+  StudioPath: bank:/Machines/Chord
+  lastModified: 639030284087947976
+  FileSizes:
+  - Name: Desktop
+    Value: 397664
+  Exists: 1
+--- !u!114 &5040033850535794629
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Cutter
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Cutter
+  Guid:
+    Data1: 212975143
+    Data2: 1138924964
+    Data3: -1619802476
+    Data4: -853000972
+  Banks:
+  - {fileID: -8211541106213440306}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: 8680765742096680121}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 11904
+--- !u!114 &5380014249677431283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/IonGenerator/IonGenerator_Pitch
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: IonGenerator_Pitch
+  StudioPath: 
+  Min: -24
+  Max: 24
+  Default: 0
+  ID:
+    data1: 3094754179
+    data2: 72729480
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
+--- !u!114 &6068112497395607849
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Conveyor
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Conveyor
+  Guid:
+    Data1: -1953765688
+    Data2: 1304285277
+    Data3: -1666388845
+    Data4: -436356112
+  Banks:
+  - {fileID: -9137794869178183784}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: -5416987214604798891}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 3000
+--- !u!114 &6200599905602818718
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Percussion.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: Assets/FMODBanks/Desktop/Percussion.bank
+  Name: Percussion
+  StudioPath: bank:/Machines/Percussion
+  lastModified: 639032189481846236
+  FileSizes:
+  - Name: Desktop
+    Value: 4379168
+  - Name: Mobile
+    Value: 5591712
+  Exists: 1
+--- !u!114 &6499572792519349550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Conveyor/Conveyor_Pitch
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Conveyor_Pitch
+  StudioPath: 
+  Min: -24
+  Max: 24
+  Default: 0
+  ID:
+    data1: 3964600442
+    data2: 760449711
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
+--- !u!114 &7343035568387867170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Assembly
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Assembly
+  Guid:
+    Data1: -1136467346
+    Data2: 1109673401
+    Data3: 1891356817
+    Data4: -1653879408
+  Banks:
+  - {fileID: -8938061184393546785}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: -7910135271097024802}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 7502
 --- !u!114 &7721336901143236758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -195,16 +1003,111 @@ MonoBehaviour:
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
   Path: event:/Press
   Guid:
-    Data1: 883550219
-    Data2: 1292728402
-    Data3: -585367120
-    Data4: -2053273892
+    Data1: 694860586
+    Data2: 1228007987
+    Data3: 94688918
+    Data4: -529980311
   Banks:
-  - {fileID: -2737026045959417360}
-  IsStream: 1
+  - {fileID: 8592018437637761813}
+  IsStream: 0
   Is3D: 1
-  IsOneShot: 1
+  IsOneShot: 0
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 0
+  Length: 5125
+--- !u!114 &8592018437637761813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Percussion.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../FMOD Audio ChipFac/Build/Desktop/Percussion.bank
+  Name: Percussion
+  StudioPath: bank:/Machines/Percussion
+  lastModified: 639030284105475815
+  FileSizes:
+  - Name: Desktop
+    Value: 1156448
+  Exists: 1
+--- !u!114 &8680765742096680121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Cutter/Cutter_Pitch
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Cutter_Pitch
+  StudioPath: 
+  Min: -24
+  Max: 24
+  Default: 0
+  ID:
+    data1: 3246844402
+    data2: 960697394
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
+--- !u!114 &9001038957526363253
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Press
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Press
+  Guid:
+    Data1: 694860586
+    Data2: 1228007987
+    Data3: 94688918
+    Data4: -529980311
+  Banks:
+  - {fileID: 6200599905602818718}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 5125
+--- !u!114 &9009383838637447705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Distance
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Distance
+  StudioPath: parameter:/Distance
+  Min: 0
+  Max: 20
+  Default: 0
+  ID:
+    data1: 810384823
+    data2: 1913176006
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1

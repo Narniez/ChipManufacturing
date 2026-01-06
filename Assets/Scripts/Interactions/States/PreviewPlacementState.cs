@@ -43,6 +43,9 @@ public class PreviewPlacementState : BasePlacementState
 
     public override void Enter()
     {
+
+        PlaceMan.SetCurrentSelection(null);
+
         _grid = PlaceMan.GridService;
         if (_grid == null || !_grid.HasGrid || _prefab == null)
         {
@@ -68,6 +71,9 @@ public class PreviewPlacementState : BasePlacementState
             PlaceMan.SetState(new IdleState(PlaceMan));
             return;
         }
+
+        TutorialEventBus.PublishPreviewStarted(_instance);
+
 
         // Detect conveyor belt previews
         _isConveyor = _instance.GetComponent<ConveyorBelt>() != null;
@@ -140,6 +146,12 @@ public class PreviewPlacementState : BasePlacementState
     // Tap anywhere to move the preview
     public override void OnTap(IInteractable target, Vector2 screen, Vector3 world)
     {
+        if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+        {
+            Debug.Log("UI blocking placement");
+            //return;
+        }
+
         if (_instance == null || _occ == null || _grid == null || !_grid.HasGrid) return;
 
         var size = GetOrientedSize();
@@ -165,6 +177,12 @@ public class PreviewPlacementState : BasePlacementState
 
     public override void OnHoldMove(IInteractable target, Vector2 screen, Vector3 world)
     {
+        if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+        {
+            Debug.Log("UI blocking placement");
+            //return;
+        }
+
         if (_instance == null || _occ == null) return;
 
         PlaceMan.EdgeScrollCamera(screen);
@@ -250,6 +268,10 @@ public class PreviewPlacementState : BasePlacementState
         _grid.SetAreaOccupant(_anchor, size, _instance);
         _committed = true;
 
+        TutorialEventBus.PublishPreviewConfirmed();
+        PlaceMan.SetCurrentSelection(_occ);
+
+
         // Persist machine placement immediately so save.json contains the new machine.
         if (machine != null)
         {
@@ -264,14 +286,11 @@ public class PreviewPlacementState : BasePlacementState
             {
                 EconomyManager.Instance?.PurchaseConveyor(belt, ref EconomyManager.Instance.playerBalance);
                 belt.NotifyAdjacentMachinesOfConnection();
-
             }
-            PlaceMan.SetState(new SelectingState(PlaceMan, _occ));
         }
-        else
-        {
-            PlaceMan.SetState(new IdleState(PlaceMan));
-        }
+
+        PlaceMan.SetState(new SelectingState(PlaceMan, _occ));
+
 
         // Cleanup preview port indicators after placement
         DestroyPortIndicators();
@@ -294,6 +313,8 @@ public class PreviewPlacementState : BasePlacementState
             {
                 economyManager.PurchaseMachine(_machineData, ref EconomyManager.Instance.playerBalance);
             }
+
+
         }
     }
 

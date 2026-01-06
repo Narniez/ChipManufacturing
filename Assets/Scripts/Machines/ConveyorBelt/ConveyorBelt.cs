@@ -221,21 +221,26 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
     public void OnTap() { }
     public void OnHold() { }
 
-    public void TickMoveAttempt()
+    // public facing - attempt to move once; returns true when a move occurred.
+    // This is a small signature change (was void) so callers can know if a move happened.
+    public bool TickMoveAttempt()
     {
-        if (_item == null) return;
-        if (IsItemAnimating()) return;
+        if (_item == null) return false;
+        if (IsItemAnimating()) return false;
 
         EnsureForwardLinkStrict();
 
         if (NextInChain != null && TryMoveOntoChainChild(NextInChain))
-            return;
+            return true;
 
         if (TryMoveOntoForwardBeltFallback())
-            return;
+            return true;
 
         // Delivery attempt if no belt ahead
-        TryDeliverToMachine(Anchor + GridOrientationExtentions.OrientationToDelta(orientation));
+        if (TryDeliverToMachine(Anchor + GridOrientationExtentions.OrientationToDelta(orientation)))
+            return true;
+
+        return false;
     }
 
     // Strict chain link maintenance (does not override existing parent on forward belt unless invalid)
