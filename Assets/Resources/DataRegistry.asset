@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DataRegistry
   m_EditorClassIdentifier: Assembly-CSharp::DataRegistry
   machines:
-  - id: Chip Machine
+  - id: Cutting Machine
     data: {fileID: 11400000, guid: d4ac0eeb666d84e42933ecf1459abe98, type: 2}
     soundData: {fileID: 11400000, guid: e09c75aa186569348856e5f9a2f318fd, type: 2}
   - id: Sillicon Material Depo
@@ -21,13 +21,28 @@ MonoBehaviour:
     soundData: {fileID: 11400000, guid: 6bf40b3348463e4438f5da10702776c2, type: 2}
   - id: Photolithography Machine
     data: {fileID: 11400000, guid: a4661fd3e7881bf4aa2fbba17314f173, type: 2}
-    soundData: {fileID: 0}
+    soundData: {fileID: 11400000, guid: 6bf40b3348463e4438f5da10702776c2, type: 2}
   - id: 'Metal Wiring Deposition '
     data: {fileID: 11400000, guid: b2b249c125c210a49b5f2e8ed6f34fbe, type: 2}
-    soundData: {fileID: 0}
+    soundData: {fileID: 11400000, guid: 8ffaf62d61eed8648bbaa936f6cc78a9, type: 2}
   - id: Press
     data: {fileID: 11400000, guid: f44cd445d1201fd42a89e4ee49ccc272, type: 2}
     soundData: {fileID: 11400000, guid: 08d445a622c7f1e45ac3070f44ec3d3b, type: 2}
+  - id: Assembly
+    data: {fileID: 11400000, guid: 63aefbac3736c7541bed3a9ceb4369d2, type: 2}
+    soundData: {fileID: 11400000, guid: b22a42f3fe3ffb147ad865adf1b95e54, type: 2}
+  - id: Bender
+    data: {fileID: 11400000, guid: 8ba650979ebf0aa488dd9ffd25ff89dc, type: 2}
+    soundData: {fileID: 0}
+  - id: IonImplantor
+    data: {fileID: 11400000, guid: 3adadda1b77322740b58ce53d175bcef, type: 2}
+    soundData: {fileID: 0}
+  - id: Puller
+    data: {fileID: 11400000, guid: 359bfaff1d4a369438e7b1bbd8153f49, type: 2}
+    soundData: {fileID: 0}
+  - id: Puller
+    data: {fileID: 11400000, guid: 359bfaff1d4a369438e7b1bbd8153f49, type: 2}
+    soundData: {fileID: 0}
   materials:
   - id: Copper
     data: {fileID: 11400000, guid: 6f9e36d4851ad8a4fa927f353c03dc07, type: 2}
@@ -41,13 +56,130 @@ MonoBehaviour:
     data: {fileID: 11400000, guid: ae6f80625a8c53c43986d6bdee75e9c2, type: 2}
   - id: ChipDesign
     data: {fileID: 11400000, guid: e06c5320cc760af4e940f23d23abaafb, type: 2}
+  - id: SiliconRod
+    data: {fileID: 11400000, guid: 7cb532456354ca84bbc30eca1dedceec, type: 2}
+  - id: Chip
+    data: {fileID: 11400000, guid: 48fcbfc1d712a4e4ca994a657b247b09, type: 2}
+  - id: Rods
+    data: {fileID: 11400000, guid: 2b40b9b7c92e72c42993fce4cf60c2f2, type: 2}
+  - id: Plates
+    data: {fileID: 11400000, guid: a7f19c4f9240e024080b171813df65eb, type: 2}
+  - id: Gears
+    data: {fileID: 11400000, guid: 0007a670576c84446b4f8710efcb243a, type: 2}
+  - id: ChipStage1
+    data: {fileID: 11400000, guid: b573a15bfc6806f4b943d93c85201d65, type: 2}
+  - id: Balls
+    data: {fileID: 11400000, guid: c5519c175500c1d44b677aec0579c8ab, type: 2}
+  - id: BallBearings
+    data: {fileID: 11400000, guid: 02d62db935a824a4b8b6db76a506b493, type: 2}
+  - id: Tire
+    data: {fileID: 11400000, guid: 88da2f958d8df7e4eb998bf302f7cb8f, type: 2}
+  - id: SteelDisk
+    data: {fileID: 11400000, guid: f1be7600eca6b334c99cd8aeffa26546, type: 2}
+  - id: Spring
+    data: {fileID: 11400000, guid: 58d75003db2f8d742b6845cb93acdf7e, type: 2}
+  - id: Petals
+    data: {fileID: 11400000, guid: aef7ca3c1575b9e4a9b7a55f1c3fe098, type: 2}
+  - id: MetalBox
+    data: {fileID: 11400000, guid: 64e1c38ff06964043bc11222e51e246b, type: 2}
+  - id: MetalFrame
+    data: {fileID: 11400000, guid: ecdb29de4c00f2b4cb9daff77b7ba583, type: 2}
+  - id: GearSystem
+    data: {fileID: 11400000, guid: 419d51098e3d6da47a1d5f96ac523bb7, type: 2}
+  - id: ChipStage3
+    data: {fileID: 11400000, guid: 0543cd7c18686574882f91dd8c5d8347, type: 2}
+  - id: ChipStage2
+    data: {fileID: 11400000, guid: 4d73601916d16a14388897263c7b1ee0, type: 2}
+  - id: ChipStage2Transistor
+    data: {fileID: 11400000, guid: f810a6a076680e049a4df49f1a87a817, type: 2}
+  - id: ChipStage2Transistor
+    data: {fileID: 11400000, guid: 85c8d3eeb6133c04c8dcb33afc29ae1f, type: 2}
+  - id: ChipStage2Metal
+    data: {fileID: 11400000, guid: 982fee018fda1e743adbe967cfbce7ef, type: 2}
+  - id: ChipStage1Metal
+    data: {fileID: 11400000, guid: 36ceafdbb385dba4893f1c0099ed7ad1, type: 2}
+  - id: Chip3
+    data: {fileID: 11400000, guid: be200e502727fc74cbdddd8a16f2b556, type: 2}
+  - id: Chip2
+    data: {fileID: 11400000, guid: 06efecab0e3aaf24e99246ca7f66b71a, type: 2}
+  - id: Bike
+    data: {fileID: 11400000, guid: 152f5f255d4f7b945bd1a058c0aaec74, type: 2}
   recipes:
-  - id: Steel
-    data: {fileID: 11400000, guid: c3835561a1409554b8e63d396ce3a5da, type: 2}
-    soundData: {fileID: 11400000, guid: a877e1dceb1006843be9f1d31169d74f, type: 2}
   - id: Test1
     data: {fileID: 11400000, guid: 882bdd72bb6ee694b99d9c7726f44fe8, type: 2}
     soundData: {fileID: 0}
-  - id: PressTest
+  - id: SiliconRod
     data: {fileID: 11400000, guid: cde54a842ee127f4b9e50c75c1c82c43, type: 2}
+    soundData: {fileID: 0}
+  - id: TransistorWafer
+    data: {fileID: 11400000, guid: 1337343925086af40b93e1c484b10819, type: 2}
+    soundData: {fileID: 0}
+  - id: Tire
+    data: {fileID: 11400000, guid: 6f33647fa0928bd418b17e3ce25ac856, type: 2}
+    soundData: {fileID: 0}
+  - id: SteelRod
+    data: {fileID: 11400000, guid: fccb694e190f031479255ba43e74f5c0, type: 2}
+    soundData: {fileID: 0}
+  - id: SteelPlate
+    data: {fileID: 11400000, guid: f5e53b1038d739b428b0df3df441442e, type: 2}
+    soundData: {fileID: 0}
+  - id: SteelPlate
+    data: {fileID: 11400000, guid: f5e53b1038d739b428b0df3df441442e, type: 2}
+    soundData: {fileID: 0}
+  - id: SteelBall
+    data: {fileID: 11400000, guid: 5e34d09c0119d4b429f7bbdee580fa64, type: 2}
+    soundData: {fileID: 0}
+  - id: Spring
+    data: {fileID: 11400000, guid: ea83bd8730a5e114e8ee30531aed572e, type: 2}
+    soundData: {fileID: 0}
+  - id: Petal
+    data: {fileID: 11400000, guid: 54eaa7c2f09824640bfddef9ef31d525, type: 2}
+    soundData: {fileID: 0}
+  - id: MetalFrame
+    data: {fileID: 11400000, guid: 14ac04f98f0cf1643ae8a6e76fbddb62, type: 2}
+    soundData: {fileID: 0}
+  - id: MetalBox
+    data: {fileID: 11400000, guid: 66b26e7aaec30ec4ebdaaf8664624363, type: 2}
+    soundData: {fileID: 0}
+  - id: GearSystem
+    data: {fileID: 11400000, guid: a5b60c2da76683f4a9477fd1d89a8d88, type: 2}
+    soundData: {fileID: 0}
+  - id: Gears
+    data: {fileID: 11400000, guid: a04da93745ad4884baea687bad10c200, type: 2}
+    soundData: {fileID: 0}
+  - id: FinalChip3
+    data: {fileID: 11400000, guid: 2c29753c5be5c354e82aa1f002d688bf, type: 2}
+    soundData: {fileID: 0}
+  - id: FinalChip2
+    data: {fileID: 11400000, guid: 98e26761f905ffb4191fca1317423947, type: 2}
+    soundData: {fileID: 0}
+  - id: FinalChip1
+    data: {fileID: 11400000, guid: 50732cf04e32d4046bc41aa387e866c1, type: 2}
+    soundData: {fileID: 0}
+  - id: ChipStage3
+    data: {fileID: 11400000, guid: 1d176e00b00283c46b14a8492fe458d2, type: 2}
+    soundData: {fileID: 0}
+  - id: ChipStage2
+    data: {fileID: 11400000, guid: 06790bf0aec482044bc381f0b98b56a1, type: 2}
+    soundData: {fileID: 0}
+  - id: ChipStage2WithTransistor
+    data: {fileID: 11400000, guid: 9da2afdfbafde384a804fcbb8dc904b9, type: 2}
+    soundData: {fileID: 0}
+  - id: ChipStage2
+    data: {fileID: 11400000, guid: 06790bf0aec482044bc381f0b98b56a1, type: 2}
+    soundData: {fileID: 0}
+  - id: ChipStage1
+    data: {fileID: 11400000, guid: 5575cf411305b684992e8f6a72459c4a, type: 2}
+    soundData: {fileID: 0}
+  - id: ChipStage1WithTransistor
+    data: {fileID: 11400000, guid: 2ea907c7d2870414a81c5dab7eaae825, type: 2}
+    soundData: {fileID: 0}
+  - id: ChipStage1WithMetal
+    data: {fileID: 11400000, guid: 0b375fdfb2559a649b3d1878a6f03462, type: 2}
+    soundData: {fileID: 0}
+  - id: ChipDesign
+    data: {fileID: 11400000, guid: eb5bc08ac70e2a5479a8a6125d57f9de, type: 2}
+    soundData: {fileID: 0}
+  - id: Bike
+    data: {fileID: 11400000, guid: 9af4340802871de48badb84d11cfc825, type: 2}
     soundData: {fileID: 0}
