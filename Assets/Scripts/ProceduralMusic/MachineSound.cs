@@ -8,6 +8,16 @@ namespace ProceduralMusic {
     [DisallowMultipleComponent]
     public class MachineSound : MonoBehaviour
     {
+        // MachineSound is responsible for managing FMOD event instances attached
+        // to machines. It listens to production events, measure beats and chord/bass
+        // changes and adjusts pitch parameters or triggers one-shot events.
+        //
+        // Responsibilities:
+        // - Start/stop FMOD instances for continuous sounds (WhileProducing)
+        // - Play one-shot percussion when production finishes (OnProduce)
+        // - Respond to ConveyorChordManager events to update melodic/bass pitches
+        // - Keep audio 3D attributes in sync with the GameObject
+
         [Tooltip("Optional override to the MachineSoundData (if set manually).")]
         public MachineSoundData soundData;
 
@@ -225,7 +235,15 @@ namespace ProceduralMusic {
         }
 
         // Play a looping event briefly for one-shot/percussion use: start, wait durationSeconds, stop+release.
-        private IEnumerator PlayOneShotAndStop(string fmodPath, string pitchParamName, float? semitoneOffset = null, float durationSeconds = 0.5f)
+    /// <summary>
+    /// Play a (possibly looping) FMOD event instance temporarily, then stop and release it.
+    /// Used for percussion and one-shot machine sounds triggered on production.
+    /// </summary>
+    /// <param name="fmodPath">FMOD event path</param>
+    /// <param name="pitchParamName">FMOD parameter name for pitch (semitone offset)</param>
+    /// <param name="semitoneOffset">Optional semitone offset to apply before starting</param>
+    /// <param name="durationSeconds">How long to let the event play before stopping</param>
+    private IEnumerator PlayOneShotAndStop(string fmodPath, string pitchParamName, float? semitoneOffset = null, float durationSeconds = 0.5f)
         {
             if (string.IsNullOrWhiteSpace(fmodPath)) yield break;
 
@@ -330,27 +348,33 @@ namespace ProceduralMusic {
             }
             catch { }
 
-            int pickIndex = chord.Length - 1; // default highest
+            // Improved selection logic: pick a chord tone or nearby tone depending on chordBias
+            // chordBias 0 -> prefer tones inside the chord; 1 -> prefer outside/upper tones.
+            int pickIndex = Mathf.Clamp((int)(UnityEngine.Random.value * chord.Length), 0, chord.Length - 1);
             if (soundData.Instrument == MachineSoundData.InstrumentType.Lead)
             {
-                // chordBias closer to 0 -> pick chord tones; closer to 1 -> prefer non-root/upper tones
-                double r = UnityEngine.Random.value;
-                if (r < (1f - chordBias))
+                // bias the pickIndex toward chord tones based on chordBias
+                float bias = Mathf.Clamp01(1f - chordBias); // 1 -> strongly inside chord
+                if (UnityEngine.Random.value < bias)
                 {
-                    // pick inside chord: choose one of the top 3 chord tones when available
-                    pickIndex = UnityEngine.Random.Range(Mathf.Max(0, chord.Length - 3), chord.Length);
+                    // choose a middle chord tone to avoid always picking the top tone
+                    int low = Mathf.Max(0, chord.Length - 3);
+                    int high = chord.Length;
+                    pickIndex = UnityEngine.Random.Range(low, high);
                 }
                 else
                 {
-                    // pick slightly outside/top to add color
-                    pickIndex = chord.Length - 1;
-                    if (UnityEngine.Random.value < 0.4f) pickIndex = chord.Length - 1; // keep high
+                    // sometimes choose outside the main voicing for color: pick top or add octave
+                    if (UnityEngine.Random.value < 0.5f)
+                        pickIndex = chord.Length - 1;
+                    else
+                        pickIndex = Mathf.Clamp(pickIndex + 1, 0, chord.Length - 1);
                 }
             }
             else
             {
-                // For chord instruments, pick the voicing's highest tone for brightness
-                pickIndex = chord.Length - 1;
+                // For chord instruments, pick a mid/high voicing but avoid always the same index
+                pickIndex = Mathf.Clamp((int)(UnityEngine.Random.value * chord.Length), 0, chord.Length - 1);
             }
 
             int selectedMidi = chord[Mathf.Clamp(pickIndex, 0, chord.Length - 1)];

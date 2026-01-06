@@ -73,6 +73,8 @@ namespace ProceduralMusic {
         private void HandleChordChanged(int[] newChord)
         {
             // update immediately (will start/stop and set parameter as needed)
+            // Chord changes should adjust running pitch parameters; keep this
+            // lightweight so the audio thread can be updated on the next frame.
             UpdatePlayState();
         }
 
@@ -142,7 +144,11 @@ namespace ProceduralMusic {
                 }
 
                 // determine deterministic voice index for this conveyor so multiple conveyors map across chord notes
-                int voiceIndex = Mathf.Abs(transform.position.GetHashCode()) % chord.Length;
+                // Using GetInstanceID gives a more stable per-instance distribution than hashing position
+                // (position hashes can collide or be similar for conveyors placed on a grid). This keeps
+                // different conveyors from often picking the same chord voice and makes the soundscape
+                // more varied and clearer.
+                int voiceIndex = Mathf.Abs(gameObject.GetInstanceID()) % chord.Length;
                 int midi = chord[voiceIndex];
                 float semitoneOffset = midi - NoteUtils.MidiA1;
                 float paramValue = NoteUtils.ClampForFmodPitch(semitoneOffset);
@@ -196,7 +202,8 @@ namespace ProceduralMusic {
             {
                 var inst = RuntimeManager.CreateInstance(fmodEventPath);
                 inst.set3DAttributes(RuntimeUtils.To3DAttributes(gameObject));
-                inst.setParameterByName(pitchParameterName, pitchSemitone);
+                // Ensure the pitch is within a usable range for FMOD parameters.
+                inst.setParameterByName(pitchParameterName, NoteUtils.ClampForFmodPitch(pitchSemitone));
                 inst.start();
                 _instance = inst;
                 _started = true;

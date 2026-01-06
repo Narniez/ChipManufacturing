@@ -7,6 +7,9 @@ namespace ProceduralMusic {
     [CustomEditor(typeof(ConveyorChordManager))]
     public class ConveyorChordManagerEditor : Editor
     {
+        // Editor for ConveyorChordManager that shows a compact visual timeline of
+        // generated chords and provides a convenient button to regenerate the progression.
+
         private ConveyorChordManager manager => (ConveyorChordManager)target;
 
         public override void OnInspectorGUI()

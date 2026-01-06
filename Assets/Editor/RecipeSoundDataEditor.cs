@@ -68,6 +68,12 @@ namespace ProceduralMusic {
             EditorGUILayout.Space();
             EditorGUILayout.HelpBox("Instrument preview mode can be set to Auto (tries override profile), or forced for editing.", MessageType.Info);
 
+            // Pattern controls only apply when the sound is played repeatedly while producing.
+            if ((MachineSoundData.PlayTiming)playTimingProp.enumValueIndex != MachineSoundData.PlayTiming.WhileProducing)
+            {
+                EditorGUILayout.HelpBox("Note: pattern controls are ignored when Play Timing is not 'WhileProducing'.", MessageType.Warning);
+            }
+
             serializedObject.ApplyModifiedProperties();
         }
 
