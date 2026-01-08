@@ -18,7 +18,7 @@ MonoBehaviour:
     soundData: {fileID: 11400000, guid: e09c75aa186569348856e5f9a2f318fd, type: 2}
   - id: Sillicon Material Depo
     data: {fileID: 11400000, guid: 6ba470c9a73f1184bb3abf8ff964a3be, type: 2}
-    soundData: {fileID: 11400000, guid: 6bf40b3348463e4438f5da10702776c2, type: 2}
+    soundData: {fileID: 0}
   - id: Photolithography Machine
     data: {fileID: 11400000, guid: a4661fd3e7881bf4aa2fbba17314f173, type: 2}
     soundData: {fileID: 11400000, guid: 6bf40b3348463e4438f5da10702776c2, type: 2}
@@ -40,8 +40,8 @@ MonoBehaviour:
   - id: Puller
     data: {fileID: 11400000, guid: 359bfaff1d4a369438e7b1bbd8153f49, type: 2}
     soundData: {fileID: 0}
-  - id: Puller
-    data: {fileID: 11400000, guid: 359bfaff1d4a369438e7b1bbd8153f49, type: 2}
+  - id: Steel Depot
+    data: {fileID: 11400000, guid: 934bdbb7f6ea7e449a6e03e5111aae3e, type: 2}
     soundData: {fileID: 0}
   materials:
   - id: Copper
