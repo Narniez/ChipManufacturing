@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: IonImplantor_Machine
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
-  machineName: 
+  machineName: Ion Implantor
   prefab: {fileID: 7861369315571813530, guid: 653bf93a4fd0fb4469fcbc631e0afff7, type: 3}
   icon: {fileID: 0}
   cost: 0
@@ -27,9 +27,15 @@ MonoBehaviour:
   size: {x: 1, y: 1}
   repairMinigame: {fileID: 0}
   upgrades: []
-  ports: []
-  inputPortIndicatorPrefab: {fileID: 0}
-  outputPortIndicatorPrefab: {fileID: 0}
+  ports:
+  - kind: 2
+    side: 0
+    offset: 0
+  - kind: 1
+    side: 2
+    offset: 0
+  inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
+  outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
   chanceIncreasePerOutput: 2
   minimunChanceToBreak: 20
   brokenMachineIndicator: {fileID: 0}

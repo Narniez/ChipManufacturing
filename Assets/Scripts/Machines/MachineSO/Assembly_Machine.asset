@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Assembly_Machine
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
-  machineName: 
-  prefab: {fileID: 495015138674993689, guid: ac07a5391b3638e4a89e9f3e766851eb, type: 3}
+  machineName: Assembly
+  prefab: {fileID: 3991115457945528057, guid: 434ab431c7ca5ce409478f4f52ab296e, type: 3}
   icon: {fileID: 0}
   cost: 0
   inputMaterial: {fileID: 0}
@@ -29,12 +29,24 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1fc98d873270ebc47ad83d57eebee533, type: 2}
   - {fileID: 11400000, guid: 6f33647fa0928bd418b17e3ce25ac856, type: 2}
   - {fileID: 11400000, guid: 54eaa7c2f09824640bfddef9ef31d525, type: 2}
-  size: {x: 1, y: 1}
+  size: {x: 3, y: 3}
   repairMinigame: {fileID: 0}
   upgrades: []
-  ports: []
-  inputPortIndicatorPrefab: {fileID: 0}
-  outputPortIndicatorPrefab: {fileID: 0}
+  ports:
+  - kind: 2
+    side: 0
+    offset: -1
+  - kind: 1
+    side: 1
+    offset: -1
+  - kind: 1
+    side: 2
+    offset: -1
+  - kind: 1
+    side: 3
+    offset: -1
+  inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
+  outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
   chanceIncreasePerOutput: 2
   minimunChanceToBreak: 20
   brokenMachineIndicator: {fileID: 0}

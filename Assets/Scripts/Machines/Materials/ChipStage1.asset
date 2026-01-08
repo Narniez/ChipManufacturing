@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: ChipStage1
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
-  materialName: 
+  materialName: Chip Stage 1
   icon: {fileID: 0}
-  prefab: {fileID: 5974428229950334080, guid: 43d60c4268247614ab7d9859882be606, type: 3}
+  prefab: {fileID: 3302082574463725970, guid: 48202cbc60a45844e9101590b9c1c56a, type: 3}
   cost: 0
   unit: pcs
   unitScale: 1

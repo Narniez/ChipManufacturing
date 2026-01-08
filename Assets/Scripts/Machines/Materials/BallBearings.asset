@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: BallBearings
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
-  materialName: 
+  materialName: Ball Bearings
   icon: {fileID: 0}
-  prefab: {fileID: 6397332429431845539, guid: fb2d239a27506a446ab0b74e70e93819, type: 3}
+  prefab: {fileID: 8596121458061275197, guid: b2c849adb6aefbe41997a0f7d701425b, type: 3}
   cost: 0
   unit: pcs
   unitScale: 1
