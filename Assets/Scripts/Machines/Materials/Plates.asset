@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Plates
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
-  materialName: 
+  materialName: Plates
   icon: {fileID: 0}
   prefab: {fileID: 193909995073368953, guid: 36399f84574e19b42a1e4129d8a2a01b, type: 3}
   cost: 0

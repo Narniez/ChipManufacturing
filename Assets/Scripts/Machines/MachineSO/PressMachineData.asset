@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
   machineName: Press
-  prefab: {fileID: 9038231671212334539, guid: c9b619322d435f148a2f8a16fcf52b23, type: 3}
+  prefab: {fileID: 5871702000536935786, guid: 8c2d47a86541b1a4bb656828802d931e, type: 3}
   icon: {fileID: 0}
   cost: 150
   inputMaterial: {fileID: 0}
@@ -33,8 +33,8 @@ MonoBehaviour:
   - kind: 2
     side: 2
     offset: 0
-  inputPortIndicatorPrefab: {fileID: 0}
-  outputPortIndicatorPrefab: {fileID: 0}
+  inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
+  outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
   chanceIncreasePerOutput: 2
   minimunChanceToBreak: 20
   brokenMachineIndicator: {fileID: 0}

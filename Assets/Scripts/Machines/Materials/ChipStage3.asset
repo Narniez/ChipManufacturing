@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f2a2e681ebc4a4e4a88a51e9ad1a00aa, type: 3}
-  m_Name: _ChipS1Metal
+  m_Name: ChipStage3
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
-  materialName: Chip S1 Metal
+  materialName: Chip Stage 3
   icon: {fileID: 0}
-  prefab: {fileID: 8559448409965842562, guid: d98b8db6ba6029d4880a2d3b51624cdc, type: 3}
+  prefab: {fileID: 8332272305505018994, guid: a46b057e885ff13419878a52d75be313, type: 3}
   cost: 0
   unit: pcs
   unitScale: 1

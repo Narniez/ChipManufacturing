@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: 1
   materialName: Steel
-  materialType: 1
-  materialCategory: 0
   icon: {fileID: 21300000, guid: 03f51453292d00c4c94cec748ac4deb5, type: 3}
+  prefab: {fileID: 8559448409965842562, guid: d98b8db6ba6029d4880a2d3b51624cdc, type: 3}
   cost: 30
   unit: pcs
   unitScale: 1
   maxStack: 9999
   tags: []
+  upgradeMaterials: []
+  requiredMachines: []

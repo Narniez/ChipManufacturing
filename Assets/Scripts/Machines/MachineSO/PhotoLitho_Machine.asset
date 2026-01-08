@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
   machineName: Photolithography Machine
-  prefab: {fileID: 315169815577762446, guid: 26074415fce2b1643b17bbc03927c622, type: 3}
+  prefab: {fileID: 4449261370138669661, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
   icon: {fileID: -9095717837082945937, guid: ba9e883793fe0424f95847dcde257b85, type: 3}
   cost: 500
   inputMaterial: {fileID: 11400000, guid: 2e04e17488d4d544696b225af5ef64b9, type: 2}

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83a17a861bb8b1b44a879f8ea9223cf7, type: 3}
   m_Name: GearSystemRecipe
   m_EditorClassIdentifier: Assembly-CSharp::MachineRecipe
-  name: 
+  name: Gear System
   inputs:
   - material: {fileID: 11400000, guid: 0007a670576c84446b4f8710efcb243a, type: 2}
     amount: 5

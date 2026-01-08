@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
   machineName: Welding
-  prefab: {fileID: 919132149155446097, guid: 2a24c823e60c29a4a8d980f72d62582e, type: 3}
+  prefab: {fileID: 8482616116469616519, guid: ef8b945d451996e409685ea3aa83838c, type: 3}
   icon: {fileID: 0}
   cost: 0
   inputMaterial: {fileID: 0}
@@ -26,14 +26,14 @@ MonoBehaviour:
   repairMinigame: {fileID: 0}
   upgrades: []
   ports:
-  - kind: 0
+  - kind: 2
     side: 0
     offset: 0
-  - kind: 0
-    side: 0
+  - kind: 1
+    side: 2
     offset: 0
-  inputPortIndicatorPrefab: {fileID: 0}
-  outputPortIndicatorPrefab: {fileID: 0}
+  inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
+  outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
   chanceIncreasePerOutput: 2
   minimunChanceToBreak: 20
   brokenMachineIndicator: {fileID: 0}
