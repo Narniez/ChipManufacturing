@@ -15,7 +15,7 @@ MonoBehaviour:
   defaultOrientation: 0
   rotateFromCenter: 0
   machineName: Sillicon Material Depo
-  prefab: {fileID: 6940107216085402520, guid: 410baa52c3828134ba4ccd7712b39c55, type: 3}
+  prefab: {fileID: 7894667101919444983, guid: a0e9c6fd57d314947824aa705981dcf2, type: 3}
   icon: {fileID: 21300000, guid: 9d4d6cce044ca694ea543c5e379e0dff, type: 3}
   cost: 1500
   inputMaterial: {fileID: 0}
@@ -30,7 +30,13 @@ MonoBehaviour:
     side: 0
     offset: -1
   - kind: 2
+    side: 1
+    offset: -1
+  - kind: 2
     side: 2
+    offset: -1
+  - kind: 2
+    side: 3
     offset: -1
   inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
   outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
