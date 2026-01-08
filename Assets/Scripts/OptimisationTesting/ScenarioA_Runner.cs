@@ -1,61 +1,52 @@
+using System.Collections;
 using UnityEngine;
 
-/// <summary>
-/// Scenario A: repeatedly refresh belt-chain ghost options to generate short-lived object churn
-/// </summary>
 public class ScenarioA_Runner : MonoBehaviour
 {
-    [Header("References")]
     [SerializeField] private PlacementManager placementManager;
-
-    [Header("Workload")]
-    [SerializeField] private float refreshHz = 30f; // 30 or 60
-    [SerializeField] private bool startOnPlay = true;
+    [SerializeField] private float refreshHz = 60f;
 
     private BeltChainPreviewController _controller;
-    private ConveyorBelt tailBelt; // a straight belt in free space
+    private ConveyorBelt _tail;
     private float _accum;
 
-    void Start()
+    private IEnumerator Start()
     {
-        if (!startOnPlay) return;
-
         if (placementManager == null) placementManager = PlacementManager.Instance;
-        if (placementManager == null)
-        {
-            Debug.LogError("[ScenarioA] PlacementManager missing.");
-            enabled = false;
-            return;
-        }
+        if (placementManager == null) { Debug.LogError("[ScenarioA] No PlacementManager."); yield break; }
 
-        if (tailBelt == null)
+        // Wait grid ready
+        while (placementManager.GridService == null || !placementManager.GridService.HasGrid)
+            yield return null;
+
+        // Wait belt exists (save load)
+        while (_tail == null)
         {
-            tailBelt = FindAnyObjectByType<ConveyorBelt>();
-            //Debug.LogError("[ScenarioA] Assign a straight ConveyorBelt as tailBelt (placed on the grid).");
-            enabled = true;
+            _tail = FindAnyObjectByType<ConveyorBelt>();
+            yield return null;
         }
 
         _controller = new BeltChainPreviewController(placementManager);
 
-        // First spawn so we know it works
-        _controller.ShowOptionsFrom(tailBelt);
+        Debug.Log($"[ScenarioA] Tail={_tail.name} anchor={_tail.Anchor} ori={_tail.Orientation}");
+        _controller.ShowOptionsFrom(_tail);
     }
 
-    void Update()
+    private void Update()
     {
-        if (_controller == null || tailBelt == null) return;
+        if (_controller == null || _tail == null) return;
 
-        float interval = refreshHz <= 0 ? 0.033f : (1f / refreshHz);
+        float interval = 1f / Mathf.Max(1f, refreshHz);
         _accum += Time.unscaledDeltaTime;
 
         while (_accum >= interval)
         {
             _accum -= interval;
-            _controller.ShowOptionsFrom(tailBelt); // churn: cleanup + spawn ghosts again
+            _controller.ShowOptionsFrom(_tail); // THIS is the churn
         }
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
         _controller?.Cleanup();
     }

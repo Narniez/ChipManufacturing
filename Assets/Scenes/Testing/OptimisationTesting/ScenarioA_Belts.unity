@@ -3767,7 +3767,7 @@ GameObject:
   - component: {fileID: 381745986}
   - component: {fileID: 381745987}
   m_Layer: 0
-  m_Name: ScenarioA_Driver
+  m_Name: ScenarioA_Runner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3801,9 +3801,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScenarioA_Runner
   placementManager: {fileID: 682233058}
-  tailBelt: {fileID: 0}
-  refreshHz: 30
-  startOnPlay: 1
+  placeIntervalSeconds: 2
+  maxPlacements: 200
+  forceInfiniteMoney: 1
+  logPreviewOptions: 1
 --- !u!1 &396940646
 GameObject:
   m_ObjectHideFlags: 0
@@ -12407,7 +12408,7 @@ MonoBehaviour:
   warmupSeconds: 10
   measureSeconds: 60
   useUnscaledDeltaTime: 1
-  testName: ScenarioA_
+  testName: ScenarioA
   variant: baseline
   runIndex: 1
   logPerSecondToConsole: 1
