@@ -8570,6 +8570,21 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8c2d47a86541b1a4bb656828802d931e, type: 3}
+--- !u!4 &6138239376512713223
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7291076092078770692}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.010000001, y: 0.01, z: 0.010000001}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &6549439497422260020
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8684,6 +8699,23 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 410baa52c3828134ba4ccd7712b39c55, type: 3}
+--- !u!1 &7291076092078770692
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6138239376512713223}
+  - component: {fileID: 8998681612856101336}
+  m_Layer: 0
+  m_Name: Conveyer_Animated (5)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1001 &8095340532247545448
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8741,6 +8773,23 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1c5b5a7391b556547a5eb3f07e8e52a2, type: 3}
+--- !u!111 &8998681612856101336
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7291076092078770692}
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Animation: {fileID: 4710992678550624974, guid: 3e6cbe33aaad7314483d842619b05e4a, type: 3}
+  m_Animations:
+  - {fileID: 4710992678550624974, guid: 3e6cbe33aaad7314483d842619b05e4a, type: 3}
+  m_WrapMode: 0
+  m_PlayAutomatically: 1
+  m_AnimatePhysics: 0
+  m_UpdateMode: 0
+  m_CullingType: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -8789,6 +8838,7 @@ SceneRoots:
   - {fileID: 529947428}
   - {fileID: 1628170208}
   - {fileID: 670796309}
+  - {fileID: 6138239376512713223}
   - {fileID: 6808829213329152371}
   - {fileID: 723320535}
   - {fileID: 6549439497422260020}

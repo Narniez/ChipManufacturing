@@ -21,6 +21,7 @@ public class ProductPanel : MonoBehaviour
     public RectTransform detailsPanelRect; // assign in inspector or will be discovered at Awake
     public TextMeshProUGUI titleText;
     public Image iconImage;
+    public Image popUpIconImage;
     public TextMeshProUGUI descriptionText; // optional short description (uses machineName if null)
     public TextMeshProUGUI costText;
 
@@ -306,6 +307,9 @@ public class ProductPanel : MonoBehaviour
 
         if (iconImage != null)
             iconImage.sprite = data.icon;
+
+        if (popUpIconImage != null)
+            popUpIconImage.sprite = data.icon;
 
         // Description - MachineData doesn't have a description field so we synthesize one.
         if (descriptionText != null)

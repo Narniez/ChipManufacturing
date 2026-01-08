@@ -34,7 +34,26 @@ public class RotateCommand : ICommand
 
         _newOri = _clockwise ? _oldOri.RotatedCW() : _oldOri.RotatedCCW();
         _newSize = _occ.BaseSize.OrientedSize(_newOri);
-        _newAnchor = _grid.ClampAnchor(_oldAnchor, _newSize);
+
+        // Check if we should rotate around center
+        var machine = _occ as Machine;
+        bool rotateFromCenter = machine != null && machine.Data != null && machine.Data.rotateFromCenter;
+
+        if (rotateFromCenter)
+        {
+            // Center of old footprint
+            var center = new Vector2Int(_oldAnchor.x + _oldSize.x / 2, _oldAnchor.y + _oldSize.y / 2);
+            // New anchor to preserve that center
+            _newAnchor = new Vector2Int(center.x - _newSize.x / 2, center.y - _newSize.y / 2);
+        }
+        else
+        {
+            // Pivot around bottom-left corner
+            _newAnchor = _oldAnchor;
+        }
+
+        // Always clamp to grid boundaries
+        _newAnchor = _grid.ClampAnchor(_newAnchor, _newSize);
 
         var go = comp.gameObject;
         if (!_grid.IsAreaInside(_newAnchor, _newSize) || !_grid.IsAreaFree(_newAnchor, _newSize, go))

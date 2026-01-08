@@ -32,6 +32,8 @@ public class MachineData : ScriptableObject
 {
     [Header("Orientation")]
     public GridOrientation defaultOrientation = GridOrientation.North;
+    [Tooltip("If true, the machine rotates around its center cell. If false, it rotates around the bottom-left cell.")]
+    public bool rotateFromCenter;
 
     [Header("Basic Info")]
     public string machineName;
