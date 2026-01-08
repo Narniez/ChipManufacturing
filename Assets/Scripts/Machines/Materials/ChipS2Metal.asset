@@ -16,7 +16,7 @@ MonoBehaviour:
   materialName: Chip S2 Metal
   icon: {fileID: 0}
   prefab: {fileID: 8379245972204634665, guid: 063e55db97715244e8e2a15c2d9700fd, type: 3}
-  cost: 0
+  cost: 95
   unit: pcs
   unitScale: 1
   maxStack: 9999

@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: SiliconCrystalPuller
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
+  rotateFromCenter: 0
   machineName: 'Silicon Crystal Puller '
   prefab: {fileID: 7759455347919647037, guid: 61ddd5b76606fd642bc9e5cff83b9fd0, type: 3}
   icon: {fileID: 21300000, guid: 51cc83529cfb86a4a81b145046cff637, type: 3}
-  cost: 50
+  cost: 500
   inputMaterial: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
   outputMaterial: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
   processingTime: 2

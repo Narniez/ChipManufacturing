@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Assembly_Machine
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
+  rotateFromCenter: 0
   machineName: Assembly
   prefab: {fileID: 3991115457945528057, guid: 434ab431c7ca5ce409478f4f52ab296e, type: 3}
   icon: {fileID: 21300000, guid: abdb53fa5fa06b04ca7c5774fbc07586, type: 3}
-  cost: 0
+  cost: 2500
   inputMaterial: {fileID: 0}
   outputMaterial: {fileID: 0}
   processingTime: 2

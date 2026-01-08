@@ -15,9 +15,6 @@ public class PlacementManager : MonoBehaviour
     [SerializeField] private GridService gridService;
     [SerializeField] private float snapYOffset = 0f;
 
-    [Header("Edge Scroll While Dragging")]
-    [SerializeField] private float edgeZonePixels = 48f;
-    [SerializeField] private float edgeScrollSpeed = 12f;
 
     [Header("Input")]
     [SerializeField] private KeyCode rotateKey = KeyCode.R;

@@ -16,7 +16,7 @@ MonoBehaviour:
   materialName: Chip S1 Transistor
   icon: {fileID: 0}
   prefab: {fileID: 3302082574463725970, guid: e52e903d9cf4bca4292e373f715996cc, type: 3}
-  cost: 0
+  cost: 65
   unit: pcs
   unitScale: 1
   maxStack: 9999

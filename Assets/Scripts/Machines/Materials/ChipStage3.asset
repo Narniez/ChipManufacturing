@@ -16,7 +16,7 @@ MonoBehaviour:
   materialName: Chip Stage 3
   icon: {fileID: 0}
   prefab: {fileID: 8332272305505018994, guid: a46b057e885ff13419878a52d75be313, type: 3}
-  cost: 0
+  cost: 130
   unit: pcs
   unitScale: 1
   maxStack: 9999

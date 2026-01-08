@@ -17,7 +17,7 @@ MonoBehaviour:
   machineName: 'Metal Wiring Deposition '
   prefab: {fileID: 7889884535009700644, guid: 9ab7a3a187f80ea4c84fed37c1da6297, type: 3}
   icon: {fileID: 21300000, guid: fb2d9fac640c6c649adbebddf8f926d2, type: 3}
-  cost: 100
+  cost: 500
   inputMaterial: {fileID: 11400000, guid: ae6f80625a8c53c43986d6bdee75e9c2, type: 2}
   outputMaterial: {fileID: 11400000, guid: e06c5320cc760af4e940f23d23abaafb, type: 2}
   processingTime: 4

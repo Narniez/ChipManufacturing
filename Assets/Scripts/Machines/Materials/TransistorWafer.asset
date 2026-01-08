@@ -14,11 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 5
   materialName: Transistor Wafer
-  materialType: 7
-  materialCategory: 0
   icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   prefab: {fileID: 4028155767589171486, guid: da2a7caadbc75f348aac94830fa3c85e, type: 3}
-  cost: 0
+  cost: 15
   unit: pcs
   unitScale: 1
   maxStack: 9999

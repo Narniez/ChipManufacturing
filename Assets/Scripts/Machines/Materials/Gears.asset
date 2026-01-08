@@ -16,7 +16,7 @@ MonoBehaviour:
   materialName: Gears
   icon: {fileID: 0}
   prefab: {fileID: 3850495093114984180, guid: a12e5e32e0a6a5242bf5a4ebf7aa0629, type: 3}
-  cost: 0
+  cost: 45
   unit: pcs
   unitScale: 1
   maxStack: 9999
