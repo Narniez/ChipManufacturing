@@ -15,7 +15,7 @@ MonoBehaviour:
   defaultOrientation: 0
   machineName: Photolithography Machine
   prefab: {fileID: 4449261370138669661, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-  icon: {fileID: -9095717837082945937, guid: ba9e883793fe0424f95847dcde257b85, type: 3}
+  icon: {fileID: 21300000, guid: b3e52d8b5c2531e4cb973a3cc31f6222, type: 3}
   cost: 500
   inputMaterial: {fileID: 11400000, guid: 2e04e17488d4d544696b225af5ef64b9, type: 2}
   outputMaterial: {fileID: 11400000, guid: ae6f80625a8c53c43986d6bdee75e9c2, type: 2}

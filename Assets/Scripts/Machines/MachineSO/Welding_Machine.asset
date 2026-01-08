@@ -15,7 +15,7 @@ MonoBehaviour:
   defaultOrientation: 0
   machineName: Welding
   prefab: {fileID: 8482616116469616519, guid: ef8b945d451996e409685ea3aa83838c, type: 3}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 5a5f177d42ebcae4889e91c03d08ff65, type: 3}
   cost: 0
   inputMaterial: {fileID: 0}
   outputMaterial: {fileID: 0}
