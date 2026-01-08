@@ -166,7 +166,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6af88c3225328047bfcce589e3ab0b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SaveManager
-  persistenceEnabled: 0
+  persistenceEnabled: 1
   autosaveIntervalSeconds: 2
 --- !u!114 &778964626
 MonoBehaviour:
@@ -180,7 +180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 928284412886f4f44926b93b0f162ef8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameBootstrapper
-  factorySceneName: Procedural Music
+  factorySceneName: ScenarioA_Belts
 --- !u!114 &778964627
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -205,7 +205,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63f953522b193b14aaf2e501f1e60041, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  mainSceneName: Procedural Music
+  mainSceneName: ScenarioA_Belts
 --- !u!1 &2007049692
 GameObject:
   m_ObjectHideFlags: 0
