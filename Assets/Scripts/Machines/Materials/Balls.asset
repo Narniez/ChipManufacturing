@@ -16,7 +16,7 @@ MonoBehaviour:
   materialName: Balls
   icon: {fileID: 0}
   prefab: {fileID: 5540542110288546490, guid: 21cc03aca0845794db593665b54bbb58, type: 3}
-  cost: 0
+  cost: 5
   unit: pcs
   unitScale: 1
   maxStack: 9999

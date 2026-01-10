@@ -16,7 +16,7 @@ MonoBehaviour:
   materialName: ' Rods'
   icon: {fileID: 0}
   prefab: {fileID: 3116134260203912637, guid: a0fffd220c37bc34fb0053aadc233eff, type: 3}
-  cost: 0
+  cost: 20
   unit: pcs
   unitScale: 1
   maxStack: 9999

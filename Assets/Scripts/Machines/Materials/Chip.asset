@@ -16,7 +16,7 @@ MonoBehaviour:
   materialName: Chip
   icon: {fileID: 0}
   prefab: {fileID: 8874705830403916536, guid: 933614f93fe843f4e832687c8d2e4cf1, type: 3}
-  cost: 0
+  cost: 50
   unit: pcs
   unitScale: 1
   maxStack: 9999

@@ -16,7 +16,7 @@ MonoBehaviour:
   materialName: Plates
   icon: {fileID: 0}
   prefab: {fileID: 193909995073368953, guid: 36399f84574e19b42a1e4129d8a2a01b, type: 3}
-  cost: 0
+  cost: 10
   unit: pcs
   unitScale: 1
   maxStack: 9999

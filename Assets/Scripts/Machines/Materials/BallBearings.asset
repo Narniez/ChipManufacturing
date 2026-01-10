@@ -16,7 +16,7 @@ MonoBehaviour:
   materialName: Ball Bearings
   icon: {fileID: 0}
   prefab: {fileID: 8596121458061275197, guid: b2c849adb6aefbe41997a0f7d701425b, type: 3}
-  cost: 0
+  cost: 75
   unit: pcs
   unitScale: 1
   maxStack: 9999

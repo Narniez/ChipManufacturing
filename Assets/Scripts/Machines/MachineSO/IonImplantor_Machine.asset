@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: IonImplantor_Machine
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
+  rotateFromCenter: 0
   machineName: Ion Implantor
   prefab: {fileID: 7861369315571813530, guid: 653bf93a4fd0fb4469fcbc631e0afff7, type: 3}
-  icon: {fileID: 0}
-  cost: 0
+  icon: {fileID: 21300000, guid: 465353adb7d9e784f840d99810d08a0a, type: 3}
+  cost: 500
   inputMaterial: {fileID: 0}
   outputMaterial: {fileID: 0}
   processingTime: 2

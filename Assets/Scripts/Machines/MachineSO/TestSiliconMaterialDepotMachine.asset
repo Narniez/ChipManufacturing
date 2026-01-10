@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: TestSiliconMaterialDepotMachine
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
+  rotateFromCenter: 0
   machineName: Sillicon Material Depo
-  prefab: {fileID: 4423430148241660529, guid: 247b70cae7a8ff44ca94e85a7c945b62, type: 3}
-  icon: {fileID: 21300000, guid: 4acd466866e18ed44856e6b4da25d6c4, type: 3}
-  cost: 100
+  prefab: {fileID: 7894667101919444983, guid: a0e9c6fd57d314947824aa705981dcf2, type: 3}
+  icon: {fileID: 21300000, guid: 9d4d6cce044ca694ea543c5e379e0dff, type: 3}
+  cost: 1500
   inputMaterial: {fileID: 0}
   outputMaterial: {fileID: 11400000, guid: 49083a82d5ba44046b9bb4a50141c0d7, type: 2}
   processingTime: 4
@@ -29,7 +30,13 @@ MonoBehaviour:
     side: 0
     offset: -1
   - kind: 2
+    side: 1
+    offset: -1
+  - kind: 2
     side: 2
+    offset: -1
+  - kind: 2
+    side: 3
     offset: -1
   inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
   outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}

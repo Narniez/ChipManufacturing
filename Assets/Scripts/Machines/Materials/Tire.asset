@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2a2e681ebc4a4e4a88a51e9ad1a00aa, type: 3}
+  m_Name: Tire
+  m_EditorClassIdentifier: Assembly-CSharp::MaterialData
+  id: 0
+  materialName: Tire
+  icon: {fileID: 0}
+  prefab: {fileID: 6303799607379709817, guid: 1c5b5a7391b556547a5eb3f07e8e52a2, type: 3}
+  cost: 250
+  unit: pcs
+  unitScale: 1
+  maxStack: 9999
+  tags: []
+  upgradeMaterials: []
+  requiredMachines: []

@@ -31,7 +31,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private float _chanceToBreakIncrement = 2f;
     private float _miniMimumChanceToBreak = 0;
     private bool _isBroken = false;
-
+    private bool _isPlaced = false;
     private bool _initialized;
 
     public static event Action<Machine, Vector3> OnMachineBroken;
@@ -49,6 +49,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     public MachineRecipe CurrentRecipe => _currentRecipe;
     public bool IsProducing => productionRoutine != null;
     public bool IsBroken => _isBroken;
+
+    public bool IsPlaced => _isPlaced;
 
     // Treat as "generator" if no recipes, no input, but has an output
     private bool IsLegacyGenerator =>
@@ -88,7 +90,7 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _buffer.Clear();
         _inputQueue.Clear();
         _currentRecipe = null;
-
+        _isPlaced = true;
         _chanceToBreak = 0f;
         _chanceToBreakIncrement = data.chanceIncreasePerOutput;
         _miniMimumChanceToBreak = data.minimunChanceToBreak;

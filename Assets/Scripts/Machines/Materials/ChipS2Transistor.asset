@@ -16,7 +16,7 @@ MonoBehaviour:
   materialName: Chip S2 Transistor
   icon: {fileID: 0}
   prefab: {fileID: 8379245972204634665, guid: 48a6445cae6825840a50a55314cacb9a, type: 3}
-  cost: 0
+  cost: 115
   unit: pcs
   unitScale: 1
   maxStack: 9999

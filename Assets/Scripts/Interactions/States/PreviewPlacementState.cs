@@ -345,7 +345,16 @@ public class PreviewPlacementState : BasePlacementState
     }
 
     // Footprints with a true center cell (odd x and odd y) can use the tapped cell as center.
-    private static bool ShouldCenterOnCell(Vector2Int size) => (size.x & 1) == 1 && (size.y & 1) == 1;
+    // Modified to respect MachineData.rotateFromCenter if available.
+    private bool ShouldCenterOnCell(Vector2Int size)
+    {
+        if (_machineData != null)
+        {
+            return _machineData.rotateFromCenter;
+        }
+        // Legacy/Default behavior for objects without MachineData (e.g. generic props)
+        return (size.x & 1) == 1 && (size.y & 1) == 1;
+    }
 
     private static Vector2Int AnchorFromCenterCell(Vector2Int centerCell, Vector2Int size)
         => new Vector2Int(centerCell.x - size.x / 2, centerCell.y - size.y / 2);

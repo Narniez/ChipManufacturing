@@ -16,7 +16,7 @@ MonoBehaviour:
   materialName: Bike
   icon: {fileID: 0}
   prefab: {fileID: 8559448409965842562, guid: d98b8db6ba6029d4880a2d3b51624cdc, type: 3}
-  cost: 0
+  cost: 800
   unit: pcs
   unitScale: 1
   maxStack: 9999

@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Cutting_Machine
   m_EditorClassIdentifier: 
   defaultOrientation: 1
+  rotateFromCenter: 0
   machineName: 'Cutting Machine '
   prefab: {fileID: 8804230376870739662, guid: 6b26bfa55b7157c4cb6b531e6f1a6a30, type: 3}
   icon: {fileID: 21300000, guid: 3e91a43a2e5109d4d98e00c308deb6a2, type: 3}
-  cost: 50
+  cost: 600
   inputMaterial: {fileID: 0}
   outputMaterial: {fileID: 0}
   processingTime: 4
