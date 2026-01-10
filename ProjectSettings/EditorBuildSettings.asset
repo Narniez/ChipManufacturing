@@ -8,25 +8,28 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Testing/TouchControlls.unity
     guid: 52d0c5c1cae9234439a4df691f5767bc
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Bootstrap.unity
     guid: 85cd5c754e6a1c045bac1cc760262ef8
+  - enabled: 1
+    path: Assets/Scenes/Testing/OptimisationTesting/ScenarioA_Belts.unity
+    guid: 15da340ecb5990849be6eb26bf5b6c4d
   - enabled: 0
     path: Assets/Scenes/Testing/Procedural Music.unity
     guid: 6c0d311255655644c81bfe5096b3548b
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Testing/Demo.unity
     guid: dcf7bed7022a13449a7843acb789b28c
   - enabled: 0
     path: Assets/Scenes/Testing/RecipeTree.unity
     guid: 6448e6a9febe37d44a72ee2513692c57
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Testing/BandsawMinigameTest.unity
     guid: 60fcf30b9261cce4787848849abae1b6
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Testing/LensesMinigameTest.unity
     guid: 5a0253c12de44bb429b6eff386c9bc53
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Testing/MetalStackingMinigame.unity
     guid: 40f48f4c85a13634abfb0d80fb3e874a
   m_configObjects:

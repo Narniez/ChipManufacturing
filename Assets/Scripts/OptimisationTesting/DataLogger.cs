@@ -28,6 +28,7 @@ public class DataLogger : MonoBehaviour
     [Header("Run Identification")]
     [SerializeField] private string testName = "Benchmark";
     [SerializeField] private string variant = "baseline";   // e.g., baseline / pooled / pooled_prewarm
+    [SerializeField] private bool autoIncrementRunIndex = true;
     [SerializeField] private int runIndex = 1;
 
     [Header("Logging")]
@@ -48,10 +49,19 @@ public class DataLogger : MonoBehaviour
 
     private void Start()
     {
-        //Debug.Log($"[DataLogger] START test={testName} variant={variant} run={runIndex} warmup={warmupSeconds}s measure={measureSeconds}s");
+        if (autoIncrementRunIndex)
+        {
+            string key = $"DL_RUN_{testName}_{variant}";
+            int last = PlayerPrefs.GetInt(key, 0);
+            runIndex = last + 1;
+            PlayerPrefs.SetInt(key, runIndex);
+            PlayerPrefs.Save();
+        }
+
         _t = 0f;
         _nextSecondMark = 1f;
     }
+
 
     private void Update()
     {
@@ -131,6 +141,8 @@ public class DataLogger : MonoBehaviour
 
         Debug.Log($"[DataLogger] MEASURE_END test={testName} variant={variant} run={runIndex}");
         Debug.Log($"[DataLogger] SUMMARY avg={avg:F2}ms p95={p95:F2}ms p99={p99:F2}ms max={max:F2}ms | GC(0/1/2)={gc0}/{gc1}/{gc2} | mono_delta={monoDeltaMB:F2}MB");
+
+        Application.Quit();
     }
 
     private void WriteCsvRow(float avg, float p95, float p99, float max, int gc0, int gc1, int gc2, float monoDeltaMB)
