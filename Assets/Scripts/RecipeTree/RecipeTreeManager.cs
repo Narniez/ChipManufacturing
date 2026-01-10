@@ -44,10 +44,10 @@ public class RecipeTreeManager : MonoBehaviour
         }
         else
         {
-            if (debugLogging) Debug.LogError($"[RecipeTreeManager] InventoryService.Instance is NULL on OnEnable!");
+            //if (debugLogging) Debug.LogError($"[RecipeTreeManager] InventoryService.Instance is NULL on OnEnable!");
         }
 
-        // Subscribe to Machine production events - THIS IS THE KEY!
+        // Subscribe to Machine production events
         Machine.OnMaterialProduced += OnMachineProducedMaterial;
         if (debugLogging) Debug.Log($"[RecipeTreeManager] Subscribed to Machine.OnMaterialProduced");
 
