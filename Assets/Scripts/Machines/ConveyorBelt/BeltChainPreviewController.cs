@@ -9,29 +9,96 @@ public class BeltChainPreviewController
     private readonly GameObject _turnPrefab;
     private readonly Material _previewMaterial;
 
-    private readonly List<GameObject> _ghosts = new List<GameObject>();
+    // Active ghosts currently shown (forward, left, right)
+    private readonly List<GameObject> _activeGhosts = new List<GameObject>(8);
+
+    // Pool of inactive ghosts ready for reuse
+    private readonly Stack<GameObject> _ghostPool = new Stack<GameObject>(35);
+
+   // private readonly List<GameObject> _ghosts = new List<GameObject>();
     private ConveyorBelt _currentTail;
 
-    public BeltChainPreviewController(PlacementManager pm)
+    // Pool config
+    private readonly int _maxPoolSize;
+    private readonly bool _prewarmOnConstruct;
+    private readonly int _prewarmCount;
+
+    public BeltChainPreviewController(PlacementManager pm, int prewarmCount = 0, int maxPoolSize = 64)
     {
         _pm = pm;
         _grid = pm.GridService;
         _straightPrefab = pm.GetConveyorPrefab(false);
         _turnPrefab = pm.GetConveyorPrefab(true);
         _previewMaterial = pm.GetPreviewMaterial();
+
+        _maxPoolSize = Mathf.Max(0, maxPoolSize);
+        _prewarmCount = Mathf.Max(0, prewarmCount);
+        _prewarmOnConstruct = _prewarmCount > 0;
+
+        if(_prewarmOnConstruct) Prewarm(_prewarmCount);
+      
     }
 
+    // Pre-create a number of ghosts so the first measured seconds don't include instantiation cost
+    public void Prewarm(int count)
+    {
+        if(_straightPrefab == null || _grid == null) return;
+
+        int target = Mathf.Min(count, _maxPoolSize);
+        while(_ghostPool.Count + _activeGhosts.Count < target)
+        {
+            var go = CreateGhost();
+            if(go == null) break;
+            go.SetActive(false);
+            _ghostPool.Push(go);
+        }
+    }
+
+    // Release active ghosts back to pool (NOT destroying them)
+    private void ReleaseActiveGhosts()
+    {
+        for(int i = 0; i < _activeGhosts.Count; i++)
+        {
+            var go = _activeGhosts[i];
+            if(go == null) continue;
+
+            // clearing preview data
+            var prev = go.GetComponent<ConveyorPreview>();
+            if(prev != null)
+            {
+                prev.Cell = default;
+                prev.Orientation = default;
+                prev.IsTurn = false;
+            }
+
+            go.SetActive(false);
+
+            if(_ghostPool.Count < _maxPoolSize)           
+                _ghostPool.Push(go);
+            else            
+                Object.Destroy(go); // pool full, destroy
+        }
+        _activeGhosts.Clear();
+    }
+
+    // Returns active ghosts and destroys pooled ones
     public void Cleanup()
     {
-        for (int i = 0; i < _ghosts.Count; i++)
-            if (_ghosts[i] != null) Object.Destroy(_ghosts[i]);
-        _ghosts.Clear();
+        ReleaseActiveGhosts();
+        
+        while(_ghostPool.Count > 0)
+        {
+            var go = _ghostPool.Pop();
+            if(go != null)
+                Object.Destroy(go);
+        }
         _currentTail = null;
     }
 
     public void ShowOptionsFrom(ConveyorBelt tail)
     {
-        Cleanup();
+        ReleaseActiveGhosts();
+
         if (tail == null || _grid == null || !_grid.HasGrid) return;
         _currentTail = tail;
 
@@ -202,32 +269,72 @@ public class BeltChainPreviewController
     {
         if (!_grid.IsInside(cell) || !_grid.IsAreaFree(cell, Vector2Int.one)) return;
         var prefab = _straightPrefab;
-        if (prefab == null) return;
+
+        var go = AcquireGhost();
+        if (go == null) return;
 
         Vector3 pos = _pm.AnchorToWorldCenter(cell, Vector2Int.one, 0f);
-        var go = Object.Instantiate(prefab, pos, ori.ToRotation());
+        go.transform.SetPositionAndRotation(pos, ori.ToRotation());
 
-        var beltComp = go.GetComponent<ConveyorBelt>();
-        if (beltComp != null)
-        {
-            BeltSystemRuntime.Instance?.Unregister(beltComp);
-            Object.Destroy(beltComp);
-        }
-
-        ApplyPreviewMaterial(go);
-
-        if (go.GetComponent<Collider>() == null)
-        {
-            var col = go.AddComponent<BoxCollider>();
-            col.size = new Vector3(_grid.CellSize * 0.9f, 0.1f, _grid.CellSize * 0.9f);
-            col.center = Vector3.zero;
-        }
-
-        var prev = go.AddComponent<ConveyorPreview>();
+        // updating preview data
+        var prev = go.GetComponent<ConveyorPreview>();
+        if (prev == null) prev = go.AddComponent<ConveyorPreview>();
         prev.Cell = cell;
         prev.Orientation = ori;
         prev.IsTurn = isTurn;
-        _ghosts.Add(go);
+              
+        ApplyPreviewMaterial(go);
+
+        go.SetActive(true);
+        _activeGhosts.Add(go);
+    }
+
+    private GameObject AcquireGhost()
+    {
+        if(_ghostPool.Count > 0) return _ghostPool.Pop();
+
+        // allowing new ghost only if pool size limit not reached
+        if (_activeGhosts.Count + _ghostPool.Count >= _maxPoolSize) return null;
+
+        return CreateGhost();
+    }
+
+    private GameObject CreateGhost()
+    {
+        if(_straightPrefab == null) return null;
+
+        // creating once, after that reusing from pool
+        var go = Object.Instantiate(_straightPrefab);
+
+        // cleaning up behaviours that are not needed for preview (e.g. ConveyorBelt, ConveyorSound, etc)
+        // only happens on creation and prewarm, not per refresh
+        var monos = go.GetComponents<MonoBehaviour>();
+        for(int i = 0; i < monos.Length; i++)
+        {
+            if (monos[i] == null) continue;
+            Object.Destroy(monos[i]);
+        }
+
+        //ensuring collider exists for interaction
+        if(go.GetComponent<Collider>() == null)
+        {
+            var collider = go.AddComponent<BoxCollider>();
+            if(_grid != null)
+            {
+                collider.size = new Vector3(_grid.CellSize * 0.9f, 0.1f, _grid.CellSize * 0.9f);
+                collider.center = Vector3.zero;
+            }
+        }
+
+        // adding the preview component we actually need
+        go.AddComponent<ConveyorPreview>();
+
+        // applying preview material once
+        ApplyPreviewMaterial(go);
+
+        // starting inactive so AcquireGhost can position then activate
+        go.SetActive(false);
+        return go;
     }
 
     private void ApplyPreviewMaterial(GameObject go)
@@ -238,15 +345,4 @@ public class BeltChainPreviewController
         cache.ApplyPreview(_previewMaterial);
     }
 
-    //private static Vector2Int ToDelta(GridOrientation o)
-    //{
-    //    switch (o)
-    //    {
-    //        case GridOrientation.North: return Vector2Int.up;
-    //        case GridOrientation.East:  return Vector2Int.right;
-    //        case GridOrientation.South: return Vector2Int.down;
-    //        case GridOrientation.West:  return Vector2Int.left;
-    //        default: return Vector2Int.up;
-    //    }
-    //}
 }

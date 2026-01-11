@@ -11834,11 +11834,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78e42ebb9c0609a4fa46385316ab548f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DataLogger
-  warmupSeconds: 5
+  warmupSeconds: 10
   measureSeconds: 60
   useUnscaledDeltaTime: 1
   testName: ScenarioA_Belts
-  variant: baseline
+  variant: pooled_previews_prewarm6
   autoIncrementRunIndex: 1
   runIndex: 1
   logPerSecondToConsole: 1

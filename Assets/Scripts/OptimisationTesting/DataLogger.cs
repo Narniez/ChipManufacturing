@@ -85,7 +85,6 @@ public class DataLogger : MonoBehaviour
             {
                 _nextSecondMark += 1f;
                 float monoMB = Profiler.GetMonoUsedSizeLong() / 1048576f;
-                //Debug.Log($"[DataLogger] t={_t:F1}s monoUsedMB={monoMB:F1} gc0={GC.CollectionCount(0)} gc1={GC.CollectionCount(1)} gc2={GC.CollectionCount(2)}");
             }
 
             if (_t >= measureSeconds)

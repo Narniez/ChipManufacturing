@@ -149,7 +149,8 @@ PlayerSettings:
   - {fileID: 0}
   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   - {fileID: -944628639613478452, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  - {fileID: 2221784980102840576, guid: 5cbe3a8819fe41b499ccbd8b82015d4c, type: 2}
+  - {fileID: -892507152279541857, guid: 5cbe3a8819fe41b499ccbd8b82015d4c, type: 2}
+  - {fileID: 11400000, guid: a584c411712cecd4da10dbebbef897fa, type: 2}
   - {fileID: 11400000, guid: 96863f04a9bd654499fc66fc0ef31b49, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -869,6 +870,7 @@ PlayerSettings:
   platformArchitecture: {}
   scriptingBackend:
     Android: 1
+    Standalone: 0
   il2cppCompilerConfiguration: {}
   il2cppCodeGeneration: {}
   il2cppStacktraceInformation: {}

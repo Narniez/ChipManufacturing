@@ -15,18 +15,20 @@ public class ScenarioA_Runner : MonoBehaviour
         if (placementManager == null) placementManager = PlacementManager.Instance;
         if (placementManager == null) { Debug.LogError("[ScenarioA] No PlacementManager."); yield break; }
 
-        // Wait grid ready
+        // waiting for the grid to be ready
         while (placementManager.GridService == null || !placementManager.GridService.HasGrid)
             yield return null;
 
-        // Wait belt exists (save load)
+        // waiting for belt to exist (save load)
         while (_tail == null)
         {
             _tail = FindAnyObjectByType<ConveyorBelt>();
             yield return null;
         }
 
-        _controller = new BeltChainPreviewController(placementManager);
+        yield return new WaitForSecondsRealtime(1f);
+
+        _controller = new BeltChainPreviewController(placementManager, prewarmCount: 6, maxPoolSize: 32);
 
         Debug.Log($"[ScenarioA] Tail={_tail.name} anchor={_tail.Anchor} ori={_tail.Orientation}");
         _controller.ShowOptionsFrom(_tail);
@@ -42,7 +44,7 @@ public class ScenarioA_Runner : MonoBehaviour
         while (_accum >= interval)
         {
             _accum -= interval;
-            _controller.ShowOptionsFrom(_tail); // THIS is the churn
+            _controller.ShowOptionsFrom(_tail); 
         }
     }
 
