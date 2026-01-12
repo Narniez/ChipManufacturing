@@ -16,7 +16,6 @@ using UnityEngine.Profiling;
 /// - GC collections (Gen0/1/2) during measure window
 /// - Mono used memory delta (MB) during measure window
 ///
-/// Tip: Pair with Unity Profiler captures for deeper CPU/GC Alloc analysis.
 /// </summary>
 public class DataLogger : MonoBehaviour
 {
