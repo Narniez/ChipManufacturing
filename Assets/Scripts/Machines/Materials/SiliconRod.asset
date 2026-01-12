@@ -15,7 +15,7 @@ MonoBehaviour:
   id: 6
   materialName: SiliconRod
   icon: {fileID: 21300000, guid: 37c6baea742b8fc4ab0947dc578c19ed, type: 3}
-  prefab: {fileID: 910861309044080528, guid: 119fd269fc244c745b5caf7f3fbcd2c4, type: 3}
+  prefab: {fileID: 910861309044080528, guid: 27dcac24c7e7ff045974278f432386cc, type: 3}
   cost: 2
   unit: pcs
   unitScale: 1
