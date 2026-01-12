@@ -14,9 +14,11 @@
   <Project Path="Unity.VisualScripting.Core.Editor.csproj" />
   <Project Path="Unity.RenderPipelines.Universal.Editor.csproj" />
   <Project Path="Unity.PerformanceTesting.Editor.csproj" />
+  <Project Path="glTFast.Editor.csproj" />
   <Project Path="UnityEngine.TestRunner.csproj" />
   <Project Path="Unity.Notifications.iOS.csproj" />
   <Project Path="Unity.Burst.csproj" />
+  <Project Path="glTFast.csproj" />
   <Project Path="Unity.VisualScripting.Flow.Editor.csproj" />
   <Project Path="Unity.VisualStudio.Editor.csproj" />
   <Project Path="Unity.InputSystem.csproj" />
@@ -29,10 +31,12 @@
   <Project Path="Unity.RenderPipelines.Universal.Runtime.csproj" />
   <Project Path="Unity.VisualScripting.State.Editor.csproj" />
   <Project Path="Unity.Burst.CodeGen.csproj" />
+  <Project Path="Unity.Postprocessing.Editor.csproj" />
   <Project Path="Unity.VisualScripting.Flow.csproj" />
   <Project Path="Unity.PerformanceTesting.csproj" />
   <Project Path="Unity.AdaptivePerformance.Editor.csproj" />
   <Project Path="Unity.TextMeshPro.csproj" />
+  <Project Path="glTFast.Export.csproj" />
   <Project Path="Unity.TextMeshPro.Editor.csproj" />
   <Project Path="Unity.Rendering.LightTransport.Runtime.csproj" />
   <Project Path="Unity.Burst.Editor.csproj" />
@@ -41,11 +45,14 @@
   <Project Path="Unity.VisualScripting.State.csproj" />
   <Project Path="Unity.AdaptivePerformance.csproj" />
   <Project Path="UnityEditor.UI.csproj" />
+  <Project Path="glTFast.Newtonsoft.csproj" />
+  <Project Path="Unity.Postprocessing.Runtime.csproj" />
   <Project Path="Unity.Notifications.csproj" />
   <Project Path="Unity.2D.Sprite.Editor.csproj" />
   <Project Path="FMODUnityResonanceEditor.csproj" />
   <Project Path="Unity.Multiplayer.Center.Common.csproj" />
   <Project Path="FMODUnityEditor.csproj" />
+  <Project Path="glTFast.Documentation.Examples.csproj" />
   <Project Path="FMODUnity.csproj" />
   <Project Path="Unity.AdaptivePerformance.Samsung.Android.csproj" />
   <Project Path="Unity.Notifications.Unified.csproj" />
@@ -68,6 +75,7 @@
   <Project Path="Unity.RenderPipeline.Universal.ShaderLibrary.csproj" />
   <Project Path="Unity.AdaptivePerformance.Profiler.Editor.csproj" />
   <Project Path="Unity.AdaptivePerformance.Simulator.Google.Extension.Editor.csproj" />
+  <Project Path="glTFast.dots.csproj" />
   <Project Path="Unity.Rendering.LightTransport.Editor.csproj" />
   <Project Path="Unity.InputSystem.DocCodeSamples.csproj" />
   <Project Path="Unity.RenderPipelines.Universal.Shaders.csproj" />

@@ -36,7 +36,7 @@ MonoBehaviour:
     soundData: {fileID: 0}
   - id: IonImplantor
     data: {fileID: 11400000, guid: 3adadda1b77322740b58ce53d175bcef, type: 2}
-    soundData: {fileID: 0}
+    soundData: {fileID: 11400000, guid: 6bf40b3348463e4438f5da10702776c2, type: 2}
   - id: Puller
     data: {fileID: 11400000, guid: 359bfaff1d4a369438e7b1bbd8153f49, type: 2}
     soundData: {fileID: 0}
