@@ -12,6 +12,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Bootstrap.unity
     guid: 85cd5c754e6a1c045bac1cc760262ef8
   - enabled: 1
+    path: Assets/Scenes/Testing/OptimisationTesting/ScenarioB_GC.unity
+    guid: 2223f7e6cc8dad24d8cd4296f9fe8b30
+  - enabled: 0
     path: Assets/Scenes/Testing/OptimisationTesting/ScenarioA_Pooling.unity
     guid: 15da340ecb5990849be6eb26bf5b6c4d
   - enabled: 0

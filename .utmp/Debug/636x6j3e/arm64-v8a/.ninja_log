@@ -10,3 +10,5 @@
 1	2649	7897805646962887	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	b71cab9e44b6c87d
 58	2900	7897805649480635	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	ff48c34bebf2e62a
 2900	3036	7897805650838084	D:/Documents/GitHub/IMTS/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/Debug/636x6j3e/obj/arm64-v8a/libgame.so	8b259bec1e6e4758
+25	869	7899929525872830	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	dccafc4726828f0a
+869	1236	7899929529387643	D:/Documents/GitHub/IMTS/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/Debug/636x6j3e/obj/arm64-v8a/libswappywrapper.so	7fbe1ac21f86231d

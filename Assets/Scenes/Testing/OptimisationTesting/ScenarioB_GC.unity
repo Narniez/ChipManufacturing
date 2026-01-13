@@ -3266,7 +3266,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EconomyManager
   defaultMaterialCost: 0
-  defaultPlayerBalance: 5000
+  defaultPlayerBalance: 50000
   playerBalanceText: {fileID: 1028810201}
   playerBalance: 0
 --- !u!1 &356518663
@@ -3682,52 +3682,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 373433070}
   m_CullTransparentMesh: 1
---- !u!1 &381745985
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 381745986}
-  - component: {fileID: 381745987}
-  m_Layer: 0
-  m_Name: ScenarioA_Runner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &381745986
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 381745985}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 610044282}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &381745987
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 381745985}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07dd1b6a0ae521a40a18c06c99e55492, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScenarioA_Runner
-  placementManager: {fileID: 682233058}
-  refreshHz: 60
 --- !u!1 &396940646
 GameObject:
   m_ObjectHideFlags: 0
@@ -3824,7 +3778,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &428644884
 Transform:
   m_ObjectHideFlags: 0
@@ -4743,7 +4697,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 381745986}
+  - {fileID: 1324154455}
   - {fileID: 1632909583}
   - {fileID: 885783982}
   m_Father: {fileID: 0}
@@ -9660,6 +9614,71 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1315342261}
   m_CullTransparentMesh: 1
+--- !u!1 &1324154454
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1324154455}
+  - component: {fileID: 1324154456}
+  - component: {fileID: 1324154457}
+  m_Layer: 0
+  m_Name: ScenarioB_Runner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1324154455
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1324154454}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 610044282}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1324154456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1324154454}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1bda29acfb02eb44aae23d178635840, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScenarioB_Runner
+  bpm: 60
+  startDelaySeconds: 1
+--- !u!114 &1324154457
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1324154454}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cf6d56239a9daa46b55fd3b689e066b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScenarioB_AutoPlaceBelts
+  placementManager: {fileID: 682233058}
+  startAnchor: {x: 5, y: 5}
+  columns: 10
+  rowsPerColumn: 9
+  columnSpacingCells: 2
+  useEconomy: 0
 --- !u!1 &1351956183
 GameObject:
   m_ObjectHideFlags: 0
@@ -11805,7 +11824,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1632909583
 Transform:
   m_ObjectHideFlags: 0
@@ -11840,7 +11859,7 @@ MonoBehaviour:
   variant: baseline
   autoIncrementRunIndex: 1
   runIndex: 1
-  logPerSecondToConsole: 1
+  logPerSecondToConsole: 0
 --- !u!1 &1680303109
 GameObject:
   m_ObjectHideFlags: 0
@@ -19551,7 +19570,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4069804967976006138, guid: e3563cc3869535948b01b757286cf131, type: 3}
       propertyPath: testMode
-      value: 4
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4069804967976006138, guid: e3563cc3869535948b01b757286cf131, type: 3}
       propertyPath: panSpeedSlider
