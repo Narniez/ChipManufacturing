@@ -950,7 +950,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: LensesMinigameTest
+          m_StringArgument: NEWLensesMinigameTest
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &104705736
@@ -3171,7 +3171,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EconomyManager
   defaultMaterialCost: 0
-  defaultPlayerBalance: 5000
+  defaultPlayerBalance: 500000
   playerBalanceText: {fileID: 1028810201}
   playerBalance: 0
 --- !u!1 &356518663
@@ -11378,6 +11378,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1296553621}
   m_CullTransparentMesh: 1
+--- !u!1 &1304939202
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1304939204}
+  - component: {fileID: 1304939203}
+  m_Layer: 0
+  m_Name: MobilePerformanceRecorder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1304939203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1304939202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85a9a443fe1db254aad9404abc12198c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MobilePerformanceRecorder
+  toggleButton: {fileID: 0}
+  buttonText: {fileID: 0}
+  statusText: {fileID: 0}
+  fileName: MobilePerformanceData.csv
+--- !u!4 &1304939204
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1304939202}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.08052, y: 3.54883, z: 2.47124}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1315342261
 GameObject:
   m_ObjectHideFlags: 0
@@ -25613,3 +25661,4 @@ SceneRoots:
   - {fileID: 681809978}
   - {fileID: 1062132405}
   - {fileID: 396940649}
+  - {fileID: 1304939204}

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: PhotoLitho_Machine
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   defaultOrientation: 0
+  rotateFromCenter: 0
   machineName: Photolithography Machine
   prefab: {fileID: 4449261370138669661, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
   icon: {fileID: 21300000, guid: b3e52d8b5c2531e4cb973a3cc31f6222, type: 3}
@@ -24,7 +25,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1337343925086af40b93e1c484b10819, type: 2}
   - {fileID: 11400000, guid: 9da2afdfbafde384a804fcbb8dc904b9, type: 2}
   - {fileID: 11400000, guid: 2ea907c7d2870414a81c5dab7eaae825, type: 2}
-  size: {x: 2, y: 3}
+  size: {x: 3, y: 2}
   repairMinigame: {fileID: 11400000, guid: 3d8ff34971520df4daf12e353d1bb994, type: 2}
   upgrades: []
   ports:
@@ -36,7 +37,7 @@ MonoBehaviour:
     offset: -1
   inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
   outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
-  chanceIncreasePerOutput: 2
+  chanceIncreasePerOutput: 15
   minimunChanceToBreak: 30
   brokenMachineIndicator: {fileID: 7888490462930570013, guid: 935c78f711e1a0c4480c2400a759f878, type: 3}
   brokenMachineParticleEffect: {fileID: 6957141498569091356, guid: b7191a096fb3fc74fb80033db4ccaa7d, type: 3}
