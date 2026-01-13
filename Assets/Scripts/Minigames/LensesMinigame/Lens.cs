@@ -37,10 +37,7 @@ public class Lens : MonoBehaviour
     [SerializeField] private LayerMask blockingLayers = ~0;
     [Tooltip("Shrinks the collision box slightly to avoid tiny overlaps.")]
     [SerializeField] private float skinWidth = 0.01f;
-/*
-    [Header("Input (New Input System)")]
-    [Tooltip("Input Actions asset that contains a 'Touch' map with 'Point' (Vector2) and 'Click' (Button).")]
-    [SerializeField] private InputActionAsset inputActions;*/
+
 
     private Camera mainCamera;
 
@@ -63,7 +60,7 @@ public class Lens : MonoBehaviour
     private Collider col;
     private Vector3 colliderCenterOffset;
 
-    // Input buffers (read in Update, used in FixedUpdate)
+    // input buffers (read in Update, used in FixedUpdate)
     private float movementInput;
     private float rotationInput;
 
@@ -79,11 +76,11 @@ public class Lens : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         col = GetComponent<Collider>();
 
-        // Script-driven kinematic body: no gravity, no physics pushing it around
+        // kinematic body: no gravity, no physics pushing it around
         rb.isKinematic = true;
         rb.useGravity = false;
 
-        // Lock Z-position, and only allow rotation around your chosen axis via script
+        // locing Z-position, and only allow rotation around your chosen axis via script
         rb.constraints = RigidbodyConstraints.FreezePositionZ
                          | RigidbodyConstraints.FreezeRotationX
                          | RigidbodyConstraints.FreezeRotationY;
@@ -92,7 +89,7 @@ public class Lens : MonoBehaviour
         initialPosition = rb.position;
         currentAngle = 0f;
 
-        // Offset from transform.position to collider center, to reuse when we sample future positions
+        // offset from transform.position to collider center, to reuse when we sample future positions
         colliderCenterOffset = col.bounds.center - transform.position;
 
         if (gameObject.activeSelf && minigameController != null)
@@ -104,18 +101,6 @@ public class Lens : MonoBehaviour
 
             mainCamera = Camera.main;
 
-     /*   // --- New Input System setup ---
-        if (inputActions != null)
-        {
-            var touchMap = inputActions.FindActionMap("Touch", true);
-            pointAction = touchMap.FindAction("Point", true); // Vector2
-            clickAction = touchMap.FindAction("Click", true); // Button
-            deltaAction = touchMap.FindAction("Delta", true); // Vector2
-        }
-        else
-        {
-            Debug.LogWarning($"Lens '{name}': InputActionAsset not assigned.");
-        }*/
     }
 
     private void OnEnable()
@@ -224,13 +209,12 @@ public class Lens : MonoBehaviour
         if (mainCamera == null || pointAction == null || minigameController == null)
             return;
 
-        // This fires on mouse click AND touch tap (because Click is bound to <Pointer>/press)
         Vector2 screenPos = pointAction.ReadValue<Vector2>();
         Ray ray = mainCamera.ScreenPointToRay(screenPos);
 
         if (Physics.Raycast(ray, out RaycastHit hit, 10000f, ~0, QueryTriggerInteraction.Ignore))
         {
-            // Check if THIS lens was hit
+            // checking if THIS lens was hit
             var hitLens = hit.collider.GetComponentInParent<Lens>();
             if (hitLens == this)
             {

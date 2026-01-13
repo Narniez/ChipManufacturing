@@ -11,25 +11,30 @@ public class EconomyManager : MonoBehaviour, IEconomy
     [Header("Text References")]
     [SerializeField] private TextMeshProUGUI playerBalanceText;
 
-    [HideInInspector] public int playerBalance;
+    [HideInInspector] public int playerBalance; // current player balance
 
     private void Awake()
     {
+        // enforcing singleton and removing duplicates
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
-        Instance = this;
 
+        // setting instance and initializing balance
+        Instance = this;
         playerBalance = defaultPlayerBalance;
+
         UpdateBalanceUI();
     }
 
     private void Update()
     {
+        // updating ui each frame
         UpdateBalanceUI();
     }
+
     private void UpdateBalanceUI()
     {
         if (playerBalanceText != null)
@@ -61,6 +66,7 @@ public class EconomyManager : MonoBehaviour, IEconomy
 
     public bool PurchaseMaterial(MaterialData materialData, int quantity, ref int playerBalance)
     {
+        // calculating total cost and subtracting when possible
         int cost = GetMaterialCost(materialData) * quantity;
         if (playerBalance >= cost)
         {
@@ -73,27 +79,24 @@ public class EconomyManager : MonoBehaviour, IEconomy
     public bool PurchaseConveyor(ConveyorBelt conveyorData, ref int playerBalance)
     {
         if (conveyorData == null) return false;
+
         if (playerBalance >= conveyorData.Cost)
         {
             playerBalance -= conveyorData.Cost;
             return true;
         }
-        UpdateBalanceUI();
 
+        UpdateBalanceUI();
         return false;
     }
 
     public bool ReturnMachine(MachineData machineData, ref int playerBalance)
     {
-        if (machineData == null)
-            return false;
+        // refunding full cost
+        if (machineData == null) return false;
 
-        // Refund full cost for now
         playerBalance += machineData.cost;
-
-        // Update UI
         UpdateBalanceUI();
-
         return true;
     }
 
@@ -110,8 +113,8 @@ public class EconomyManager : MonoBehaviour, IEconomy
         return true;
     }
 
-    public bool SellMaterial(MaterialData materialData, int quantity, ref int playerBalance)
+   /* public bool SellMaterial(MaterialData materialData, int quantity, ref int playerBalance)
     {
         throw new System.NotImplementedException();
-    }
+    }*/
 }

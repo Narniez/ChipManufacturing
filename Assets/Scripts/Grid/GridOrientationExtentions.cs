@@ -22,18 +22,6 @@ public static class GridOrientationExtentions
     public static float ToYaw(this GridOrientation o) => ((int)o) * 90f;
     public static Quaternion ToRotation(this GridOrientation o) => Quaternion.Euler(0f, o.ToYaw(), 0f);
 
-    //// New: map orientation <-> direction and deltas
-    //public static Direction ToDirection(this GridOrientation o)
-    //{
-    //    switch (o)
-    //    {
-    //        case GridOrientation.North: return Direction.North;
-    //        case GridOrientation.East:  return Direction.East;
-    //        case GridOrientation.South: return Direction.South;
-    //        case GridOrientation.West:  return Direction.West;
-    //        default: return Direction.North;
-    //    }
-    //}
 
     public static GridOrientation ToOrientation(this Direction d)
     {

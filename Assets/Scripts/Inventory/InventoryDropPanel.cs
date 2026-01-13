@@ -10,7 +10,7 @@ public class InventoryDropPanel : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     [SerializeField] private CanvasGroup dropPanelCanvasGroup;
 
-    private bool _lockedByDrag;   // track if *we* locked the camera due to a drag
+    private bool _lockedByDrag;   // track if we locked the camera due to a drag
 
     public bool IsPointerOver { get; private set; }
 
@@ -25,25 +25,6 @@ public class InventoryDropPanel : MonoBehaviour, IPointerEnterHandler, IPointerE
     }
 
 
-    /* public void OnPointerEnter(PointerEventData eventData)
-     {
-         IsPointerOver = true;
-         mainCamera.SetInputLocked(false);
-         inventoryPanel.SetActive(false);
-         inventoryButton.gameObject.SetActive(true);
-     }*/
-
-    /*public void OnPointerExit(PointerEventData eventData)
-    {
-        IsPointerOver = false;
-        if (mainCamera != null) mainCamera.SetInputLocked(false);
-
-        if (dropPanelCanvasGroup != null) dropPanelCanvasGroup.blocksRaycasts = true;
-
-        if (inventoryButton != null) inventoryButton.gameObject.SetActive(false);
-
-    }*/
-
     public void OnPointerEnter(PointerEventData eventData)
     {
         IsPointerOver = true;
@@ -52,15 +33,15 @@ public class InventoryDropPanel : MonoBehaviour, IPointerEnterHandler, IPointerE
 
         if (draggingInventoryItem)
         {
-            // lock camera only during an inventory-item drag over the panel
+            // locking camera only during an inventory-item drag over the panel
             if (mainCamera) mainCamera.SetInputLocked(true);
             _lockedByDrag = true;
 
-            // optional UI toggles while in "drop mode"
+            // optional UI toggles while in drop mode
             if (inventoryPanel) inventoryPanel.SetActive(false);
             if (inventoryButton) inventoryButton.gameObject.SetActive(true);
 
-            // let world receive the drop even though we're over UI
+            // letting world receive the drop even though we're over UI
             if (dropPanelCanvasGroup) dropPanelCanvasGroup.blocksRaycasts = false;
         }
         else
@@ -82,7 +63,7 @@ public class InventoryDropPanel : MonoBehaviour, IPointerEnterHandler, IPointerE
         if (dropPanelCanvasGroup) dropPanelCanvasGroup.blocksRaycasts = true;
         if (inventoryButton) inventoryButton.gameObject.SetActive(false);
 
-        // unlock only if we were the ones who locked it (i.e., we were in a drag)
+        // unlocking only if we were the ones who locked it 
         if (_lockedByDrag && mainCamera) mainCamera.SetInputLocked(false);
         _lockedByDrag = false;
     }

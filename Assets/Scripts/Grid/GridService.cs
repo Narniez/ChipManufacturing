@@ -7,23 +7,24 @@ public class GridService : MonoBehaviour
     [SerializeField] private float cellSize = 1f;
     [SerializeField] private Vector3 origin = Vector3.zero;
 
-    private Dictionary<Vector2Int, CellData> cells = new Dictionary<Vector2Int, CellData>();
+    private Dictionary<Vector2Int, CellData> cells = new Dictionary<Vector2Int, CellData>(); // ocupancy map
 
-    // Added: store dimensions after build
-    [SerializeField, Tooltip("Grid width (columns). Runtime-set by CreateGridFromPlane.")] 
+    [SerializeField, Tooltip("Grid width (columns). Runtime-set by CreateGridFromPlane.")]
     private int cols = -1;
-    [SerializeField, Tooltip("Grid height (rows). Runtime-set by CreateGridFromPlane.")] 
+    [SerializeField, Tooltip("Grid height (rows). Runtime-set by CreateGridFromPlane.")]
     private int rows = -1;
 
     public float CellSize => cellSize;
     public Vector3 Origin => origin;
     public int Cols => cols;
     public int Rows => rows;
+
     public bool HasGrid => cols > 0 && rows > 0;
     public int OccupiedCount => cells.Count;
 
     public Vector2Int WorldToCell(Vector3 world)
     {
+        // converting world position to grid indices (x/z plane)
         int cx = Mathf.FloorToInt((world.x - origin.x) / cellSize);
         int cy = Mathf.FloorToInt((world.z - origin.z) / cellSize);
         return new Vector2Int(cx, cy);
@@ -47,6 +48,7 @@ public class GridService : MonoBehaviour
     {
         const float UNITY_PLANE_SIZE = 10f;
 
+        // deriving real-world plane size from Unity plane scaling
         float planeWidth = plane.localScale.x * UNITY_PLANE_SIZE;
         float planeDepth = plane.localScale.z * UNITY_PLANE_SIZE;
 
@@ -56,7 +58,7 @@ public class GridService : MonoBehaviour
         float targetWidth = outCols * cellSize;
         float targetDepth = outRows * cellSize;
 
-        // Snap plane scale
+        // snapping plane scale so its edges align with the grid
         Vector3 local = plane.localScale;
         local.x = targetWidth / UNITY_PLANE_SIZE;
         local.z = targetDepth / UNITY_PLANE_SIZE;
@@ -65,19 +67,19 @@ public class GridService : MonoBehaviour
         Vector3 center = plane.position;
         originMin = center - Vector3.right * (targetWidth * 0.5f) - Vector3.forward * (targetDepth * 0.5f);
 
-        
         origin = originMin;
         cols = outCols;
         rows = outRows;
     }
 
-    // --- Bounds / Area Helpers ---
+    // Bounds / Area Helpers
 
     public bool IsInside(Vector2Int cell) =>
         HasGrid && cell.x >= 0 && cell.y >= 0 && cell.x < cols && cell.y < rows;
 
     public Vector2Int ClampAnchor(Vector2Int anchor, Vector2Int size)
     {
+        // clamping anchor so the full area stays inside the grid
         if (!HasGrid) return anchor;
         int maxX = Mathf.Max(0, cols - size.x);
         int maxY = Mathf.Max(0, rows - size.y);
@@ -96,6 +98,7 @@ public class GridService : MonoBehaviour
 
     public IEnumerable<Vector2Int> EnumerateArea(Vector2Int anchor, Vector2Int size)
     {
+        // iterating all cells inside a rectangle footprint
         for (int y = 0; y < size.y; y++)
             for (int x = 0; x < size.x; x++)
                 yield return new Vector2Int(anchor.x + x, anchor.y + y);
@@ -134,9 +137,11 @@ public class GridService : MonoBehaviour
     public bool SetOccupant(Vector2Int cell, Object occupant)
     {
         if (occupant == null) return Clear(cell);
+
         bool changed = true;
         if (cells.TryGetValue(cell, out CellData existing))
             changed = existing.occupant != occupant;
+
         cells[cell] = new CellData { occupant = occupant };
         return changed;
     }
@@ -146,12 +151,16 @@ public class GridService : MonoBehaviour
 
     public IEnumerable<Neighbor> GetNeighbors(Vector2Int cell)
     {
+        // 4-directional neighbors
         Vector2Int n = cell + Vector2Int.up;
         yield return new Neighbor(n, Direction.North, IsCellOccupied(n));
+
         Vector2Int s = cell + Vector2Int.down;
         yield return new Neighbor(s, Direction.South, IsCellOccupied(s));
+
         Vector2Int e = cell + Vector2Int.right;
         yield return new Neighbor(e, Direction.East, IsCellOccupied(e));
+
         Vector2Int w = cell + Vector2Int.left;
         yield return new Neighbor(w, Direction.West, IsCellOccupied(w));
     }

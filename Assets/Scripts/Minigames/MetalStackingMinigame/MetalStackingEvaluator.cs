@@ -19,7 +19,6 @@ public class MetalStackingEvaluator : MonoBehaviour
 
     private bool _finished;
 
-    // Public read-only flag for external gating
     public bool IsFinished => _finished;
 
     private void OnEnable()
@@ -29,7 +28,7 @@ public class MetalStackingEvaluator : MonoBehaviour
 
     private void WireUI()
     {
-        // Persistent early-exit (keeps machine broken)
+        // persistent early-exit (keeps machine broken)
         if (quitButton != null)
         {
             var btn = quitButton.GetComponent<Button>();
@@ -43,7 +42,7 @@ public class MetalStackingEvaluator : MonoBehaviour
             }
         }
 
-        // Completion panel buttons (shown only after success)
+        // completion panel buttons (shown only after success)
         if (completionReturnButton != null)
         {
             completionReturnButton.onClick.RemoveAllListeners();
@@ -63,7 +62,7 @@ public class MetalStackingEvaluator : MonoBehaviour
             completionExitButton.onClick.RemoveAllListeners();
             completionExitButton.onClick.AddListener(() =>
             {
-                // Exit back without repairing, even after completion if chosen
+                // exiting back without repairing, even after completion if chosen
                 RepairMinigameManager.ExitWithoutRepair(0f);
             });
         }

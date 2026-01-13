@@ -92,7 +92,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         _dropHandledThisDrag = false;
         _originalParent = transform.parent;
 
-        // Reparent this ITEM to the top canvas so it follows the pointer smoothly
+        // reparenting this to the top canvas so it follows the pointer smoothly
         if (_canvas == null) _canvas = GetComponentInParent<Canvas>();
         transform.SetParent(_canvas.transform, true); // keep world pos
         canvasGroup.blocksRaycasts = false;
@@ -111,10 +111,10 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         bool worldConsumed = false;
 
-        // --- Unlock input if dropped on game view (not UI) ---
+        // unlocking input if dropped on game view (not UI)
         if (EventSystem.current != null && !EventSystem.current.IsPointerOverGameObject())
         {
-            // Raycast into the world to find a machine
+            // raycast into the world to find a machine
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
             if (Physics.Raycast(ray, out RaycastHit hit, 100f))
@@ -130,16 +130,15 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                     {
                         Debug.Log("took item");
                         worldConsumed = true;
-                        // Update global inventory
+                        // updating global inventory
                         if (InventoryService.Instance != null)
                             InventoryService.Instance.TryRemove(slotItem.id, used);
 
-                        // Reflect consumption in the ORIGIN slot UI (so remainder goes back)
                         if (_originSlot != null)
                             _originSlot.AddAmount(-used);
                         Debug.Log("item no more in the inventory");
 
-                        // Proxy is only a drag visual — remove it whether partial or full
+                        // proxy is only a drag visual — remove it whether partial or full
                         Destroy(gameObject);
                         //CurrentSlot.Clear();
                                            
@@ -155,7 +154,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             
         }
 
-        // Always unlock the camera at the end, no matter what path we took
+        // always unlocking the camera at the end, no matter what path we took
         var cam = Camera.main;
         if (cam != null)
         {

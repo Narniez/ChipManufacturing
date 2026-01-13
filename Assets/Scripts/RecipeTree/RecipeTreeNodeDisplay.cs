@@ -1,11 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Display layer for recipe tree nodes.
-/// Receives MaterialData and RecipeItemSO from RecipeTreeManager.
-/// Only handles visuals - no logic.
-/// </summary>
+// Display layer for recipe tree nodes.
+// Receives MaterialData and RecipeItemSO from RecipeTreeManager.
+// Only handles visuals - no logic.
 public class RecipeTreeNodeDisplay : MonoBehaviour
 {
     [SerializeField] private Image icon;
@@ -18,9 +16,7 @@ public class RecipeTreeNodeDisplay : MonoBehaviour
     private RecipeItemSO recipeTree;
     private RecipeTreeManager treeManager;
 
-    /// <summary>
-    /// Called by RecipeTreeManager to initialize this node
-    /// </summary>
+    // Called by RecipeTreeManager to initialize this node
     public void Initialize(MaterialData materialData, RecipeItemSO recipeTreeSO, RecipeTreeManager manager)
     {
         material = materialData;
@@ -46,7 +42,6 @@ public class RecipeTreeNodeDisplay : MonoBehaviour
             if (debugLogging) Debug.LogError($"[RecipeTreeNodeDisplay] treeManager is null! Cannot subscribe to events");
         }
 
-        // Set initial sprite based on lock state
         Refresh();
     }
 
@@ -128,7 +123,7 @@ public class RecipeTreeNodeDisplay : MonoBehaviour
             Debug.Log($"[RecipeTreeNodeDisplay] Old icon.sprite: {(icon.sprite != null ? icon.sprite.name : "null")}");
         }
 
-        // Set the sprite on the Image component
+        // setting the sprite on the Image component
         icon.sprite = sprite;
 
         if (debugLogging)

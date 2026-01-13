@@ -25,7 +25,7 @@ public class InventoryService : MonoBehaviour, IInventory
     // while loading we don't want to mark dirty or re-save repeatedly
     private bool _suppressSave;
 
-    // Expose loading/suppress flag so UI slots can avoid double-applying deltas
+    // expose loading/suppress flag so UI slots can avoid double-applying deltas
     public bool IsLoading => _suppressSave;
 
     private void Awake()
@@ -49,7 +49,7 @@ public class InventoryService : MonoBehaviour, IInventory
         }
         Debug.Log("[InventoryService] Found slots: " + _inventorySlots.Count);
 
-        // Persist snapshot to GameState on changes (single place)
+        // persist snapshot to GameState on changes (single place)
         OnChanged += (delta, all) =>
         {
             if (_suppressSave) return;
@@ -65,10 +65,10 @@ public class InventoryService : MonoBehaviour, IInventory
     {
         try { GameServices.Init(this); } catch { /* ignore */ }
 
-        // Build material caches by id
+        // building material caches by id
         EnsureMaterialLookup();
 
-        // Restore saved inventory - DEFER until next frame so other Start() calls can subscribe
+        // restoring saved inventory
         if (GameStateService.Instance != null && GameStateService.Instance.State != null && GameStateService.Instance.State.inventory != null)
         {
             StartCoroutine(DeferredLoadState());
@@ -77,7 +77,7 @@ public class InventoryService : MonoBehaviour, IInventory
 
     private System.Collections.IEnumerator DeferredLoadState()
     {
-        yield return null; // Wait one frame for all OnEnable() subscriptions
+        yield return null; // wait one frame for all OnEnable() subscriptions
         LoadState(GameStateService.Instance.State.inventory);
     }
 
@@ -124,7 +124,7 @@ public class InventoryService : MonoBehaviour, IInventory
     {
         if (mat == null || amount <= 0) return;
 
-        // Try stack into existing slot with same material
+        // trying to stack into existing slot with same material
         foreach (var slot in _inventorySlots)
         {
             if (!slot.IsEmpty && slot.Item == mat)
@@ -135,7 +135,7 @@ public class InventoryService : MonoBehaviour, IInventory
             }
         }
 
-        // Find an empty slot
+        // finding an empty slot
         foreach (var slot in _inventorySlots)
         {
             if (slot.IsEmpty)
@@ -151,7 +151,7 @@ public class InventoryService : MonoBehaviour, IInventory
 
     // ----- Persistence helpers -----
 
-    // Export exact per-slot snapshot
+    // Exports exact per-slot snapshot
     public InventoryState ExportState()
     {
         var state = new InventoryState();
@@ -175,7 +175,7 @@ public class InventoryService : MonoBehaviour, IInventory
         return state;
     }
 
-    // Restore the exact layout by slotIndex => SetItem
+    // Restores the exact layout by slotIndex => SetItem
     public void LoadState(InventoryState state)
     {
         if (state == null) return;
@@ -184,7 +184,7 @@ public class InventoryService : MonoBehaviour, IInventory
 
         _suppressSave = true;
 
-        // Snapshot current slots so we can correctly maintain _counts while overriding specific slots.
+        // snapshots current slots so we can correctly maintain _counts while overriding specific slots.
         int slotCount = _inventorySlots.Count;
         var prev = new (int materialId, int amount)?[slotCount];
 
@@ -205,7 +205,7 @@ public class InventoryService : MonoBehaviour, IInventory
 
         var pending = new List<InventoryEntry>();
 
-        // First pass: entries with valid slotIndex override that slot
+        // entries with valid slotIndex override that slot
         foreach (var entry in state.items)
         {
             MaterialData mat = null;
@@ -219,7 +219,7 @@ public class InventoryService : MonoBehaviour, IInventory
             int idx = entry.slotIndex;
             if (idx >= 0 && idx < slotCount)
             {
-                // subtract previous content of this slot (if any)
+                // subtracting previous content of this slot (if any)
                 if (prev[idx] != null)
                 {
                     var (prevId, prevAmt) = prev[idx].Value;
@@ -243,7 +243,7 @@ public class InventoryService : MonoBehaviour, IInventory
             }
         }
 
-        // Pending: stack into same-material slots, else put in first empty slot
+        // stacking into same-material slots, else put in first empty slot
         foreach (var e in pending)
         {
             MaterialData mat = null;
@@ -284,20 +284,20 @@ public class InventoryService : MonoBehaviour, IInventory
             }
         }
 
-        // Notify listeners with the resulting counts
+        // notifying listeners with the resulting counts
         OnChanged?.Invoke(null, _counts);
 
         _suppressSave = false;
     }
 
-    // Build a lookup of materials by id without using MaterialRegistry or MaterialType
+    // Builds a lookup of materials by id without using MaterialRegistry or MaterialType
     private void EnsureMaterialLookup()
     {
         if (_materialById != null && _materialById.Count > 0) return;
 
         _materialById = new Dictionary<int, MaterialData>();
 
-        // 1) Gather from current UI slots (runtime-safe)
+        // gathering from current UI slots (runtime-safe)
         foreach (var slot in _inventorySlots)
         {
             if (slot != null && !slot.IsEmpty && slot.Item != null)
@@ -307,7 +307,7 @@ public class InventoryService : MonoBehaviour, IInventory
             }
         }
 
-        // 2) Editor-only: index all MaterialData assets in project (for reliable load in editor)
+        // editor-only: index all MaterialData assets in project (for reliable load in editor)
 #if UNITY_EDITOR
         var guids = UnityEditor.AssetDatabase.FindAssets("t:MaterialData");
         foreach (var g in guids)

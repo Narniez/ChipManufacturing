@@ -46,7 +46,7 @@ public class MetalStackingManager : MonoBehaviour
 
     private void Update()
     {
-        // Hard gate: ignore input entirely if finished or completed
+        // hard gate: ignore input entirely if finished or completed
         if (completed || (evaluator != null && evaluator.IsFinished))
         {
             _queuedDrop = false; // purge any buffered click
@@ -68,7 +68,7 @@ public class MetalStackingManager : MonoBehaviour
 
     private void SpawnAndAttach()
     {
-        // Do not spawn when finished
+        // dont spawn when finished
         if (completed || (evaluator != null && evaluator.IsFinished))
         {
             return;
@@ -108,7 +108,7 @@ public class MetalStackingManager : MonoBehaviour
 
     private void ReleaseCurrent()
     {
-        // Do not release when finished
+        // dont release when finished
         if (completed || (evaluator != null && evaluator.IsFinished))
         {
             return;
@@ -151,7 +151,7 @@ public class MetalStackingManager : MonoBehaviour
             }
 
             evaluator?.OnLayerCompleted(level);
-            // If evaluator finished due to reaching target, mark completed to stop any pending actions
+            // if evaluator finished due to reaching target, mark completed to stop any pending actions
             if (evaluator != null && evaluator.IsFinished)
             {
                 completed = true;
@@ -190,10 +190,10 @@ public class MetalStackingManager : MonoBehaviour
 
     public void ResetMinigame()
     {
-        // Cancel any pending spawns
+        // canceling any pending spawns
         CancelInvoke(nameof(SpawnAndAttach));
 
-        // Unsubscribe all handlers to avoid dangling refs
+        // unsubscribing all handlers to avoid dangling refs
         foreach (var kvp in _stuckHandlers)
         {
             var stack = kvp.Key;
@@ -205,7 +205,7 @@ public class MetalStackingManager : MonoBehaviour
         }
         _stuckHandlers.Clear();
 
-        // Destroy all stacks in the scene
+        // destroying all stacks in the scene
         var allStacks = FindObjectsOfType<MetalStack>(true);
         for (int i = 0; i < allStacks.Length; i++)
         {
@@ -220,7 +220,7 @@ public class MetalStackingManager : MonoBehaviour
             }
         }
 
-        // Clear state
+        // clearing state
         currentPiece = null;
         currentStack = null;
         lastPiece = null;
@@ -228,17 +228,17 @@ public class MetalStackingManager : MonoBehaviour
         _queuedDrop = false;
         completed = false;
 
-        // Reset level and UI
+        // resetting level and UI
         level = 0;
         if (layerCountText != null)
         {
             layerCountText.text = "0";
         }
 
-        // Reset evaluator run state
+        // resetting evaluator run state
         if(evaluator != null) evaluator.ResetRun();
 
-        // Respawn new piece to start fresh
+        // respawing new piece to start fresh
         SpawnAndAttach();
     }
 }

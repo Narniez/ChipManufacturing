@@ -27,12 +27,12 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private Canvas dragCanvas;
 
-    [SerializeField] private InventoryItem inventoryItemPrefab; // your existing InventoryItem prefab
+    [SerializeField] private InventoryItem inventoryItemPrefab;
     private GameObject _activeProxy;
     private NewCameraControls mainCamera;
 
 
-    // Backing data for this slot
+    // backing data for this slot
     public MaterialData Item { get; private set; }
     public int Amount { get; private set; }
     public bool IsEmpty => Item == null || Amount <= 0;
@@ -55,7 +55,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
 
         dragCanvas = GameObject.FindGameObjectWithTag("PopupCanvas")?.GetComponent<Canvas>();
 
-        // Cache original icon sprite/color so we can restore them when the slot is empty
+        // caching original icon sprite/color so we can restore them when the slot is empty
         if (icon != null)
         {
             //_slotSprite = img.sprite;
@@ -71,27 +71,27 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     {
         if (item == null) return;
 
-        // Copy data from the InventoryItem, then destroy it.
+        // copying data from the InventoryItem, then destroting it
         SetItem(item.SlotItem, item.SlotQuantity);
 
         Destroy(item.gameObject);
     }
 
-    // Directly assign material + amount
+    // Directly assigns material + amount
     public void SetItem(MaterialData mat, int amount)
     {
-        // Compute previous values to derive inventory delta
+        // computes previous values to derive inventory delta
         MaterialData prevItem = Item;
         int prevAmount = Amount;
 
-        // Apply new values
+        // applying new values
         Item = mat;
         Amount = Mathf.Max(0, amount);
         if (Amount == 0) Item = null;
 
         UpdateUI();
 
-        // Update InventoryService totals (unless we're loading/restoring state)
+        // updating InventoryService totals (unless we're loading/restoring state)
         if (InventoryService.Instance != null && !InventoryService.Instance.IsLoading)
         {
             var delta = new Dictionary<int, int>();
@@ -102,7 +102,6 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
             if (mat != null)
                 delta[mat.id] = delta.TryGetValue(mat.id, out var v2) ? v2 + Amount : Amount;
 
-            // Clean zero deltas
             var clean = new Dictionary<int, int>();
             foreach (var kv in delta) if (kv.Value != 0) clean[kv.Key] = kv.Value;
 
@@ -251,14 +250,14 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
             var prevItem = Item;                  // A
             var prevAmount = Amount;
 
-            // Target becomes dragged B
+            // target becomes dragged B
             SetItem(dragged.SlotItem, dragged.SlotQuantity);
 
-            // Origin becomes previous A
+            // origin becomes previous A
             if (origin != null)
                 origin.SetItem(prevItem, prevAmount);
 
-            Destroy(dragged.gameObject);          // no NotifyDroppedHandled here
+            Destroy(dragged.gameObject);          
             return;
         }
         dragged.NotifyDroppedHandled();

@@ -15,14 +15,14 @@ public class MetalStack : MonoBehaviour
     [SerializeField] private float minOverlapZ = 0.001f; // minimal Z overlap to consider valid (in world units)
     [SerializeField] private float yStackTolerance = 0.01f; // how much higher this piece must be to consider it "on top"
 
-    // Raised when this piece sticks. Parameter is the MetalStack it stuck to (can be null if non-MetalStack).
+    // raised when this piece sticks. Parameter is the MetalStack it stuck to (can be null if non-MetalStack).
     public event Action<MetalStack> StuckTo;
 
     private Rigidbody _rb;
     private bool _isHeld;
     private bool _isStuck;
 
-    // Cached for collision ignoring with the claw
+    // cache for collision ignoring with the claw
     private Collider[] _clawColliders;
     private Collider[] _pieceColliders;
 
@@ -39,13 +39,13 @@ public class MetalStack : MonoBehaviour
         _rb.linearDamping = 0.1f;
         _rb.angularDamping = 0.5f;
 
-        // Always freeze rotation
+        // always freeze rotation
         _rb.constraints = RigidbodyConstraints.FreezeRotation;
 
         _pieceColliders = GetComponentsInChildren<Collider>(true);
     }
 
-    // Attach under claw, lock physics, and ignore collision with the claw
+    // Attaches under claw, lock physics, and ignore collision with the claw
     public void AttachToClaw(Transform clawTransform, Vector3 localOffset, GameObject clawObject)
     {
         transform.SetParent(clawTransform, false);
@@ -55,18 +55,18 @@ public class MetalStack : MonoBehaviour
         _rb.isKinematic = true;
         _rb.useGravity = false;
 
-        // Keep rotation frozen while held
+        // keeping rotation frozen while held
         _rb.constraints = RigidbodyConstraints.FreezeRotation;
 
         _isHeld = true;
         _isStuck = false;
 
-        // Permanently ignore collisions with the claw
+        // permanently ignore collisions with the claw
         _clawColliders = clawObject != null ? clawObject.GetComponentsInChildren<Collider>(true) : null;
         SetIgnoreClawCollision(true);
     }
 
-    // Release from claw and let physics take over
+    // Releases from claw and let physics take over
     public void ReleaseFromClaw()
     {
         if (!_isHeld)
@@ -80,7 +80,7 @@ public class MetalStack : MonoBehaviour
         _rb.isKinematic = false;
         _rb.useGravity = true;
 
-        // Keep rotation frozen while falling
+        // keeping rotation frozen while falling
         _rb.constraints = RigidbodyConstraints.FreezeRotation;
 
         if (dropVelocityBoost > 0f)
@@ -121,37 +121,37 @@ public class MetalStack : MonoBehaviour
         _rb.linearVelocity = Vector3.zero;
         _rb.angularVelocity = Vector3.zero;
 
-        // Slight push into the surface to avoid post-solve separation
+        // slight push into the surface to avoid post-solve separation
         if (collision.contactCount > 0)
         {
             var contact = collision.GetContact(0);
             transform.position -= contact.normal * 0.001f;
         }
 
-        // Hard lock
+        // har lock
         _rb.isKinematic = true;
         _rb.useGravity = false;
         _rb.constraints = RigidbodyConstraints.FreezeAll;
         _rb.Sleep();
 
-        // Identify what we stuck to (may be null or a non-MetalStack)
+        // identifies what we stuck to (may be null or a non-MetalStack)
         MetalStack otherStack = null;
         if (collision.collider != null)
         {
             otherStack = collision.collider.GetComponentInParent<MetalStack>();
         }
 
-        // Align/cut on Z if we stuck on top of another MetalStack
+        // aligning/cutting on Z if we stuck on top of another MetalStack
         if (cutOnStick && otherStack != null && otherStack != this)
         {
-            // Ensure we are on top of the other piece (by Y)
+            // ensuring we are on top of the other piece (by Y)
             if (transform.position.y >= otherStack.transform.position.y + yStackTolerance)
             {
                 AlignZWithinBelow(otherStack.transform);
             }
         }
 
-        // Notify listeners
+        // notifying listeners
         StuckTo?.Invoke(otherStack);
 
         if (destroyRigidbodyOnStick)
@@ -181,29 +181,28 @@ public class MetalStack : MonoBehaviour
         float bottomMinZ = bottomBounds.min.z;
         float bottomMaxZ = bottomBounds.max.z;
 
-        // Current world Z size of the top piece
+        // current world Z size of the top piece
         float currentTopLenZ = Mathf.Max(0f, topMaxZ - topMinZ);
 
-        // Overlap on Z between top and bottom
+        // overlap on Z between top and bottom
         float overlapZ = Mathf.Max(0f, Mathf.Min(topMaxZ, bottomMaxZ) - Mathf.Max(topMinZ, bottomMinZ));
 
         if (overlapZ < minOverlapZ || currentTopLenZ <= Mathf.Epsilon)
         {
-            // No valid overlap; do nothing (or could hide/destroy). Keeping as-is per request.
             return;
         }
 
-        // If the top piece extends outside the bottom bounds on Z, "cut" by scaling on Z
+        // if the top piece extends outside the bottom bounds on Z, "cut" by scaling on Z
         if (overlapZ < currentTopLenZ - 1e-5f)
         {
             float scaleFactor = Mathf.Clamp01(overlapZ / currentTopLenZ);
 
-            // Apply Z scale
+            // apply Z scale
             var ls = transform.localScale;
             ls.z *= scaleFactor;
             transform.localScale = ls;
 
-            // Recompute bounds after scaling to reposition accurately
+            // recomputing bounds after scaling to reposition accurately
             if (!TryGetCombinedBounds(transform, out Bounds topAfter))
             {
                 return;
@@ -212,23 +211,23 @@ public class MetalStack : MonoBehaviour
             float newHalfLen = overlapZ * 0.5f;
             float targetCenterZ;
 
-            // If it was overhanging +Z, clamp to bottom's max edge
+            // clamp to bottom's max edge
             if (topMaxZ > bottomMaxZ + 1e-5f)
             {
                 targetCenterZ = bottomMaxZ - newHalfLen;
             }
-            // If it was overhanging -Z, clamp to bottom's min edge
+            // clamp to bottom's min edge
             else if (topMinZ < bottomMinZ - 1e-5f)
             {
                 targetCenterZ = bottomMinZ + newHalfLen;
             }
             else
             {
-                // Center within bottom if already inside but bigger for some reason
+                // centering within bottom if already inside but bigger for some reason
                 targetCenterZ = Mathf.Clamp(topAfter.center.z, bottomMinZ + newHalfLen, bottomMaxZ - newHalfLen);
             }
 
-            // Shift by delta so that the new bounds center aligns with target
+            // shifts by delta so that the new bounds center aligns with target
             float deltaZ = targetCenterZ - topAfter.center.z;
             if (Mathf.Abs(deltaZ) > 1e-6f)
             {
@@ -241,7 +240,6 @@ public class MetalStack : MonoBehaviour
 
     private static bool TryGetCombinedBounds(Transform root, out Bounds bounds)
     {
-        // Prefer renderers for visual alignment
         var renderers = root.GetComponentsInChildren<Renderer>(true);
         if (renderers != null && renderers.Length > 0)
         {
@@ -256,7 +254,7 @@ public class MetalStack : MonoBehaviour
             return true;
         }
 
-        // Fallback to collider bounds
+        // fallback to collider bounds
         var colliders = root.GetComponentsInChildren<Collider>(true);
         if (colliders != null && colliders.Length > 0)
         {

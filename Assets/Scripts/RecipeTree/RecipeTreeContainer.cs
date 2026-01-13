@@ -1,10 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
 /// Container for a recipe tree in the scene.
 /// Manages both the product display and child nodes.
-/// </summary>
 public class RecipeTreeContainer : MonoBehaviour
 {
     [SerializeField] private RecipeItemSO recipeTree;
@@ -29,10 +27,10 @@ public class RecipeTreeContainer : MonoBehaviour
             return;
         }
 
-        // Initialize product display
+        // initializing product display
         InitializeProductDisplay();
 
-        // Initialize child nodes
+        // initializing child nodes
         AutoFindChildNodes();
         treeManager.AssignNodesToTree(recipeTree, nodes);
     }
@@ -42,11 +40,11 @@ public class RecipeTreeContainer : MonoBehaviour
         if (productIcon == null)
             return;
 
-        // Subscribe to unlock events
+        // subscribing to unlock events
         treeManager.OnMaterialUnlocked += OnMaterialUnlockedGlobal;
         treeManager.OnProductUnlocked += OnProductUnlockedGlobal;
 
-        // Set initial product display
+        // setting initial product display
         RefreshProductDisplay();
     }
 
@@ -61,7 +59,7 @@ public class RecipeTreeContainer : MonoBehaviour
 
     private void OnMaterialUnlockedGlobal(MaterialData unlockedMaterial)
     {
-        // Refresh whenever ANY material unlocks (might complete this product)
+        // refreshing whenever ANY material unlocks (might complete this product)
         RefreshProductDisplay();
     }
 
@@ -78,11 +76,11 @@ public class RecipeTreeContainer : MonoBehaviour
 
         bool isUnlocked = treeManager.IsProductUnlocked(recipeTree);
 
-        // Show unlocked icon if product is unlocked, otherwise show locked sprite
+        // showing unlocked icon if product is unlocked, otherwise show locked sprite
         Sprite sprite = isUnlocked ? recipeTree.unlockedIcon : treeManager.GetGlobalLockedSprite();
         productIcon.sprite = sprite;
 
-        // Update visuals
+        // updating visuals
         if (productCanvasGroup != null)
         {
             productCanvasGroup.alpha = isUnlocked ? 1f : 0.5f;

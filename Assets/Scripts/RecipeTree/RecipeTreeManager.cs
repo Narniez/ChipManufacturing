@@ -33,7 +33,7 @@ public class RecipeTreeManager : MonoBehaviour
 
     private void OnEnable()
     {
-        // Build material cache from all recipes and tree steps
+        // building material cache from all recipes and tree steps
         BuildMaterialCache();
 
         inventoryService = InventoryService.Instance;
@@ -47,7 +47,7 @@ public class RecipeTreeManager : MonoBehaviour
             //if (debugLogging) Debug.LogError($"[RecipeTreeManager] InventoryService.Instance is NULL on OnEnable!");
         }
 
-        // Subscribe to Machine production events
+        // subscribing to Machine production events
         Machine.OnMaterialProduced += OnMachineProducedMaterial;
         if (debugLogging) Debug.Log($"[RecipeTreeManager] Subscribed to Machine.OnMaterialProduced");
 
@@ -67,10 +67,10 @@ public class RecipeTreeManager : MonoBehaviour
         if (debugLogging) Debug.Log($"[RecipeTreeManager] Unsubscribed from Machine.OnMaterialProduced");
     }
 
-    /// <summary>
-    /// Build a cache of all materials by ID and MaterialType from tree steps AND final products
-    /// This ensures we can find ANY material that appears in the system
-    /// </summary>
+
+    // Build a cache of all materials by ID and MaterialType from tree steps AND final products
+    // This ensures we can find ANY material that appears in the system
+
     private void BuildMaterialCache()
     {
         materialCache.Clear();
@@ -92,7 +92,7 @@ public class RecipeTreeManager : MonoBehaviour
             }
         }
 
-        // IMPORTANT: Also add final products so they can be unlocked when produced
+        // IMPORTANT: also add final products so they can be unlocked when produced
         foreach (var tree in recipeTrees)
         {
             if (tree?.product != null)
@@ -106,7 +106,7 @@ public class RecipeTreeManager : MonoBehaviour
             Debug.Log($"[RecipeTreeManager] Built material cache: {materialCache.Count} by ID, {materialByTypeCache.Count} by type");
     }
 
-    // Updated to accept the recipe parameter (may be null)
+    // Updates to accept the recipe parameter (may be null)
     private void OnMachineProducedMaterial(MaterialData material, Vector3 position, MachineRecipe recipe)
     {
         if (material == null)
@@ -119,10 +119,10 @@ public class RecipeTreeManager : MonoBehaviour
         if (debugLogging)
             Debug.Log($"[RecipeTreeManager] ========== Machine produced '{material.materialName}' (ID {material.id}) ==========");
 
-        // 1) Unlock the material itself (for node icons)
+        // unlocking the material itself (for node icons)
         UnlockMaterial(material, raiseEvent: true);
 
-        // 2) Unlock any products whose product is this material
+        // unlocking any products whose product is this material
         CheckAndUnlockProductByMaterial(material);
 
         if (debugLogging)
@@ -149,7 +149,7 @@ public class RecipeTreeManager : MonoBehaviour
             if (unlockedProducts.Contains(recipe))
                 continue;
 
-            // Match only by reference or ID (SAFE)
+            // matching only by reference or ID (SAFE)
             bool matches =
                 recipe.product == producedMaterial ||
                 recipe.product.id == producedMaterial.id;
@@ -172,9 +172,7 @@ public class RecipeTreeManager : MonoBehaviour
 
 
 
-    /// <summary>
-    /// Initialize only the starting materials. Actual unlocks will happen via production events.
-    /// </summary>
+    // Initializes only the starting materials. Actual unlocks will happen via production events.
     private void InitializeFromStartingMaterials()
     {
         unlockedMaterials.Clear();
@@ -195,7 +193,7 @@ public class RecipeTreeManager : MonoBehaviour
             }
         }
 
-        // NOTE: Removed CheckForUnlockedProducts() here - products only unlock when produced
+        // removed CheckForUnlockedProducts() here - products only unlock when produced
 
         if (debugLogging)
         {
@@ -205,10 +203,8 @@ public class RecipeTreeManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Called when inventory changes during runtime (fallback for inventory-only paths)
-    /// Most production is now caught by OnMachineProducedMaterial
-    /// </summary>
+    // Called when inventory changes during runtime (fallback for inventory-only paths)
+    // Most production is now caught by OnMachineProducedMaterial
     private void OnInventoryChanged(IDictionary<int, int> delta, IReadOnlyDictionary<int, int> allCounts)
     {
         if (delta == null)
@@ -224,7 +220,7 @@ public class RecipeTreeManager : MonoBehaviour
             int materialId = change.Key;
             int quantityDelta = change.Value;
 
-            // Only care about additions
+            // only care about additions
             if (quantityDelta <= 0) continue;
 
             var material = FindMaterialById(materialId);
@@ -238,9 +234,7 @@ public class RecipeTreeManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Unlock a material globally
-    /// </summary>
+    // Unlocks a material globally
     private void UnlockMaterial(MaterialData material, bool raiseEvent = true)
     {
         if (material == null || unlockedMaterials.Contains(material))
@@ -262,9 +256,7 @@ public class RecipeTreeManager : MonoBehaviour
     }
 
 
-    /// <summary>
-    /// Unlock a final product
-    /// </summary>
+    // Unlocks a final product
     private void UnlockProduct(RecipeItemSO product, bool raiseEvent = true)
     {
         if (product == null || unlockedProducts.Contains(product))
@@ -281,25 +273,24 @@ public class RecipeTreeManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Check if a material is unlocked
-    /// </summary>
+
+    // Checks if a material is unlocked
+
     public bool IsMaterialUnlocked(MaterialData material)
     {
         return material != null && unlockedMaterials.Contains(material);
     }
 
-    /// <summary>
-    /// Check if a product is unlocked
-    /// </summary>
+    // Checks if a product is unlocked
+
     public bool IsProductUnlocked(RecipeItemSO product)
     {
         return product != null && unlockedProducts.Contains(product);
     }
 
-    /// <summary>
-    /// Get the lock state for displaying a material in a tree
-    /// </summary>
+
+    // Gets the lock state for displaying a material in a tree
+
     public LockState GetMaterialLockState(MaterialData material)
     {
         if (material == null)
@@ -308,9 +299,9 @@ public class RecipeTreeManager : MonoBehaviour
         return IsMaterialUnlocked(material) ? LockState.Unlocked : LockState.Locked;
     }
 
-    /// <summary>
-    /// Get the sprite for a material node
-    /// </summary>
+
+    // Gets the sprite for a material node
+
     public Sprite GetMaterialSprite(RecipeItemSO tree, MaterialData material, LockState lockState)
     {
         if (material == null)
@@ -322,9 +313,9 @@ public class RecipeTreeManager : MonoBehaviour
         return material.icon;
     }
 
-    /// <summary>
-    /// Get all node data for a recipe tree
-    /// </summary>
+
+    // Gets all node data for a recipe tree
+
     public List<(MaterialData material, LockState lockState, Sprite sprite)> GetTreeNodeData(RecipeItemSO tree)
     {
         var nodeData = new List<(MaterialData, LockState, Sprite)>();
@@ -346,9 +337,9 @@ public class RecipeTreeManager : MonoBehaviour
         return nodeData;
     }
 
-    /// <summary>
-    /// Get progress for a specific tree
-    /// </summary>
+
+    // Gets progress for a specific tree
+
     public (int unlockedCount, int totalCount) GetTreeProgress(RecipeItemSO tree)
     {
         if (tree?.treeSteps == null || tree.treeSteps.Count == 0)
@@ -358,9 +349,9 @@ public class RecipeTreeManager : MonoBehaviour
         return (unlocked, tree.treeSteps.Count);
     }
 
-    /// <summary>
-    /// Get overall progress across all trees
-    /// </summary>
+
+    // Gets overall progress across all trees
+
     public (int unlockedMaterials, int totalMaterials, int unlockedProducts, int totalProducts) GetGlobalProgress()
     {
         int totalMaterials = recipeTrees
@@ -373,9 +364,9 @@ public class RecipeTreeManager : MonoBehaviour
         return (unlockedMaterials.Count, totalMaterials, unlockedProducts.Count, recipeTrees.Count);
     }
 
-    /// <summary>
-    /// Assign MaterialData to child node displays for a recipe tree
-    /// </summary>
+
+    // Assignes MaterialData to child node displays for a recipe tree
+
     public void AssignNodesToTree(RecipeItemSO recipeTree, RecipeTreeNodeDisplay[] nodes)
     {
         if (recipeTree == null)
@@ -404,7 +395,7 @@ public class RecipeTreeManager : MonoBehaviour
                 this);
         }
 
-        // Assign each node a material from the tree steps
+        // assigning each node a material from the tree steps
         for (int i = 0; i < nodes.Length && i < recipeTree.treeSteps.Count; i++)
         {
             var nodeDisplay = nodes[i];
@@ -433,25 +424,9 @@ public class RecipeTreeManager : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Find a MaterialData by MaterialType using cached lookup
-    /// </summary>
-    private MaterialData FindMaterialByType(MaterialType materialType)
-    {
-        if (materialByTypeCache.TryGetValue(materialType, out var material))
-        {
-            return material;
-        }
 
-        if (debugLogging)
-            Debug.LogWarning($"[RecipeTreeManager] MaterialType {materialType} not found in cache.");
+    // Get the global locked sprite
 
-        return null;
-    }
-
-    /// <summary>
-    /// Get the global locked sprite
-    /// </summary>
     public Sprite GetGlobalLockedSprite()
     {
         return globalLockedSprite;

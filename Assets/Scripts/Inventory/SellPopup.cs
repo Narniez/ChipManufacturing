@@ -24,7 +24,7 @@ public class SellPopup : MonoBehaviour
     private int _have;
     private Transform _originalParent;
 
-    // Track open mode so we can avoid service/events in slot mode
+    // track open mode so we can avoid service/events in slot mode
     private bool _openedFromSlot;
 
     private NewCameraControls mainCamera;
@@ -101,7 +101,7 @@ public class SellPopup : MonoBehaviour
         mainCamera.SetInputLocked(true);
     }*/
 
-    // Open popup for a slot (no InventoryItem child required)
+    // Opens popup for a slot (no InventoryItem child required)
     public void OpenForSlot(InventorySlot slot)
     {
         _openedFromSlot = true;
@@ -109,7 +109,7 @@ public class SellPopup : MonoBehaviour
         _slot = slot;
         _item = null;
 
-        // Validate slot data
+        // validating slot data
         if (_slot == null || _slot.IsEmpty || _slot.Item == null)
         {
             Close();
@@ -148,8 +148,6 @@ public class SellPopup : MonoBehaviour
 
         mainCamera.SetInputLocked(true);
 
-        // Important: do NOT subscribe to InventoryService events in slot mode,
-        // as slot mode does not use the service as the authority.
     }
 
     public void Close()
@@ -189,7 +187,7 @@ public class SellPopup : MonoBehaviour
 
     private void OnInventoryChanged(IDictionary<int, int> _, IReadOnlyDictionary<int, int> all)
     {
-        // Ignore service changes when opened from slot
+        // ignoring service changes when opened from slot
         if (_openedFromSlot) return;
 
         if (_item != null && _item.SlotItem != null)
@@ -221,49 +219,22 @@ public class SellPopup : MonoBehaviour
         }
     }
 
-    private void RefreshStockFromService()
-    {
-        if (_openedFromSlot)
-        {
-            _have = (_slot != null && !_slot.IsEmpty) ? _slot.Amount : 0;
-            _have = Mathf.Max(0, _have);
-            return;
-        }
-
-        // Item mode: prefer authoritative counts from the service
-        if (_item != null && _item.SlotItem != null)
-        {
-            if (InventoryService.Instance != null)
-            {
-                int serviceCount = InventoryService.Instance.GetCount(_item.SlotItem.id);
-                _have = Mathf.Max(0, serviceCount);
-            }
-            else
-            {
-                _have = Mathf.Max(0, _item.SlotQuantity);
-            }
-        }
-        else
-        {
-            _have = 0;
-        }
-    }
-
+  
     /// ---------------- ACTIONS ----------------
     private void OnConfirm()
     {
         int amount = Mathf.RoundToInt(amountSlider.value);
 
-        // Cache references to avoid race with callbacks that may Close() and null fields
+        // caching references to avoid race with callbacks that may Close() and null fields
         var slotRef = _slot;
         var itemRef = _item;
         var inventoryService = InventoryService.Instance;
         var economyManager = EconomyManager.Instance;
 
-        // Slot path: use the slot as source-of-truth; do not call the service
+        // using the slot as source-of-truth
         if (slotRef != null && !slotRef.IsEmpty && slotRef.Item != null)
         {
-            // Clamp to available
+            // clamping to available
             amount = Mathf.Clamp(amount, 1, slotRef.Amount);
             economyManager.playerBalance += amount * slotRef.Item.cost;      
             slotRef.AddAmount(-amount);      
@@ -272,10 +243,10 @@ public class SellPopup : MonoBehaviour
             return;
         }
 
-        // Item path (service-authoritative)
+        // item path (service-authoritative)
         if (itemRef == null || itemRef.SlotItem == null) { Close(); return; }
 
-        // Unsubscribe to avoid re-entrancy closing us mid-call
+        // unsubsscribing to avoid re-entrancy closing us mid-call
         if (inventoryService != null) inventoryService.OnChanged -= OnInventoryChanged;
 
         if (inventoryService != null)

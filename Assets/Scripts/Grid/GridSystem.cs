@@ -71,7 +71,7 @@ public class GridSystem : MonoBehaviour
 
     private void InitializeGrid()
     {
-        //snaps the plane to whole cells
+        //snapping the plane to whole cells
         grid.CreateGridFromPlane(plane, out int cols, out int rows, out Vector3 originMin);
 
         if (cellParent == null)
@@ -79,7 +79,7 @@ public class GridSystem : MonoBehaviour
             cellParent = this.transform;
         }
 
-        //clears previous cells
+        //clearing previous cells
         for (int i = cellParent.childCount - 1; i >= 0; i--)
         {
             GameObject c = cellParent.GetChild(i).gameObject;
@@ -92,7 +92,7 @@ public class GridSystem : MonoBehaviour
         }
         spawned.Clear();
 
-        //spawns cells
+        //spawning cells
         for (int y = 0; y < rows; y++)
         {
             for (int x = 0; x < cols; x++)
