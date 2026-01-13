@@ -48,6 +48,8 @@ namespace ProceduralMusic {
         public static event Action<int> OnMeasureBeat; // passes 0-based beat index
 
         private Coroutine _clockCoroutine;
+        private WaitForSecondsRealtime _wait;
+        private float _waitInterval = -1f;
 
         // internal beat tracking
         private int _currentBeatIndex = 0;
@@ -88,38 +90,15 @@ namespace ProceduralMusic {
         {
             AdvanceBeat();
 
-            // Machines first (release outputs / production logic)
-            var machineHandlers = OnClockTick_Machines;
-            if (machineHandlers != null)
-            {
-                foreach (Action h in machineHandlers.GetInvocationList())
-                {
-                    try { h(); }
-                    catch (Exception ex) { Debug.LogError($"Clock tick (machines) handler exception: {ex}"); }
-                }
-            }
+            // Direct multicast invoke (no GetInvocationList allocation)
+            try { OnClockTick_Machines?.Invoke(); }
+            catch (Exception ex) { Debug.LogError($"Clock tick (machines) handler exception: {ex}"); }
 
-            // Measure beat notifications (for UI / patterns)
-            var measureHandlers = OnMeasureBeat;
-            if (measureHandlers != null)
-            {
-                foreach (Action<int> h in measureHandlers.GetInvocationList())
-                {
-                    try { h(_currentBeatIndex); }
-                    catch (Exception ex) { Debug.LogError($"Measure beat handler exception: {ex}"); }
-                }
-            }
+            try { OnMeasureBeat?.Invoke(_currentBeatIndex); }
+            catch (Exception ex) { Debug.LogError($"Measure beat handler exception: {ex}"); }
 
-            // Belts second (consume outputs placed this tick)
-            var beltHandlers = OnClockTick_Belts;
-            if (beltHandlers != null)
-            {
-                foreach (Action h in beltHandlers.GetInvocationList())
-                {
-                    try { h(); }
-                    catch (Exception ex) { Debug.LogError($"Clock tick (belts) handler exception: {ex}"); }
-                }
-            }
+            try { OnClockTick_Belts?.Invoke(); }
+            catch (Exception ex) { Debug.LogError($"Clock tick (belts) handler exception: {ex}"); }
         }
 
         // Start the repeating clock using current BPM (one tick per beat).
@@ -150,14 +129,25 @@ namespace ProceduralMusic {
             // Use the provided initial interval for the first wait, then compute interval
             // from bpm each subsequent loop so BPM changes take effect without restarting.
             float interval = initialInterval > 0f ? initialInterval : (60f / Mathf.Max(1, bpm));
-            Debug.Log("Clockloop started");
+
+            // caching yield instruction
+            _waitInterval = interval;
+            _wait = new WaitForSecondsRealtime(interval);
+
             while (true)
             {
-                // Debug.Log("Clockloop running and outputting tick");
                 TriggerClockTick();
                 // use real-time wait so timeScale changes don't break tempo
-                yield return new WaitForSecondsRealtime(interval);
                 interval = 60f / Mathf.Max(1, bpm);
+
+                // only recreate yield instruction if bpm/interval changed
+                if (_wait == null || !Mathf.Approximately(interval, _waitInterval))
+                {
+                    _waitInterval = interval;
+                    _wait = new WaitForSecondsRealtime(interval);
+                }
+
+                yield return _wait;
             }
         }
 
@@ -165,12 +155,6 @@ namespace ProceduralMusic {
         {
             StopClock();
         }
-
-
-
-
-
-
 
         // Public setters for audio control values (apply integration in audio system as needed)
         public void SetReverbAmount(float amount)

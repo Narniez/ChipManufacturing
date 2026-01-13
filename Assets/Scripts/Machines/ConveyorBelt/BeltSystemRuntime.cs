@@ -13,6 +13,11 @@ public class BeltSystemRuntime : MonoBehaviour
 
     private readonly List<ConveyorBelt> _belts = new List<ConveyorBelt>();
 
+    //  GC-optimised buffers
+    private readonly Queue<int> _queue = new Queue<int>(256);
+    private bool[] _enqueued = new bool[256];
+    private readonly Dictionary<ConveyorBelt, int> _index = new Dictionary<ConveyorBelt, int>(256);
+
     private void Awake()
     {
         if (Instance != null) { Destroy(gameObject); return; }
@@ -47,70 +52,57 @@ public class BeltSystemRuntime : MonoBehaviour
         int n = _belts.Count;
         if (n == 0) return;
 
-        // Build initial queue of indices for belts that currently have a non-animating item.
-        var queue = new System.Collections.Generic.Queue<int>(Mathf.Max(16, n));
-        var enqueued = new bool[n]; // mark to avoid duplicate enqueue
+        EnsureBuffers(n);
 
+        _queue.Clear();
+        System.Array.Clear(_enqueued, 0, n);
+
+        // enqueuing belts that can move
         for (int i = 0; i < n; i++)
         {
             var b = _belts[i];
             if (b == null) continue;
             if (b.HasItem && !b.IsItemAnimating())
             {
-                queue.Enqueue(i);
-                enqueued[i] = true;
+                _queue.Enqueue(i);
+                _enqueued[i] = true;
             }
         }
 
         // Process queue: when a belt moves forward, its predecessor may become eligible,
         // so enqueue predecessor to propagate chain moves within same tick.
-        while (queue.Count > 0)
+        while (_queue.Count > 0)
         {
-            int idx = queue.Dequeue();
-            enqueued[idx] = false;
+            int idx = _queue.Dequeue();
+            _enqueued[idx] = false;
 
             var belt = _belts[idx];
             if (belt == null) continue;
             if (!belt.HasItem || belt.IsItemAnimating()) continue;
 
-            bool moved = false;
-            try
-            {
-                moved = belt.TickMoveAttempt();
-            }
+            bool moved;
+            try { moved = belt.TickMoveAttempt(); }
             catch (System.Exception ex)
             {
                 Debug.LogError($"Belt TickMoveAttempt exception on {belt.name}: {ex}");
-                // skip this belt further this tick
                 moved = false;
             }
 
             if (moved)
             {
-                // If this belt moved an item forward, its predecessor (if any) may now be able to move.
                 var prev = belt.PreviousInChain;
-                if (prev != null)
+                if (prev != null && _index.TryGetValue(prev, out int prevIdx))
                 {
-                    int prevIdx = _belts.IndexOf(prev);
-                    if (prevIdx >= 0 && !enqueued[prevIdx] && prev.HasItem && !prev.IsItemAnimating())
+                    if (prevIdx >= 0 && prevIdx < n && !_enqueued[prevIdx] && prev.HasItem && !prev.IsItemAnimating())
                     {
-                        queue.Enqueue(prevIdx);
-                        enqueued[prevIdx] = true;
+                        _queue.Enqueue(prevIdx);
+                        _enqueued[prevIdx] = true;
                     }
                 }
-                else
-                {
-                    // If not linked by chain, consider scanning nearby belts (optional)
-                }
-            }
-            else
-            {
-                // If couldn't move now, it might become able later in the same tick after others move;
-                // but to avoid busy looping we rely on predecessors enqueuing successors when they move.
-                // Optionally re-enqueue after some other moves if desired (omitted for perf).
             }
         }
     }
+
 
     private void Update()
     {
@@ -125,23 +117,47 @@ public class BeltSystemRuntime : MonoBehaviour
     {
         for (int i = 0; i < _belts.Count; i++)
         {
-            var item = _belts[i].PeekItem();
+            var b = _belts[i];
+            if (b == null) continue;
+
+            var item = b.PeekItem();
             if (item == null) continue;
+
             item.Animate(dt);
         }
     }
 
+    private void EnsureBuffers(int n)
+    {
+        if (_enqueued == null || _enqueued.Length < n)
+            _enqueued = new bool[Mathf.NextPowerOfTwo(n)];
+    }
+
+
     public void Register(ConveyorBelt belt)
     {
         if (belt == null) return;
-        if (!_belts.Contains(belt))
-        {
-            _belts.Add(belt);
-        }
+        if (_index.ContainsKey(belt)) return;
+
+        int idx = _belts.Count;
+        _belts.Add(belt);
+        _index[belt] = idx;
     }
 
     public void Unregister(ConveyorBelt belt)
     {
-        _belts.Remove(belt);
+        if (belt == null) return;
+        if (!_index.TryGetValue(belt, out int idx)) return;
+
+        int last = _belts.Count - 1;
+        var lastBelt = _belts[last];
+
+        // swap-remove to keep list compact, update index map
+        _belts[idx] = lastBelt;
+        _belts.RemoveAt(last);
+
+        _index.Remove(belt);
+        if (lastBelt != null)
+            _index[lastBelt] = idx;
     }
 }

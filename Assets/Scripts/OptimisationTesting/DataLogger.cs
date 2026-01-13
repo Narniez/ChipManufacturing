@@ -5,18 +5,6 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-/// <summary>
-/// DataLogger: data logger for repeatable performance runs
-/// - Warmup (ignored)
-/// - Measure window (frame time samples)
-/// - Writes a single CSV summary row to Application.persistentDataPath/data.csv
-///
-/// Metrics:
-/// - avg/p95/p99/max frame time (ms)
-/// - GC collections (Gen0/1/2) during measure window
-/// - Mono used memory delta (MB) during measure window
-///
-/// </summary>
 public class DataLogger : MonoBehaviour
 {
     [Header("Timing")]
@@ -26,14 +14,14 @@ public class DataLogger : MonoBehaviour
 
     [Header("Run Identification")]
     [SerializeField] private string testName = "Benchmark";
-    [SerializeField] private string variant = "baseline";   // e.g., baseline / pooled / pooled_prewarm
+    [SerializeField] private string variant = "baseline";
     [SerializeField] private bool autoIncrementRunIndex = true;
     [SerializeField] private int runIndex = 1;
 
     [Header("Logging")]
     [SerializeField] private bool logPerSecondToConsole = true;
 
-    // Frame-time samples (ms)
+    // frame-time samples (ms)
     private readonly List<float> _frameMs = new(8192);
 
     private enum Phase { Warmup, Measure, Done }

@@ -8,12 +8,15 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Testing/TouchControlls.unity
     guid: 52d0c5c1cae9234439a4df691f5767bc
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Bootstrap.unity
     guid: 85cd5c754e6a1c045bac1cc760262ef8
   - enabled: 1
-    path: Assets/Scenes/Testing/OptimisationTesting/ScenarioA_Belts.unity
+    path: Assets/Scenes/Testing/OptimisationTesting/ScenarioA_Pooling.unity
     guid: 15da340ecb5990849be6eb26bf5b6c4d
+  - enabled: 0
+    path: Assets/Scenes/Testing/OptimisationTesting/ScenarioB_GC.unity
+    guid: 2223f7e6cc8dad24d8cd4296f9fe8b30
   - enabled: 0
     path: Assets/Scenes/Testing/Procedural Music.unity
     guid: 6c0d311255655644c81bfe5096b3548b
