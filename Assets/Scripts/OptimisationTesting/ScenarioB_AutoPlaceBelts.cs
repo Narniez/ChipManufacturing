@@ -27,7 +27,7 @@ public class ScenarioB_AutoPlaceBelts : MonoBehaviour
             yield break;
         }
 
-        // Wait for grid ready
+        // waiting for grid to be ready
         while (placementManager.GridService == null || !placementManager.GridService.HasGrid)
             yield return null;
 
@@ -65,39 +65,27 @@ public class ScenarioB_AutoPlaceBelts : MonoBehaviour
             int yEndExclusive = goingUp ? (startAnchor.y + rowsPerColumn) : (startAnchor.y - 1);
             int yStep = goingUp ? 1 : -1;
 
-            // If this isn't the first column, connect from previous column end to this column start
             if (c > 0)
             {
-                // previous column ended at (prevEndX, prevEndY) = startAnchor.x + (c-1)*xStep, yStartPrevEnd
-                // current column starts at (x, yStart)
-                // We place ONE bridge belt at (x - xStep + 1, prevEndY) ... BUT since xStep can be > 1,
-                // we need to span the gap. We'll place belts across the gap row at the end Y of previous column.
-                // This will create additional turns, but still valid.
 
                 int prevX = startAnchor.x + (c - 1) * xStep;
                 int bridgeY = prev != null ? prev.Anchor.y : yStart;
 
-                // Place belts from prevX+1 to x (inclusive) along bridgeY
-                // This fills the empty spacing with belts so the chain is continuous (important for stress test)
+                // placing belts from prevX+1 to x (inclusive) along bridgeY
                 for (int bx = prevX + 1; bx <= x; bx++)
                 {
                     var cell = new Vector2Int(bx, bridgeY);
                     var ori = GridOrientation.East;
 
-                    // last step might need West if we're bridging "backwards", but here bx increases so East is fine.
                     var b = PlaceStraight(straightPrefab, cell, ori);
                     if (b == null) continue;
 
-                    // Link chain
                     Link(prev, b);
                     PromoteCornerIfNeeded(prev, b);
                     prev = b;
                     placed++;
                 }
 
-                // Now we are positioned at (x, bridgeY). We need to move vertically into yStart if different.
-                // For serpentine, bridgeY should already equal yStart of current column (end of previous column),
-                // but due to safety, handle mismatch:
                 while (prev != null && prev.Anchor.y != yStart)
                 {
                     int dir = prev.Anchor.y < yStart ? 1 : -1;
@@ -114,7 +102,7 @@ public class ScenarioB_AutoPlaceBelts : MonoBehaviour
                 }
             }
 
-            // Place the column belts
+            // placing the column belts
             for (int y = yStart; y != yEndExclusive; y += yStep)
             {
                 var cell = new Vector2Int(x, y);
@@ -173,7 +161,6 @@ public class ScenarioB_AutoPlaceBelts : MonoBehaviour
         b.PreviousInChain = a;
     }
 
-    // Promote "a" to a corner prefab if direction changed from a->b
     private void PromoteCornerIfNeeded(ConveyorBelt parent, ConveyorBelt child)
     {
         if (parent == null || child == null) return;
@@ -183,7 +170,6 @@ public class ScenarioB_AutoPlaceBelts : MonoBehaviour
         var outgoing = DeltaToOrientation(delta);
         if (!outgoing.HasValue) return;
 
-        // straight: no promotion
         if (outgoing.Value == parent.Orientation) return;
 
         var incoming = parent.Orientation;
@@ -198,10 +184,9 @@ public class ScenarioB_AutoPlaceBelts : MonoBehaviour
         var replaced = placementManager.ReplaceConveyorPrefab(parent, useTurnPrefab: true, overrideOrientation: outgoing.Value, turnKind: turnKind);
         replaced?.LockCorner();
 
-        // If we replaced the parent, repair chain links so the runtime tick logic sees a clean chain.
         if (replaced != null)
         {
-            // reconnect previous
+            // reconnecting previous
             var prev = parent.PreviousInChain;
             if (prev != null)
             {
@@ -209,7 +194,7 @@ public class ScenarioB_AutoPlaceBelts : MonoBehaviour
                 replaced.PreviousInChain = prev;
             }
 
-            // reconnect next
+            // reconnecting next
             replaced.NextInChain = child;
             child.PreviousInChain = replaced;
         }
