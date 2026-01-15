@@ -12,6 +12,8 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
     private Image fullscreenImage;
     [SerializeField, Tooltip("Optional: image to use behind text as backdrop.")]
     private Image textBackdropImage;
+    [SerializeField, Tooltip("Optional: image to use infront text as foreground.")]
+    private Image textForegroundImage;
 
     [Header("Hint UI")]
     [SerializeField] private FingerHint finger;
@@ -83,6 +85,7 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
         if (bubbleText) bubbleText.raycastTarget = false;
         if (fullscreenImage) fullscreenImage.raycastTarget = false;
         if (textBackdropImage) textBackdropImage.raycastTarget = false;
+        if (textForegroundImage) textForegroundImage.raycastTarget = false;
 
         // Dimmer starts disabled and non-raycastable
         if (dimmer)
@@ -152,6 +155,7 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
 
             if (fullscreenImage) fullscreenImage.gameObject.SetActive(false);
             if (textBackdropImage) textBackdropImage.gameObject.SetActive(false);
+            if (textForegroundImage) textForegroundImage.gameObject.SetActive(false);
             if (dimmer) { dimmer.gameObject.SetActive(false); dimmer.raycastTarget = false; }
             if (skipButton) skipButton.gameObject.SetActive(false);
 
@@ -170,6 +174,7 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
 
             if (fullscreenImage) fullscreenImage.gameObject.SetActive(false);
             if (textBackdropImage) textBackdropImage.gameObject.SetActive(false);
+            if (textForegroundImage) textForegroundImage.gameObject.SetActive(false);
             if (dimmer) { dimmer.gameObject.SetActive(false); dimmer.raycastTarget = false; }
             if (skipButton) skipButton.gameObject.SetActive(false);
         }
@@ -181,6 +186,7 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
         if (finger) finger.gameObject.SetActive(visible);
         if (fullscreenImage) fullscreenImage.gameObject.SetActive(false);
         if (textBackdropImage) textBackdropImage.gameObject.SetActive(false);
+        if (textForegroundImage) textForegroundImage.gameObject.SetActive(false);
         if (skipButton) skipButton.gameObject.SetActive(visible && showSkipButton);
 
         _highlightTarget = null;
@@ -260,6 +266,21 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
                         textBackdropImage.gameObject.SetActive(false);
                     }
                 }
+                if (textForegroundImage)
+                {
+                    if (step.textBackdropSprite != null)
+                    {
+                        textForegroundImage.sprite = step.textForegroundSprite;
+                        textForegroundImage.enabled = true;
+                        textForegroundImage.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        textForegroundImage.sprite = null;
+                        textForegroundImage.enabled = false;
+                        textForegroundImage.gameObject.SetActive(false);
+                    }
+                }
             }
             else
             {
@@ -274,6 +295,13 @@ public class TutorialOverlayUI : MonoBehaviour, ICanvasRaycastFilter
                     textBackdropImage.sprite = null;
                     textBackdropImage.enabled = false;
                     textBackdropImage.gameObject.SetActive(false);
+                }
+
+                if (textForegroundImage)
+                {
+                    textForegroundImage.sprite = null;
+                    textForegroundImage.enabled = false;
+                    textForegroundImage.gameObject.SetActive(false);
                 }
             }
         }
