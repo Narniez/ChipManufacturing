@@ -16,6 +16,8 @@ public class TutorialStep : ScriptableObject
     [Tooltip("Sprite to display when fullscreen is enabled.")]
     public Sprite textBackdropSprite;
 
+    public Sprite textForegroundSprite;
+
     [Tooltip("Optional TMP font to use for this step's text. Leave null to use the overlay default.")]
     public TMP_FontAsset textFont;
 

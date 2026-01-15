@@ -15,9 +15,12 @@ MonoBehaviour:
   text: "[START TRIGGER, BROKEN MACHINE CLICK SIGNAL NOT IN]\nWhat happened? Oh no,
     it seems like the machine broke down because there is too much going in. Let\u2019s
     fix it."
-  textBackdropSprite: {fileID: 0}
-  textFont: {fileID: 0}
-  speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
+  textBackdropSprite: {fileID: 21300000, guid: a5c9f8112d896ab489be9b0153cb66d0, type: 3}
+  textForegroundSprite: {fileID: 21300000, guid: dd9ff97edd441b741b6ee329532677bf, type: 3}
+  textFont: {fileID: 11400000, guid: 8a2743ad59e7cbf4b8007d6b0330cb28, type: 2}
+  overrideTextColor: 0
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  speaker: {fileID: 21300000, guid: 0d443b8cd9fcf4141941b92533ea9d45, type: 3}
   anchor: 7
   waitForSignal: 0
   highlightTargetPath: Canvas/BrokenMachinePannel/Button
@@ -28,5 +31,7 @@ MonoBehaviour:
   dragTargetPath: 
   dragDuration: 1.25
   dragLoop: 0
+  showDimmerImage: 1
   typewriterCharsPerSecond: 60
   fullscreenSprite: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
+  blockAllUIInteraction: 0
