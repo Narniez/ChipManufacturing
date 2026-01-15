@@ -21,5 +21,7 @@ MonoBehaviour:
   unitScale: 1
   maxStack: 9999
   tags: []
-  upgradeMaterials: []
-  requiredMachines: []
+  upgradeMaterials:
+  - {fileID: 11400000, guid: 85c8d3eeb6133c04c8dcb33afc29ae1f, type: 2}
+  requiredMachines:
+  - {fileID: 11400000, guid: a4661fd3e7881bf4aa2fbba17314f173, type: 2}

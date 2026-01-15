@@ -21,5 +21,6 @@ MonoBehaviour:
   unitScale: 1
   maxStack: 9999
   tags: []
-  upgradeMaterials: []
+  upgradeMaterials:
+  - {fileID: 0}
   requiredMachines: []

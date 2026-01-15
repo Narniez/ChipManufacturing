@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 936aea6a974b1f04ea73d6de1dfd0a82, type: 3}
+  m_Name: Chip2
+  m_EditorClassIdentifier: Assembly-CSharp::RecipeItemSO
+  product: {fileID: 11400000, guid: 06efecab0e3aaf24e99246ca7f66b71a, type: 2}
+  unlockedIcon: {fileID: 0}
+  treeSteps:
+  - {fileID: 11400000, guid: b573a15bfc6806f4b943d93c85201d65, type: 2}
+  - {fileID: 11400000, guid: 85c8d3eeb6133c04c8dcb33afc29ae1f, type: 2}
+  - {fileID: 11400000, guid: 36ceafdbb385dba4893f1c0099ed7ad1, type: 2}
+  - {fileID: 11400000, guid: 4d73601916d16a14388897263c7b1ee0, type: 2}
+  startingUnlockedMaterials:
+  - {fileID: 11400000, guid: b573a15bfc6806f4b943d93c85201d65, type: 2}
