@@ -3729,63 +3729,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 373708486}
   m_CullTransparentMesh: 1
---- !u!1001 &376749731
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 3960109964832008423, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 6.193239
-      objectReference: {fileID: 0}
-    - target: {fileID: 3960109964832008423, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3960109964832008423, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -12.766705
-      objectReference: {fileID: 0}
-    - target: {fileID: 3960109964832008423, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3960109964832008423, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3960109964832008423, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3960109964832008423, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3960109964832008423, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3960109964832008423, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3960109964832008423, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4449261370138669661, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
-      propertyPath: m_Name
-      value: Texturing_Machine_PhotoLitho
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 8f10f71e35b08d04783a098b72fe414b, type: 3}
 --- !u!1 &396940646
 GameObject:
   m_ObjectHideFlags: 0
@@ -4121,8 +4064,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 679092805}
   m_HandleRect: {fileID: 679092804}
   m_Direction: 2
-  m_Value: 0.99999964
-  m_Size: 0.6067334
+  m_Value: 1
+  m_Size: 0.6067335
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -31195,4 +31138,3 @@ SceneRoots:
   - {fileID: 1039923343}
   - {fileID: 1932022296}
   - {fileID: 1402628646}
-  - {fileID: 376749731}
