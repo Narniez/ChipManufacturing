@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4571073523927799990}
   - component: {fileID: 8386458828446169239}
   - component: {fileID: 4822415295761413290}
-  - component: {fileID: 2790463523975782346}
+  - component: {fileID: 455048363761977593}
   m_Layer: 0
   m_Name: ConveyorCorner
   m_TagString: Untagged
@@ -70,10 +70,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ConveyorBelt
   orientation: 0
   itemHeight: 0.8
-  isTurnPrefab: 0
+  isTurnPrefab: 1
   lockCorner: 0
   cost: 50
---- !u!114 &2790463523975782346
+--- !u!114 &455048363761977593
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -87,7 +87,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProceduralMusic.ConveyorSound
   fmodEventPath: event:/Drone
   pitchParameterName: Conveyor_Pitch
-  audibleRangeOverride: 40
+  audibleRangeOverride: 0
 --- !u!1001 &4096333574026718043
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -6927,7 +6927,7 @@ MonoBehaviour:
   enableSecondFingerRotate: 1
   selectionUI: {fileID: 955067076}
   conveyorStraightPrefab: {fileID: 7340109979149904849, guid: d142d1921fa62c8438e15babb72147ad, type: 3}
-  conveyorTurnPrefab: {fileID: 3395784172091410599, guid: 10a4b5c99e52e3941b894d10b6121114, type: 3}
+  conveyorTurnPrefab: {fileID: 7542371343100100579, guid: 7aa46b22b0734c14c9df0db51d9d67cb, type: 3}
   placementPreviewMaterial: {fileID: 2100000, guid: cf78832a6b8134741991e7d20847d026, type: 2}
   conveyorItemPrefab: {fileID: 8559448409965842562, guid: 645a15e76d0729c4084aa3d7e242accc, type: 3}
   testMaterialData: {fileID: 11400000, guid: bfd75f3931afffe41bc1479eea543d9f, type: 2}
@@ -25495,7 +25495,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 431856671559206526, guid: 9bc427e42d74d23468a51910f5ddfff0, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1747773203277141840, guid: 9bc427e42d74d23468a51910f5ddfff0, type: 3}
       propertyPath: m_AnchoredPosition.x
