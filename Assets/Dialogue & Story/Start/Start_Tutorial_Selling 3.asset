@@ -18,11 +18,11 @@ MonoBehaviour:
   textBackdropSprite: {fileID: 0}
   textFont: {fileID: 11400000, guid: 5aaa7e67d3ced3f4faaaaf7aa95534e7, type: 2}
   overrideTextColor: 1
-  textColor: {r: 0, g: 0, b: 0, a: 1}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
   anchor: 7
   waitForSignal: 11
-  highlightTargetPath: Canvas/Inventory/InventorySlot/Panel/Sell
+  highlightTargetPath: Canvas/Inventory/Buttons/Sell
   gateInputOutsideHighlight: 1
   fingerMode: 1
   showFinger: 1
