@@ -19,7 +19,11 @@ MonoBehaviour:
   textFont: {fileID: 11400000, guid: 8a2743ad59e7cbf4b8007d6b0330cb28, type: 2}
   overrideTextColor: 0
   textColor: {r: 1, g: 1, b: 1, a: 1}
+<<<<<<< HEAD
   speaker: {fileID: 21300000, guid: ca7a4d3db6c975e4e9b8695bf709d2ec, type: 3}
+=======
+  speaker: {fileID: 21300000, guid: 0d443b8cd9fcf4141941b92533ea9d45, type: 3}
+>>>>>>> origin/FixPanels
   anchor: 5
   waitForSignal: 3
   highlightTargetPath: TestShopPannel/ProductPannelScrollView/ProductPannelContainer/ConveyorBeltProductPannel
