@@ -398,7 +398,7 @@ namespace ProceduralMusic {
             {
                 // Apply the key change via ProceduralMusicManager so inspector updates and other systems are notified
                 _proceduralMusicManager.SetCurrentKey(best);
-                Debug.Log($"ConveyorChordManager: changed key to {best.root} {best.scale} (overlap {bestOverlap})");
+               // Debug.Log($"ConveyorChordManager: changed key to {best.root} {best.scale} (overlap {bestOverlap})");
             }
         }
 

@@ -91,14 +91,14 @@ namespace ProceduralMusic {
             AdvanceBeat();
 
             // Direct multicast invoke (no GetInvocationList allocation)
-            try { OnClockTick_Machines?.Invoke(); }
-            catch (Exception ex) { Debug.LogError($"Clock tick (machines) handler exception: {ex}"); }
+            /*try {*/ OnClockTick_Machines?.Invoke(); // }
+           // catch (Exception ex) { Debug.LogError($"Clock tick (machines) handler exception: {ex}"); }
 
-            try { OnMeasureBeat?.Invoke(_currentBeatIndex); }
-            catch (Exception ex) { Debug.LogError($"Measure beat handler exception: {ex}"); }
+           /* try {*/ OnMeasureBeat?.Invoke(_currentBeatIndex); //}
+           // catch (Exception ex) { Debug.LogError($"Measure beat handler exception: {ex}"); }
 
-            try { OnClockTick_Belts?.Invoke(); }
-            catch (Exception ex) { Debug.LogError($"Clock tick (belts) handler exception: {ex}"); }
+           /* try {*/ OnClockTick_Belts?.Invoke(); //}
+           // catch (Exception ex) { Debug.LogError($"Clock tick (belts) handler exception: {ex}"); }
         }
 
         // Start the repeating clock using current BPM (one tick per beat).
@@ -149,6 +149,12 @@ namespace ProceduralMusic {
 
                 yield return _wait;
             }
+        }
+
+        private void OnEnable()
+        {
+            // Start clock automatically on enable
+            StartClock();
         }
 
         private void OnDisable()
