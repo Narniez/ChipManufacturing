@@ -716,9 +716,29 @@ PrefabInstance:
       value: InventorySlot (8)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -2659,6 +2679,7 @@ GameObject:
   - component: {fileID: 257974607}
   - component: {fileID: 257974609}
   - component: {fileID: 257974608}
+  - component: {fileID: 257974610}
   m_Layer: 0
   m_Name: '-'
   m_TagString: Untagged
@@ -2723,6 +2744,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 257974606}
   m_CullTransparentMesh: 1
+--- !u!114 &257974610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 257974606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 257974608}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &283493382
 GameObject:
   m_ObjectHideFlags: 0
@@ -3776,9 +3841,29 @@ PrefabInstance:
       value: InventorySlot (7)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -4520,9 +4605,29 @@ PrefabInstance:
       value: InventorySlot (15)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -4888,9 +4993,29 @@ PrefabInstance:
       value: InventorySlot (11)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -5201,6 +5326,142 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -20, y: -20}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &529502450
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 529502451}
+  - component: {fileID: 529502453}
+  - component: {fileID: 529502452}
+  m_Layer: 0
+  m_Name: Text (TMP)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &529502451
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529502450}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1147629055}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 400, y: 50}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &529502452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529502450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: SELL
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 504e8d4da92fc174697386a83c18cc5f, type: 2}
+  m_sharedMaterial: {fileID: -6040760378953360182, guid: 504e8d4da92fc174697386a83c18cc5f, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4278190080
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 98
+  m_fontSizeBase: 98
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &529502453
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529502450}
+  m_CullTransparentMesh: 1
 --- !u!1 &538515149
 GameObject:
   m_ObjectHideFlags: 0
@@ -5370,9 +5631,29 @@ PrefabInstance:
       value: InventorySlot (23)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -7415,9 +7696,29 @@ PrefabInstance:
       value: InventorySlot (10)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -8334,6 +8635,7 @@ GameObject:
   - component: {fileID: 996566159}
   - component: {fileID: 996566161}
   - component: {fileID: 996566160}
+  - component: {fileID: 996566162}
   m_Layer: 0
   m_Name: MIN
   m_TagString: Untagged
@@ -8398,6 +8700,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 996566158}
   m_CullTransparentMesh: 1
+--- !u!114 &996566162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 996566158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 996566160}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1012166921
 GameObject:
   m_ObjectHideFlags: 0
@@ -8778,9 +9124,29 @@ PrefabInstance:
       value: InventorySlot (9)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -8952,9 +9318,29 @@ PrefabInstance:
       value: InventorySlot (20)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -9247,9 +9633,29 @@ PrefabInstance:
       value: InventorySlot (5)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -9677,9 +10083,29 @@ PrefabInstance:
       value: InventorySlot (22)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -9851,9 +10277,29 @@ PrefabInstance:
       value: InventorySlot (19)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -10139,6 +10585,7 @@ GameObject:
   - component: {fileID: 1147629055}
   - component: {fileID: 1147629057}
   - component: {fileID: 1147629056}
+  - component: {fileID: 1147629058}
   m_Layer: 0
   m_Name: Sell
   m_TagString: Untagged
@@ -10157,7 +10604,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_Children:
+  - {fileID: 529502451}
   m_Father: {fileID: 1975931415}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -10203,6 +10651,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1147629054}
   m_CullTransparentMesh: 1
+--- !u!114 &1147629058
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1147629054}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 1147629056}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1152716105
 GameObject:
   m_ObjectHideFlags: 0
@@ -10393,9 +10885,29 @@ PrefabInstance:
       value: InventorySlot (17)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -10642,9 +11154,29 @@ PrefabInstance:
       value: InventorySlot (24)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -12301,9 +12833,29 @@ PrefabInstance:
       value: InventorySlot (14)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -12475,9 +13027,29 @@ PrefabInstance:
       value: InventorySlot (3)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -13126,6 +13698,7 @@ GameObject:
   - component: {fileID: 1503392530}
   - component: {fileID: 1503392532}
   - component: {fileID: 1503392531}
+  - component: {fileID: 1503392533}
   m_Layer: 0
   m_Name: MAX
   m_TagString: Untagged
@@ -13190,6 +13763,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1503392529}
   m_CullTransparentMesh: 1
+--- !u!114 &1503392533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1503392529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 1503392531}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1001 &1505941892
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13223,9 +13840,29 @@ PrefabInstance:
       value: InventorySlot (18)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -13589,9 +14226,29 @@ PrefabInstance:
       value: InventorySlot (16)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -13763,9 +14420,29 @@ PrefabInstance:
       value: InventorySlot (6)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -14805,9 +15482,29 @@ PrefabInstance:
       value: InventorySlot (21)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -15403,9 +16100,29 @@ PrefabInstance:
       value: InventorySlot (4)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -16102,9 +16819,29 @@ PrefabInstance:
       value: InventorySlot (13)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -17364,6 +18101,7 @@ GameObject:
   - component: {fileID: 1933779989}
   - component: {fileID: 1933779991}
   - component: {fileID: 1933779990}
+  - component: {fileID: 1933779992}
   m_Layer: 0
   m_Name: +
   m_TagString: Untagged
@@ -17428,6 +18166,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1933779988}
   m_CullTransparentMesh: 1
+--- !u!114 &1933779992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1933779988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 1933779990}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1001 &1961446792
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17461,9 +18243,29 @@ PrefabInstance:
       value: InventorySlot (1)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -17975,9 +18777,29 @@ PrefabInstance:
       value: InventorySlot (12)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -19637,9 +20459,29 @@ PrefabInstance:
       value: InventorySlot (2)
       objectReference: {fileID: 0}
     - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: maxButton
+      value: 
+      objectReference: {fileID: 1503392533}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minButton
+      value: 
+      objectReference: {fileID: 996566162}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: dragCanvas
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: plusButton
+      value: 
+      objectReference: {fileID: 1933779992}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: sellButton
+      value: 
+      objectReference: {fileID: 1147629058}
+    - target: {fileID: 4562508477077783702, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
+      propertyPath: minusButton
+      value: 
+      objectReference: {fileID: 257974610}
     - target: {fileID: 4966403907937669567, guid: 35485b7928e62d749aa058c1a67e1086, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
