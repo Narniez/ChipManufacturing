@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5306768117735125891}
   - component: {fileID: 7490122577578146616}
   m_Layer: 0
-  m_Name: IonGenerator
+  m_Name: IonGeneratorP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

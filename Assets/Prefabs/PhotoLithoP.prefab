@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3062422088678176526}
   - component: {fileID: 770937296495311875}
   m_Layer: 0
-  m_Name: PhotoLitho
+  m_Name: PhotoLithoP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
