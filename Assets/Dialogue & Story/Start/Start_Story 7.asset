@@ -14,7 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   text: 
   textBackdropSprite: {fileID: 0}
+  textForegroundSprite: {fileID: 0}
   textFont: {fileID: 11400000, guid: 8a2743ad59e7cbf4b8007d6b0330cb28, type: 2}
+  overrideTextColor: 0
+  textColor: {r: 1, g: 1, b: 1, a: 1}
   speaker: {fileID: 0}
   anchor: 4
   waitForSignal: 0
@@ -29,3 +32,4 @@ MonoBehaviour:
   showDimmerImage: 1
   typewriterCharsPerSecond: 60
   fullscreenSprite: {fileID: 21300000, guid: ef6847a11b48c544b8f79b0817b95056, type: 3}
+  blockAllUIInteraction: 0
