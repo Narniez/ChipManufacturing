@@ -19,7 +19,7 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 9d4d6cce044ca694ea543c5e379e0dff, type: 3}
   cost: 1500
   inputMaterial: {fileID: 0}
-  outputMaterial: {fileID: 11400000, guid: 49083a82d5ba44046b9bb4a50141c0d7, type: 2}
+  outputMaterial: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
   processingTime: 5
   recipes: []
   size: {x: 3, y: 3}
@@ -40,7 +40,7 @@ MonoBehaviour:
     offset: -1
   inputPortIndicatorPrefab: {fileID: 3911487465822677078, guid: 5a58c169ab30d4a4a86d7656872d1817, type: 3}
   outputPortIndicatorPrefab: {fileID: 1186180990483634666, guid: f12d9c0f4a8dd0f46a551564c670712a, type: 3}
-  chanceIncreasePerOutput: 2
+  chanceIncreasePerOutput: 0
   minimunChanceToBreak: 20
   brokenMachineIndicator: {fileID: 0}
   brokenMachineParticleEffect: {fileID: 0}

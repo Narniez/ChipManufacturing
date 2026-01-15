@@ -129,8 +129,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
     public void TryStartIfIdle()
     {
-        if (!_isBroken && productionRoutine == null)
-            StartProduction();
+        if (_isBroken || productionRoutine != null) return;
+        if (!_initialized || data == null) return; // guard: not ready yet
+        StartProduction();
     }
 
     // Try to start one cycle if inputs are ready
@@ -138,6 +139,11 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     {
         if (productionRoutine != null) return;
         if (_isBroken) return;
+        if (data == null)
+        {
+            Debug.LogWarning("Machine.StartProduction: MachineData not set.");
+            return;
+        }
 
         if (data.HasRecipes)
         {
@@ -240,6 +246,11 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             for (int i = 0; i < _currentRecipe.outputs.Count; i++)
             {
                 var outStack = _currentRecipe.outputs[i];
+                if (outStack.material == null)
+                {
+                    Debug.LogWarning($"[Machine] {_currentRecipe.name} has null output at index {i}; skipping.");
+                    continue;
+                }
                 int count = Mathf.Max(1, outStack.amount);
                 for (int c = 0; c < count; c++)
                     _pendingOutputs.Add(outStack.material);
@@ -474,7 +485,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         }
 
         if (!placed)
+        {
             AddOutputToInventory(mat, 1);
+            Debug.Log("M: output added to inventory");
+        }
     }
 
     private List<ConveyorBelt> GetConnectedOutputBelts()
@@ -840,9 +854,11 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         // If a recipe finished and produced pending outputs, release them now
         if (_pendingOutputs.Count > 0)
         {
+            Debug.Log($"[Machine] {name} releasing {_pendingOutputs.Count} pending outputs");
             // produce each pending output (this will try to push to belts / inventory)
             for (int i = 0; i < _pendingOutputs.Count; i++)
             {
+                Debug.Log($"[Machine] {name} producing index {i}");
                 ProduceOneOutput(_pendingOutputs[i]);
                 if (_isBroken) break; // stop if machine broke during release
             }

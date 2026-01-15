@@ -1006,8 +1006,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 389d6c2caeac8f44ab895099e087da6c, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -1047,7 +1047,7 @@ MonoBehaviour:
   canvasGroup: {fileID: 3656892440195538964}
   dragCanvas: {fileID: 0}
   inventoryItemPrefab: {fileID: 4732989784102188928, guid: 824548cb7a45a2a46b48620070012af8, type: 3}
-  emptySlotSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  emptySlotSprite: {fileID: 21300000, guid: 389d6c2caeac8f44ab895099e087da6c, type: 3}
 --- !u!1 &4717846610528181500
 GameObject:
   m_ObjectHideFlags: 0

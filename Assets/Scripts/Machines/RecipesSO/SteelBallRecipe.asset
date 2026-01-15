@@ -17,6 +17,6 @@ MonoBehaviour:
   - material: {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
     amount: 1
   outputs:
-  - material: {fileID: 0}
+  - material: {fileID: 11400000, guid: c5519c175500c1d44b677aec0579c8ab, type: 2}
     amount: 1
   processingTimeOverride: -1
