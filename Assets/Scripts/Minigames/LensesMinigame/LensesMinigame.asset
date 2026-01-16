@@ -15,8 +15,6 @@ MonoBehaviour:
   displayName: LensesMinigame
   icon: {fileID: 0}
   launchMode: 0
-  sceneName: LensesMinigameTest
+  sceneName: NEWLensesMinigame
   overlayPrefab: {fileID: 0}
   evaluator: {fileID: 11400000, guid: b1aa246db6780ce4db3ba4132702fc57, type: 2}
-  brokenIndicatorPrefab: {fileID: 0}
-  repairUIPrefab: {fileID: 0}

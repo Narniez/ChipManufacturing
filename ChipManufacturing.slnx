@@ -22,6 +22,7 @@
   <Project Path="Unity.VisualScripting.Flow.Editor.csproj" />
   <Project Path="Unity.VisualStudio.Editor.csproj" />
   <Project Path="Unity.InputSystem.csproj" />
+  <Project Path="Unity.MemoryProfiler.Editor.csproj" />
   <Project Path="PPv2URPConverters.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Unity.Notifications.Android.csproj" />
@@ -50,6 +51,7 @@
   <Project Path="Unity.Notifications.csproj" />
   <Project Path="Unity.2D.Sprite.Editor.csproj" />
   <Project Path="FMODUnityResonanceEditor.csproj" />
+  <Project Path="Unity.MemoryProfiler.Editor.MemoryProfilerModule.csproj" />
   <Project Path="Unity.Multiplayer.Center.Common.csproj" />
   <Project Path="FMODUnityEditor.csproj" />
   <Project Path="glTFast.Documentation.Examples.csproj" />
@@ -70,6 +72,7 @@
   <Project Path="Unity.VisualScripting.Shared.Editor.csproj" />
   <Project Path="Unity.AdaptivePerformance.Samsung.Android.Editor.csproj" />
   <Project Path="Unity.Profiling.Core.csproj" />
+  <Project Path="Unity.EditorCoroutines.Editor.csproj" />
   <Project Path="Unity.AdaptivePerformance.Simulator.Editor.csproj" />
   <Project Path="FMODUnityResonance.csproj" />
   <Project Path="Unity.RenderPipeline.Universal.ShaderLibrary.csproj" />
@@ -82,6 +85,7 @@
   <Project Path="Unity.RenderPipelines.Core.Runtime.Shared.csproj" />
   <Project Path="Unity.2D.Sprite.AIIntegration.Editor.csproj" />
   <Project Path="Unity.AdaptivePerformance.UI.Editor.csproj" />
+  <Project Path="Unity.MemoryProfiler.csproj" />
   <Project Path="Unity.VisualScripting.DocCodeExamples.csproj" />
   <Project Path="Unity.PlasticSCM.Editor.Entities.csproj" />
   <Project Path="Unity.AdaptivePerformance.Simulator.Extension.csproj" />

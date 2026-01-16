@@ -304,6 +304,13 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     {
         if (IsEmpty || SelectedToSell <= 0) return;
 
+        // Credit economy before removing items from inventory
+        var econ = EconomyManager.Instance;
+        if (econ != null)
+        {
+            econ.SellMaterial(Item, SelectedToSell, ref econ.playerBalance);
+        }
+
         // Reduce amount by selected-to-sell
         AddAmount(-SelectedToSell);
 

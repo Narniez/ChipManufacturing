@@ -15,7 +15,10 @@ MonoBehaviour:
   text: "It seemed like a normal day in the biggest chip and chip products factory
     of the country. Until\u2026"
   textBackdropSprite: {fileID: 0}
+  textForegroundSprite: {fileID: 0}
   textFont: {fileID: 11400000, guid: 8a2743ad59e7cbf4b8007d6b0330cb28, type: 2}
+  overrideTextColor: 0
+  textColor: {r: 1, g: 1, b: 1, a: 1}
   speaker: {fileID: 0}
   anchor: 4
   waitForSignal: 0
@@ -30,3 +33,4 @@ MonoBehaviour:
   showDimmerImage: 1
   typewriterCharsPerSecond: 60
   fullscreenSprite: {fileID: 0}
+  blockAllUIInteraction: 0

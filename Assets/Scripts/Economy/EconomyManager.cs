@@ -50,7 +50,7 @@ public class EconomyManager : MonoBehaviour, IEconomy
 
     public int GetMaterialCost(MaterialData materialData)
     {
-        return materialData != null ? defaultMaterialCost : 0;
+        return materialData != null ? materialData.cost : 0;
     }
 
     public bool PurchaseMachine(MachineData machineData, ref int playerBalance)
@@ -113,8 +113,15 @@ public class EconomyManager : MonoBehaviour, IEconomy
         return true;
     }
 
-   /* public bool SellMaterial(MaterialData materialData, int quantity, ref int playerBalance)
+    public bool SellMaterial(MaterialData materialData, int quantity, ref int playerBalance)
     {
-        throw new System.NotImplementedException();
-    }*/
+        if (materialData == null || quantity <= 0) return false;
+
+        int revenuePerUnit = GetMaterialCost(materialData);
+        int revenue = revenuePerUnit * quantity;
+
+        playerBalance += revenue;
+        UpdateBalanceUI();
+        return true;
+    }
 }

@@ -1,20 +1,24 @@
 using UnityEngine;
 
-public class ConveyorItem 
+public class ConveyorItem
 {
     public MaterialData materialData;
     public GameObject Visual;
+    public int upgradeCycleIndex;
 
     // Smooth hop animation state
     public Vector3 From;
     public Vector3 To;
-    public float smoothTime;         // 0..1
-    public float Duration;  // seconds
+    public float smoothTime; // 0..1
+    public float Duration;   // seconds
 
     public ConveyorItem(MaterialData mat, GameObject visual = null)
     {
         materialData = mat;
         Visual = visual;
+
+        upgradeCycleIndex = 0;
+
         smoothTime = 0.5f;
         Duration = 0f;
     }

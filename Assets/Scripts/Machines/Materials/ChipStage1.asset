@@ -22,6 +22,8 @@ MonoBehaviour:
   maxStack: 9999
   tags: []
   upgradeMaterials:
-  - {fileID: 11400000, guid: 85c8d3eeb6133c04c8dcb33afc29ae1f, type: 2}
+  - {fileID: 11400000, guid: 4d73601916d16a14388897263c7b1ee0, type: 2}
   requiredMachines:
   - {fileID: 11400000, guid: a4661fd3e7881bf4aa2fbba17314f173, type: 2}
+  - {fileID: 11400000, guid: b2b249c125c210a49b5f2e8ed6f34fbe, type: 2}
+  - {fileID: 11400000, guid: 3adadda1b77322740b58ce53d175bcef, type: 2}
