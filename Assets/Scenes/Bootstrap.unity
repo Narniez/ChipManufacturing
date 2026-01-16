@@ -320,7 +320,8 @@ MonoBehaviour:
   - MetalStackingMinigame
   persistRootNames:
   - BeltSystem
-  persistTags: []
+  persistTags:
+  - Persist
 --- !u!4 &2037171455
 Transform:
   m_ObjectHideFlags: 0

@@ -8,6 +8,7 @@ TagManager:
   - Cuttable
   - Target
   - PreviewIgnore
+  - Persist
   layers:
   - Default
   - TransparentFX

@@ -399,15 +399,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         // Include current recipe when notifying listeners.
         OnMaterialProduced?.Invoke(mat, transform.position, _currentRecipe);
 
-        // Increase break chance per produced output
-        _chanceToBreak += _chanceToBreakIncrement;
+        TryBreakFromProducedOutput();
 
-        if (BreakCheck())
-        {
-            Debug.Log("M: machine broke!");
-            Break();
-            return; 
-        }
         GameObject visualPrefab = mat != null ? mat.prefab : null;
         GameObject visual = null;
         if (visualPrefab != null) visual = Instantiate(visualPrefab);
@@ -429,6 +422,22 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         }
 
         TryPushOutputToBelt(item);
+    }
+
+    private bool TryBreakFromProducedOutput()
+    {
+        if (_isBroken) return true;
+
+        _chanceToBreak += _chanceToBreakIncrement;
+
+        if (BreakCheck())
+        {
+            Debug.Log("M: machine broke!");
+            Break();
+            return true;
+        }
+
+        return false;
     }
 
     public void Break()
@@ -948,6 +957,9 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
 
                 if (item.Visual == null && item.materialData != null && item.materialData.prefab != null)
                     item.Visual = Instantiate(item.materialData.prefab);
+
+                if (TryBreakFromProducedOutput())
+                    break;
 
                 TryPushOutputToBelt(item);
 
