@@ -4076,7 +4076,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EconomyManager
   defaultMaterialCost: 0
-  defaultPlayerBalance: 500000
+  defaultPlayerBalance: 2500
   playerBalanceText: {fileID: 1028810201}
   playerBalance: 0
 --- !u!1 &356518663
@@ -8738,7 +8738,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4623189637657199770, guid: 3a0c7ea6d73335642b2a3f8158f9bd44, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -243.00002
+      value: -126
       objectReference: {fileID: 0}
     - target: {fileID: 4623189637657199770, guid: 3a0c7ea6d73335642b2a3f8158f9bd44, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -10370,10 +10370,10 @@ RectTransform:
   - {fileID: 2115332241}
   - {fileID: 123197721}
   - {fileID: 1680271610}
+  - {fileID: 2038199557}
   - {fileID: 356518664}
   - {fileID: 104705734}
   - {fileID: 6826910606329019408}
-  - {fileID: 2038199557}
   - {fileID: 968686103}
   - {fileID: 1902116671}
   m_Father: {fileID: 0}
@@ -22349,7 +22349,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4623189637657199770, guid: 3a0c7ea6d73335642b2a3f8158f9bd44, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -474
+      value: -372
       objectReference: {fileID: 0}
     - target: {fileID: 4623189637657199770, guid: 3a0c7ea6d73335642b2a3f8158f9bd44, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -28652,7 +28652,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 431856671559206526, guid: 9bc427e42d74d23468a51910f5ddfff0, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1747773203277141840, guid: 9bc427e42d74d23468a51910f5ddfff0, type: 3}
       propertyPath: m_AnchoredPosition.x

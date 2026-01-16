@@ -15,9 +15,9 @@ MonoBehaviour:
   product: {fileID: 11400000, guid: 88da2f958d8df7e4eb998bf302f7cb8f, type: 2}
   unlockedIcon: {fileID: 21300000, guid: 77c4ec4fc8d2c5d45b32e1e010cebea6, type: 3}
   treeSteps:
-  - {fileID: 11400000, guid: 49083a82d5ba44046b9bb4a50141c0d7, type: 2}
   - {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
   - {fileID: 11400000, guid: a7f19c4f9240e024080b171813df65eb, type: 2}
+  - {fileID: 11400000, guid: 49083a82d5ba44046b9bb4a50141c0d7, type: 2}
   - {fileID: 11400000, guid: 2b40b9b7c92e72c42993fce4cf60c2f2, type: 2}
   startingUnlockedMaterials:
   - {fileID: 11400000, guid: e481b0942ce1e9843bc578f80e6256c2, type: 2}
