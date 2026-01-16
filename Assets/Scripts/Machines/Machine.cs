@@ -958,6 +958,8 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
                 if (item.Visual == null && item.materialData != null && item.materialData.prefab != null)
                     item.Visual = Instantiate(item.materialData.prefab);
 
+                OnMaterialProduced?.Invoke(item.materialData, transform.position, _currentRecipe);
+
                 if (TryBreakFromProducedOutput())
                     break;
 
