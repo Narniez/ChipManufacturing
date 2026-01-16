@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 936aea6a974b1f04ea73d6de1dfd0a82, type: 3}
+  m_Name: Metal Frame
+  m_EditorClassIdentifier: Assembly-CSharp::RecipeItemSO
+  product: {fileID: 11400000, guid: ecdb29de4c00f2b4cb9daff77b7ba583, type: 2}
+  unlockedIcon: {fileID: 0}
+  treeSteps:
+  - {fileID: 11400000, guid: 2b40b9b7c92e72c42993fce4cf60c2f2, type: 2}
+  startingUnlockedMaterials: []
