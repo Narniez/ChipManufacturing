@@ -150,6 +150,21 @@ public class BeltSystemRuntime : MonoBehaviour
         if (!_index.TryGetValue(belt, out int idx)) return;
 
         int last = _belts.Count - 1;
+        if (last < 0)
+        {
+            // List is already empty; just drop the index entry.
+            _index.Remove(belt);
+            return;
+        }
+
+        if (idx < 0 || idx > last)
+        {
+            // Index is stale/out of sync; remove mapping and rebuild.
+            _index.Remove(belt);
+            RebuildIndexMap();
+            return;
+        }
+
         var lastBelt = _belts[last];
 
         // swap-remove to keep list compact, update index map
@@ -157,7 +172,18 @@ public class BeltSystemRuntime : MonoBehaviour
         _belts.RemoveAt(last);
 
         _index.Remove(belt);
-        if (lastBelt != null)
+        if (lastBelt != null && !ReferenceEquals(lastBelt, belt))
             _index[lastBelt] = idx;
+    }
+
+    private void RebuildIndexMap()
+    {
+        _index.Clear();
+        for (int i = 0; i < _belts.Count; i++)
+        {
+            var b = _belts[i];
+            if (b != null)
+                _index[b] = i;
+        }
     }
 }

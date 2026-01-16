@@ -23634,7 +23634,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemMoveDuration: 1
-  registerBeltsOnStart: 1
+  registerBeltsOnStart: 0
 --- !u!4 &1680303111
 Transform:
   m_ObjectHideFlags: 0
