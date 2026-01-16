@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,6 +19,7 @@ public class RecipeTreeContainer : MonoBehaviour
         productIcon = GetComponent<Image>();
         productCanvasGroup = GetComponent<CanvasGroup>();
     }
+
     private void Start()
     {
         treeManager = FindFirstObjectByType<RecipeTreeManager>();
@@ -89,10 +91,29 @@ public class RecipeTreeContainer : MonoBehaviour
 
     public void AutoFindChildNodes()
     {
-        if (autoFindChildNotes)
+        if (!autoFindChildNotes)
+            return;
+
+        var all = GetComponentsInChildren<RecipeTreeNodeDisplay>(includeInactive: false);
+        var filtered = new List<RecipeTreeNodeDisplay>(all.Length);
+
+        for (int i = 0; i < all.Length; i++)
         {
-            nodes = GetComponentsInChildren<RecipeTreeNodeDisplay>(includeInactive: false);
-            Debug.Log($"[RecipeTreeContainer] Found {nodes.Length} child nodes for product {gameObject.name}");
+            var node = all[i];
+            if (node == null)
+                continue;
+
+            // skip self if a node is placed on the same GameObject as this container
+            if (node.transform == transform)
+                continue;
+
+            // include only nodes whose nearest parent container is THIS container
+            var owningContainer = node.GetComponentInParent<RecipeTreeContainer>();
+            if (owningContainer == this)
+                filtered.Add(node);
         }
+
+        nodes = filtered.ToArray();
+        Debug.Log($"[RecipeTreeContainer] Found {nodes.Length} child nodes for product {gameObject.name}");
     }
 }
