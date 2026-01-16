@@ -176,7 +176,7 @@ public static class GameStateSync
 
 #if UNITY_EDITOR
         if (!string.IsNullOrEmpty(itemKey))
-            Debug.Log($"GameStateSync: saved belt[{b.Anchor}] itemKey='{itemKey}'");
+            //Debug.Log($"GameStateSync: saved belt[{b.Anchor}] itemKey='{itemKey}'");
 #endif
 
         GameStateService.MarkDirty();

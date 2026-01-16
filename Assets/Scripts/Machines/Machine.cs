@@ -15,6 +15,10 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     private GridService _grid;
     // Pending outputs produced by a finished recipe, released on next clock tick
     private readonly List<MaterialData> _pendingOutputs = new List<MaterialData>();
+    private readonly Queue<ConveyorItem> _inputItems = new Queue<ConveyorItem>();
+
+    // Pending outputs as *items*, not just materials
+    private readonly List<ConveyorItem> _pendingOutputItems = new List<ConveyorItem>();
 
     //private InventoryItem inventoryItem;
 
@@ -226,7 +230,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             _productionProgress = duration > 0f ? Mathf.Clamp01(elapsed / duration) : 1f;
             ProductionProgressChanged?.Invoke(_productionProgress);
 
-            // If machine got broken mid-process, abort
             if (_isBroken)
             {
                 _productionProgress = 0f;
@@ -239,30 +242,58 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         _productionProgress = 1f;
         ProductionProgressChanged?.Invoke(_productionProgress);
 
-        // Instead of producing immediately, collect outputs and wait for the next clock tick to release them.
-        _pendingOutputs.Clear();
+        // Build output items for next tick
+        _pendingOutputItems.Clear();
+
+        // Consume the correct number of *item instances* corresponding to recipe inputs.
+        // For now: total count = sum of inputs amounts, and we dequeue that many items.
+        // This assumes your recipes represent "processing the same chip" rather than combining different chips.
+        int consumeCount = 0;
+        if (_currentRecipe != null)
+        {
+            for (int i = 0; i < _currentRecipe.inputs.Count; i++)
+                consumeCount += Mathf.Max(1, _currentRecipe.inputs[i].amount);
+        }
+
+        ConveyorItem consumedItem = null;
+        for (int i = 0; i < consumeCount; i++)
+        {
+            if (_inputItems.Count > 0)
+                consumedItem = _inputItems.Dequeue(); // keep the last one as the “carrier item”
+        }
+
+        // If no ConveyorItem was available (e.g. came from inventory path), fall back to producing new items.
+        // This keeps the game functional even if not everything is using ConveyorItem yet.
         if (_currentRecipe != null)
         {
             for (int i = 0; i < _currentRecipe.outputs.Count; i++)
             {
                 var outStack = _currentRecipe.outputs[i];
-                if (outStack.material == null)
-                {
-                    Debug.LogWarning($"[Machine] {_currentRecipe.name} has null output at index {i}; skipping.");
-                    continue;
-                }
+                if (outStack.material == null) continue;
+
                 int count = Mathf.Max(1, outStack.amount);
                 for (int c = 0; c < count; c++)
-                    _pendingOutputs.Add(outStack.material);
+                {
+                    // If we have a consumed item, reuse it for the first output; otherwise create fresh items.
+                    if (consumedItem != null)
+                    {
+                        // The item "becomes" the recipe output material
+                        var item = consumedItem;
+                        item.materialData = outStack.material;
+                        consumedItem = null; // only reuse once
+                        _pendingOutputItems.Add(item);
+                    }
+                    else
+                    {
+                        _pendingOutputItems.Add(new ConveyorItem(outStack.material, visual: null));
+                    }
+                }
             }
         }
 
-        // mark production finished; actual release happens on clock tick handler
         productionRoutine = null;
         _productionProgress = 0f;
         ProductionProgressChanged?.Invoke(_productionProgress);
-
-        // Do NOT StartProduction() here; StartProduction() will be called after outputs are released on tick.
     }
 
     private IEnumerator ProcessOneLegacy()
@@ -377,8 +408,27 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             Break();
             return; 
         }
+        GameObject visualPrefab = mat != null ? mat.prefab : null;
+        GameObject visual = null;
+        if (visualPrefab != null) visual = Instantiate(visualPrefab);
 
-        TryPushOutputToBelt(mat);
+        var item = new ConveyorItem(mat, visual);
+
+        // Advance upgrade-cycle progress for this item, and if the cycle completes, upgrade it now.
+        // Only the "last machine" behavior naturally triggers because AdvanceCycle returns true only at cycle completion.
+        if (ItemUpgradeService.AdvanceCycle(item, data))
+        {
+            bool upgraded = ItemUpgradeService.TryUpgradeMaterial(item);
+            if (upgraded && item.Visual != null)
+            {
+                // Swap visual to match upgraded material
+                Destroy(item.Visual);
+                var newPrefab = item.materialData != null ? item.materialData.prefab : null;
+                item.Visual = newPrefab != null ? Instantiate(newPrefab) : null;
+            }
+        }
+
+        TryPushOutputToBelt(item);
     }
 
     public void Break()
@@ -435,9 +485,12 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
         return false;
     }
 
-    private void TryPushOutputToBelt(MaterialData mat)
+    private void TryPushOutputToBelt(ConveyorItem item)
     {
+        if (item == null || item.materialData == null) return;
         if (_grid == null || !_grid.HasGrid) return;
+
+        var mat = item.materialData;
 
         var orientedSize = BaseSize.OrientedSize(Orientation);
         var outputs = new List<(Vector2Int cell, GridOrientation worldSide)>();
@@ -460,8 +513,6 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             outputs.Add((cell, worldSide));
         }
 
-        GameObject visualPrefab = mat != null ? mat.prefab : null;
-
         bool placed = false;
 
         foreach (var (cell, worldSide) in outputs)
@@ -472,20 +523,17 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             var belt = occGO.GetComponent<ConveyorBelt>();
             if (!BeltAcceptsOutput(belt, worldSide)) continue;
 
-            GameObject visual = null;
-            if (visualPrefab != null) visual = Instantiate(visualPrefab);
-
-            var item = new ConveyorItem(mat, visual);
             if (belt.TrySetItem(item))
             {
                 placed = true;
                 break;
             }
-            if (visual != null) Destroy(visual);
         }
 
         if (!placed)
         {
+            // If belt placement fails, destroy item visual and fallback to inventory.
+            if (item.Visual != null) Destroy(item.Visual);
             AddOutputToInventory(mat, 1);
             Debug.Log("M: output added to inventory");
         }
@@ -642,20 +690,51 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
             TryStartIfIdle();
     }
 
+    // ---------- Conveyor input ----------
+    // NEW overload used by belts
+    public bool OnConveyorItemArrived(ConveyorItem item)
+    {
+        if (Data == null || item == null || item.materialData == null) return false;
+
+        // Gate: only accept if machine can process this material in some way.
+        if (data.HasRecipes)
+        {
+            if (!AppearsInAnyRecipe(item.materialData)) return false;
+        }
+        else
+        {
+            // Legacy single input machine
+            if (Data.inputMaterial != null && Data.inputMaterial != item.materialData) return false;
+
+            // If this is a legacy generator (no input, only output), it should NOT accept belt inputs.
+            // (optional but prevents confusing behavior)
+            if (IsLegacyGenerator) return false;
+        }
+
+        _inputItems.Enqueue(item);
+
+        // Keep old material-based buffers in sync for recipe selection.
+        AddToBuffer(item.materialData, 1);
+
+        StartProduction();
+        return true;
+    }
+
+    // Keep the old signature in case something else calls it (inventory etc.)
     public void OnConveyorItemArrived(MaterialData material)
     {
+        // Route inventory-sent materials through the old path (no per-item progress)
+        // This keeps existing behavior unchanged.
         if (Data == null || material == null) return;
 
         if (data.HasRecipes)
         {
-            // Accept only materials that appear in at least one recipe
             if (!AppearsInAnyRecipe(material)) return;
             AddToBuffer(material, 1);
             StartProduction();
             return;
         }
 
-        // Legacy single input
         if (Data.inputMaterial != null && Data.inputMaterial != material) return;
         _inputQueue.Enqueue(material);
         StartProduction();
@@ -846,28 +925,58 @@ public class Machine : MonoBehaviour, IInteractable, IDraggable, IGridOccupant
     // Called on each clock tick from ProceduralMusicManager
     private void HandleClockTick()
     {
-        // Guard against receiving ticks before initialization or when data is missing
         if (!_initialized || data == null) return;
-
         if (_isBroken) return;
 
-        // If a recipe finished and produced pending outputs, release them now
-        if (_pendingOutputs.Count > 0)
+        // 1) New item-based outputs (recipes)
+        if (_pendingOutputItems.Count > 0)
         {
-            Debug.Log($"[Machine] {name} releasing {_pendingOutputs.Count} pending outputs");
-            // produce each pending output (this will try to push to belts / inventory)
-            for (int i = 0; i < _pendingOutputs.Count; i++)
+            for (int i = 0; i < _pendingOutputItems.Count; i++)
             {
-                Debug.Log($"[Machine] {name} producing index {i}");
-                ProduceOneOutput(_pendingOutputs[i]);
-                if (_isBroken) break; // stop if machine broke during release
+                var item = _pendingOutputItems[i];
+                if (item == null || item.materialData == null) continue;
+
+                if (ItemUpgradeService.AdvanceCycle(item, data))
+                {
+                    if (ItemUpgradeService.TryUpgradeMaterial(item))
+                    {
+                        if (item.Visual != null) Destroy(item.Visual);
+                        var prefab = item.materialData != null ? item.materialData.prefab : null;
+                        item.Visual = prefab != null ? Instantiate(prefab) : null;
+                    }
+                }
+
+                if (item.Visual == null && item.materialData != null && item.materialData.prefab != null)
+                    item.Visual = Instantiate(item.materialData.prefab);
+
+                TryPushOutputToBelt(item);
+
+                if (_isBroken) break;
             }
-            _pendingOutputs.Clear();
-            // After releasing outputs, attempt to start next production
+
+            _pendingOutputItems.Clear();
             StartProduction();
             return;
         }
-        // Otherwise keep normal behavior: some machines may want to start/resume on tick
+
+        // 2) Legacy generator / legacy output queue (IMPORTANT)
+        if (_pendingOutputs.Count > 0)
+        {
+            for (int i = 0; i < _pendingOutputs.Count; i++)
+            {
+                var mat = _pendingOutputs[i];
+                if (mat == null) continue;
+
+                ProduceOneOutput(mat);
+
+                if (_isBroken) break;
+            }
+
+            _pendingOutputs.Clear();
+            StartProduction();
+            return;
+        }
+
         TryStartIfIdle();
     }
 }

@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MachineRecipe
   name: Chip Stage Two
   inputs:
-  - material: {fileID: 11400000, guid: 36ceafdbb385dba4893f1c0099ed7ad1, type: 2}
+  - material: {fileID: 11400000, guid: b573a15bfc6806f4b943d93c85201d65, type: 2}
     amount: 1
   outputs:
-  - material: {fileID: 11400000, guid: 4d73601916d16a14388897263c7b1ee0, type: 2}
+  - material: {fileID: 11400000, guid: b573a15bfc6806f4b943d93c85201d65, type: 2}
     amount: 1
   processingTimeOverride: -1

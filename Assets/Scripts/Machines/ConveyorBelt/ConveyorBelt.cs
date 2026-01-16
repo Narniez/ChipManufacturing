@@ -344,9 +344,35 @@ public class ConveyorBelt : MonoBehaviour, IGridOccupant, IInteractable
             portType == MachinePortType.Input)
         {
             var moving = TakeItem();
-            if (moving?.Visual != null) Destroy(moving.Visual);
-            machine.OnConveyorItemArrived(moving.materialData);
+            if (moving == null || moving.materialData == null) return false;
+
+            // Remove visual now (either way the belt no longer owns it)
+            if (moving.Visual != null)
+            {
+                Destroy(moving.Visual);
+                moving.Visual = null;
+            }
+
+            // Attempt delivery as the actual ConveyorItem (so progress can persist)
+            bool accepted = machine.OnConveyorItemArrived(moving);
+
+            if (!accepted)
+            {
+                // Fallback: add to inventory instead of losing it
+                var inv = InventoryService.Instance;
+                if (inv != null)
+                {
+                    inv.AddOrStack(moving.materialData, 1);
+                }
+                else
+                {
+                    Debug.LogWarning("ConveyorBelt: Machine rejected item but InventoryService.Instance is null. Item lost.");
+                }
+
+            }
+
             return true;
+
         }
         return false;
     }
