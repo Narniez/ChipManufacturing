@@ -31,5 +31,5 @@ MonoBehaviour:
   dragLoop: 0
   showDimmerImage: 1
   typewriterCharsPerSecond: 60
-  fullscreenSprite: {fileID: 21300000, guid: d75fb6f299ba70241832927d82a9ea75, type: 3}
+  fullscreenSprite: {fileID: 21300000, guid: 1214c68cb5f5a9d4a9658b146ba6e0e2, type: 3}
   blockAllUIInteraction: 0
