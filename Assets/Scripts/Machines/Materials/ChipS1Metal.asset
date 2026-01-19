@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
   materialName: Chip S1 Metal
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 6f12c87f825046947a3aaab903055c98, type: 3}
   prefab: {fileID: 3302082574463725970, guid: dfc22a32c178a0d4194b428623d3dde7, type: 3}
   cost: 55
   unit: pcs

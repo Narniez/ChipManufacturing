@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
   materialName: Chip S2 Transistor
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: eae74cb6f72a78e468909d69aae1e42b, type: 3}
   prefab: {fileID: 8379245972204634665, guid: 48a6445cae6825840a50a55314cacb9a, type: 3}
   cost: 115
   unit: pcs

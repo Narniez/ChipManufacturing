@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
   materialName: SteelDisk
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: c84ccc8d9555e3742899038c461f3589, type: 3}
   prefab: {fileID: 5003186552333094357, guid: f797ad44bf0ac654fa0413cab485f1e2, type: 3}
   cost: 15
   unit: pcs

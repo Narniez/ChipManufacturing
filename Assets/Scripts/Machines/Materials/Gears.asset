@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
   materialName: Gears
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 478fe89e884986447986f4abe4488e84, type: 3}
   prefab: {fileID: 3850495093114984180, guid: 799fc42cffb8df54384d79df898c82fe, type: 3}
   cost: 45
   unit: pcs

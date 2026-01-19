@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 4
   materialName: Wafer
-  icon: {fileID: 21300000, guid: 6bcdfa988b05a474b9be47d67ddfd3f0, type: 3}
+  icon: {fileID: 21300000, guid: 9133e59296175564db0e132a1e0cf3a7, type: 3}
   prefab: {fileID: 5890557348334130944, guid: f928a68a8f6750449a9a24ea45b7201f, type: 3}
   cost: 5
   unit: pcs

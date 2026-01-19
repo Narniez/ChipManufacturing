@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f2a2e681ebc4a4e4a88a51e9ad1a00aa, type: 3}
-  m_Name: _GearSystem
+  m_Name: _MetalBox
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
-  materialName: Gear System
+  materialName: Metal Box
   icon: {fileID: 0}
-  prefab: {fileID: 3850495093114984180, guid: a12e5e32e0a6a5242bf5a4ebf7aa0629, type: 3}
-  cost: 100
+  prefab: {fileID: 919132149155446097, guid: 90d4ec6e691725b499b90641a82c120e, type: 3}
+  cost: 30
   unit: pcs
   unitScale: 1
   maxStack: 9999

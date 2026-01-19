@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
   materialName: Balls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 986110c96cc40f146b96818efef2b988, type: 3}
   prefab: {fileID: 5540542110288546490, guid: e35ff0cf1965739428b4f7530f588dde, type: 3}
   cost: 5
   unit: pcs

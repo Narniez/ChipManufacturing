@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
   materialName: Tire
-  icon: {fileID: 21300000, guid: 77c4ec4fc8d2c5d45b32e1e010cebea6, type: 3}
-  prefab: {fileID: 6303799607379709817, guid: 1c5b5a7391b556547a5eb3f07e8e52a2, type: 3}
+  icon: {fileID: 21300000, guid: 52b82b7fbdd279e4b8b7fcf79672b58b, type: 3}
+  prefab: {fileID: 2274671170802677219, guid: 93829460268732041b4acc14600cb5b6, type: 3}
   cost: 250
   unit: pcs
   unitScale: 1

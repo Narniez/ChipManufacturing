@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f2a2e681ebc4a4e4a88a51e9ad1a00aa, type: 3}
-  m_Name: _Bike
+  m_Name: Bike
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
   materialName: Bike
-  icon: {fileID: 0}
-  prefab: {fileID: 8559448409965842562, guid: d98b8db6ba6029d4880a2d3b51624cdc, type: 3}
+  icon: {fileID: 21300000, guid: 4a0183a580c4a0745ab8da96ace8db6f, type: 3}
+  prefab: {fileID: 4201290311111042425, guid: cd4e762af11d5bf4fa3f67242c7f5036, type: 3}
   cost: 800
   unit: pcs
   unitScale: 1

@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
   materialName: Petals
-  icon: {fileID: 0}
-  prefab: {fileID: 132675799859970213, guid: 1535bfab3a53e0a40997aaf4a58b2308, type: 3}
+  icon: {fileID: 21300000, guid: 24de2c37b6c66bb448f4f47b56fe39b7, type: 3}
+  prefab: {fileID: 3303359767657341852, guid: 96dc27b46bd97474b9455db21a1d1557, type: 3}
   cost: 50
   unit: pcs
   unitScale: 1

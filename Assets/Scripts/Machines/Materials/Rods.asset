@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaterialData
   id: 0
   materialName: ' Rods'
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: da41487293bdb9e45ac2204152436c43, type: 3}
   prefab: {fileID: 3116134260203912637, guid: a0fffd220c37bc34fb0053aadc233eff, type: 3}
   cost: 20
   unit: pcs
