@@ -59,10 +59,20 @@ public class InteractionManager : MonoBehaviour
 
     private void Update()
     {
-#if (UNITY_EDITOR || UNITY_STANDALONE) && !UNITY_IOS && !UNITY_ANDROID
+        // Prefer true touch input when available.
+        // On WebGL mobile (and some browsers), Unity may not report touches via Input.touchCount,
+        // so we fall back to mouse/pointer events when there are no touches.
+        if (Input.touchCount > 0)
+        {
+            UpdateTouch();
+            return;
+        }
+
+        ResetTouch();
+
+#if UNITY_EDITOR || UNITY_STANDALONE || UNITY_WEBGL
         if (enableMouse) UpdateMouse();
 #endif
-        UpdateTouch();
     }
 
     #region Touch Handling

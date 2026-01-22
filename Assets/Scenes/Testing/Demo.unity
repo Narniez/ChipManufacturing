@@ -4076,7 +4076,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EconomyManager
   defaultMaterialCost: 0
-  defaultPlayerBalance: 2500
+  defaultPlayerBalance: 500000
   playerBalanceText: {fileID: 1028810201}
   playerBalance: 0
 --- !u!1 &356518663
@@ -4910,8 +4910,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 679092805}
   m_HandleRect: {fileID: 679092804}
   m_Direction: 2
-  m_Value: 0.9999998
-  m_Size: 0.6067334
+  m_Value: 1
+  m_Size: 0.60673344
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -7637,8 +7637,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 43772302}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.39326647}
-  m_AnchorMax: {x: 1, y: 0.9999999}
+  m_AnchorMin: {x: 0, y: 0.39326656}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -10079,7 +10079,6 @@ GameObject:
   - component: {fileID: 941296128}
   - component: {fileID: 941296127}
   - component: {fileID: 941296126}
-  - component: {fileID: 941296125}
   - component: {fileID: 941296124}
   m_Layer: 5
   m_Name: DropPanel
@@ -10104,8 +10103,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1600, y: 800}
+  m_AnchoredPosition: {x: -34.807377, y: 4.3509}
+  m_SizeDelta: {x: 1691.3696, y: 882.6676}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &941296124
 CanvasGroup:
@@ -10119,22 +10118,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &941296125
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 941296122}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 89fd11fd0d8299b4b84f38c0bd9376f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 4365471052268879467}
-  inventoryPanel: {fileID: 1902116670}
-  inventoryButton: {fileID: 1588089269}
-  dropPanelCanvasGroup: {fileID: 941296124}
 --- !u!114 &941296126
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10178,7 +10161,31 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 941296127}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1902116670}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1588089267}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
 --- !u!114 &941296127
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13788,9 +13795,9 @@ RectTransform:
   - {fileID: 2130253140}
   m_Father: {fileID: 1743831414}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 982, y: -849}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 42}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1266425971
@@ -22555,18 +22562,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 1169455639}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!114 &1588089270
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28652,7 +28647,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 431856671559206526, guid: 9bc427e42d74d23468a51910f5ddfff0, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1747773203277141840, guid: 9bc427e42d74d23468a51910f5ddfff0, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -34353,6 +34348,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4069804967976006138, guid: e3563cc3869535948b01b757286cf131, type: 3}
+      propertyPath: testMode
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4069804967976006138, guid: e3563cc3869535948b01b757286cf131, type: 3}
       propertyPath: panSpeedSlider
       value: 
       objectReference: {fileID: 1485767514}
@@ -35403,8 +35402,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -571, y: 0}
-  m_SizeDelta: {x: 2337.3916, y: 1304.9}
+  m_AnchoredPosition: {x: -552.25, y: 0}
+  m_SizeDelta: {x: 2395, y: 1304.9}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &6852753191486684673
 MonoBehaviour:
