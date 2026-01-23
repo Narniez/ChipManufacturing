@@ -37,6 +37,17 @@
             "bindings": [
                 {
                     "name": "",
+                    "id": "f26ebdf7-eab5-4fee-9313-0341c1fb8b1f",
+                    "path": "<Pointer>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Point",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "6c0206a3-19de-4bc7-9d96-87f7f4343765",
                     "path": "<Touchscreen>/position",
                     "interactions": "",
@@ -48,12 +59,34 @@
                 },
                 {
                     "name": "",
+                    "id": "f1f71e2a-c1a4-4698-b33b-1b937975bd46",
+                    "path": "<Pointer>/press",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Click",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "8666a831-ddb5-4379-805d-acd602b78077",
                     "path": "<Touchscreen>/Press",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "Click",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "69257ad7-e79a-408f-a633-338f55b773c9",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Delta",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

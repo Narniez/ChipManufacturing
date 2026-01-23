@@ -334,7 +334,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     {
         if (IsEmpty) return;
 
-        mainCamera?.SetInputLocked(true);
+        //mainCamera?.SetInputLocked(true);
 
         var parent = canvasGroup ? canvasGroup.transform : (GetComponentInParent<Canvas>()?.transform ?? transform.root);
         var proxy = Instantiate(inventoryItemPrefab, parent, false);
@@ -364,7 +364,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     {
         if (_activeProxy != null)
         {
-            mainCamera?.SetInputLocked(false);
+            //mainCamera?.SetInputLocked(false);
             ExecuteEvents.Execute<IEndDragHandler>(_activeProxy, e, ExecuteEvents.endDragHandler);
             _activeProxy = null;
         }

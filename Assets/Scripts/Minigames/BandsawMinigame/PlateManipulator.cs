@@ -153,7 +153,7 @@ public class PlateManipulator : MonoBehaviour
     void Update()
     {
         if (_cam == null) return;
-#if UNITY_EDITOR
+#if UNITY_EDITOR || UNITY_WEBGL || UNITY_STANDALONE
         HandleMouse();
 #else
         HandleTouch();

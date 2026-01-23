@@ -78,7 +78,7 @@
 				{
 					"backtrace" : 2,
 					"isSystem" : true,
-					"path" : "C:/Users/crazy/.gradle/caches/8.13/transforms/6553fed145da0193876e5b502bd35441/transformed/jetified-games-frame-pacing-2.1.2/prefab/modules/swappy_static/include"
+					"path" : "C:/Users/trifo/.gradle/caches/8.13/transforms/6553fed145da0193876e5b502bd35441/transformed/jetified-games-frame-pacing-2.1.2/prefab/modules/swappy_static/include"
 				}
 			],
 			"language" : "CXX",
@@ -108,7 +108,7 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "C:\\Users\\crazy\\.gradle\\caches\\8.13\\transforms\\6553fed145da0193876e5b502bd35441\\transformed\\jetified-games-frame-pacing-2.1.2\\prefab\\modules\\swappy_static\\libs\\android.arm64-v8a\\libswappy_static.a",
+				"fragment" : "C:\\Users\\trifo\\.gradle\\caches\\8.13\\transforms\\6553fed145da0193876e5b502bd35441\\transformed\\jetified-games-frame-pacing-2.1.2\\prefab\\modules\\swappy_static\\libs\\android.arm64-v8a\\libswappy_static.a",
 				"role" : "libraries"
 			},
 			{
